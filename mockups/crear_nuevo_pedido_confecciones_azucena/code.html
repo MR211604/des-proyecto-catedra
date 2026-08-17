@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nuevo Pedido - Confecciones Azucena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f8eef7",
+                        "primary-container": "#8b5e83",
+                        "tertiary-container": "#726a72",
+                        "tertiary": "#59525a",
+                        "surface-container": "#f5ebf4",
+                        "on-error": "#ffffff",
+                        "surface": "#fff7fc",
+                        "background": "#fff7fc",
+                        "on-secondary-fixed-variant": "#613c45",
+                        "tertiary-fixed-dim": "#cec3cd",
+                        "surface-variant": "#e9dfe9",
+                        "on-tertiary-container": "#f7ecf5",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#eadfe9",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#342f36",
+                        "surface-dim": "#e1d7e0",
+                        "on-secondary-fixed": "#2f121a",
+                        "surface-container-low": "#fbf1fa",
+                        "primary": "#70466a",
+                        "on-secondary-container": "#7a525b",
+                        "secondary-fixed-dim": "#ecb9c4",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#efe5ef",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#fecad4",
+                        "surface-tint": "#7b5074",
+                        "on-surface-variant": "#4e444b",
+                        "on-surface": "#1f1a20",
+                        "surface-bright": "#fff7fc",
+                        "inverse-primary": "#ecb6e0",
+                        "outline": "#80747b",
+                        "on-tertiary-fixed": "#1f1a20",
+                        "on-primary-container": "#ffeaf7",
+                        "primary-fixed": "#ffd7f4",
+                        "on-primary-fixed-variant": "#61395b",
+                        "primary-fixed-dim": "#ecb6e0",
+                        "secondary": "#7b535c",
+                        "on-tertiary-fixed-variant": "#4b454c",
+                        "surface-container-highest": "#e9dfe9",
+                        "outline-variant": "#d1c2cb",
+                        "secondary-fixed": "#ffd9e0",
+                        "on-background": "#1f1a20",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#310d2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "xxl": "48px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #fff7fc; }
+        .input-elegant {
+            border: 1px solid rgba(111, 104, 112, 0.2);
+            transition: all 0.3s ease;
+        }
+        .input-elegant:focus {
+            border-color: #8B5E83;
+            box-shadow: 0 0 0 2px rgba(139, 94, 131, 0.1);
+            outline: none;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 12px rgba(47, 41, 48, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-gutter px-base bg-surface-dim dark:bg-inverse-surface fixed left-0 top-0 w-[260px] z-50">
+<div class="mb-lg px-md pt-md">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Confecciones Azucena</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Studio Atelier</p>
+</div>
+<div class="mb-lg px-base">
+<button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-sm px-md rounded-lg flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="add" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add</span>
+                Nuevo Pedido
+            </button>
+</div>
+<ul class="flex-1 overflow-y-auto space-y-xs px-base">
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> Dashboard</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="group">group</span> Clientes</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-l-4 border-primary dark:border-primary-fixed-dim bg-surface-container-high dark:bg-surface-variant transition-transform hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span> Pedidos</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="architecture">architecture</span> Producción</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span> Inventario</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="payments">payments</span> Ventas</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="analytics">analytics</span> Reportes</a></li>
+<li><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span> Configuración</a></li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-[260px] w-full h-full">
+<!-- TopNavBar -->
+<header class="hidden md:flex justify-between items-center px-xl w-full h-16 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline fixed top-0 right-0 w-[calc(100%-260px)] z-40">
+<div class="flex items-center gap-md w-1/3">
+<div class="relative w-full max-w-md focus-within:ring-2 ring-primary dark:ring-primary-fixed-dim rounded-lg">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-xl pr-md py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline" placeholder="Buscar pedido, cliente..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-sm rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-sm rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant ml-sm cursor-pointer">
+<img alt="Tailor Profile" class="w-full h-full object-cover" data-alt="A close up, highly detailed portrait of a sophisticated tailor in a softly lit, high-end studio environment. The light mode aesthetic is prominent with soft shadows and elegant composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXDuTyZrIXfYdRrOAgHrmulOunVfiUazdKecloux5UT6sCfeR9HIN8uh0vl38z4VnkYYI5d8rIBj-4woSjkNeRhIix79c_qrfUot9Z_SwtxHWUKxoTZ4QNXH8Ye0nDC7-3oz69H7F1s_SVd5lL71ZYFBDB5dbyXNPtxMx46qngn32cT_IotrmcxBuiaLAPiVCMBmEEoOVrCl3l1-4WUhpkK1Ixwy-gKMEOaQebcjLihd5pgIhnNMXZYA"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto mt-16 p-gutter pb-xxl bg-background">
+<div class="max-w-[1440px] mx-auto">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<nav class="flex items-center text-on-surface-variant font-label-md text-label-md mb-xs">
+<a class="hover:text-primary transition-colors" href="#">Pedidos</a>
+<span class="material-symbols-outlined mx-xs text-[16px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-on-surface">Nuevo Pedido</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Crear Pedido</h2>
+</div>
+</div>
+<!-- Bento Grid Layout for Form -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Left Column: Core Details -->
+<div class="lg:col-span-8 flex flex-col gap-lg">
+<!-- CUSTOMER Section -->
+<section class="bg-surface-container-lowest rounded-xl p-lg card-shadow">
+<div class="flex justify-between items-center mb-md border-b border-surface-container-highest pb-sm">
+<h3 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+                                    Cliente
+                                </h3>
+<button class="font-label-md text-label-md text-primary flex items-center gap-xs hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                                    Nuevo Cliente
+                                </button>
+</div>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-xl pr-md py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" placeholder="Buscar cliente por nombre o teléfono..." type="text"/>
+</div>
+</section>
+<!-- SERVICE Section -->
+<section class="bg-surface-container-lowest rounded-xl p-lg card-shadow">
+<h3 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm mb-md border-b border-surface-container-highest pb-sm">
+<span class="material-symbols-outlined text-primary" data-icon="design_services">design_services</span>
+                                Detalle del Servicio
+                            </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Tipo de Trabajo</label>
+<div class="relative">
+<select class="w-full pl-sm pr-xl py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface appearance-none">
+<option disabled="" selected="" value="">Seleccione tipo...</option>
+<option value="arreglo">Arreglo</option>
+<option value="ajuste">Ajuste a medida</option>
+<option value="confeccion">Confección</option>
+<option value="diseno">Diseño de prenda</option>
+</select>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Prenda</label>
+<input class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" placeholder="Ej. Vestido de noche, Pantalón" type="text"/>
+</div>
+</div>
+<div class="mb-md">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Descripción del Trabajo</label>
+<textarea class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface resize-none" placeholder="Detalles específicos del ajuste o confección..." rows="3"></textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Cantidad</label>
+<input class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" min="1" type="number" value="1"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Observaciones</label>
+<input class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" placeholder="Notas adicionales..." type="text"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Meta & Pricing -->
+<div class="lg:col-span-4 flex flex-col gap-lg">
+<!-- DATES Section -->
+<section class="bg-surface-container-lowest rounded-xl p-lg card-shadow">
+<h3 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm mb-md border-b border-surface-container-highest pb-sm">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+                                Fechas
+                            </h3>
+<div class="space-y-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Fecha de Ingreso</label>
+<input class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" type="date" value="2023-10-27"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Fecha Estimada de Entrega</label>
+<input class="w-full px-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface" type="date"/>
+</div>
+</div>
+</section>
+<!-- PRICING Section -->
+<section class="bg-surface-container-lowest rounded-xl p-lg card-shadow">
+<h3 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm mb-md border-b border-surface-container-highest pb-sm">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+                                Presupuesto
+                            </h3>
+<div class="space-y-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Precio del Servicio</label>
+<div class="relative">
+<span class="absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant font-body-md">$</span>
+<input class="w-full pl-lg pr-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface text-right" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Adelanto (Seña)</label>
+<div class="relative">
+<span class="absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant font-body-md">$</span>
+<input class="w-full pl-lg pr-sm py-sm rounded-lg input-elegant bg-surface-container-lowest font-body-md text-body-md text-on-surface text-right" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="pt-sm border-t border-surface-container-highest flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface">Saldo Pendiente</span>
+<span class="font-headline-md text-headline-md text-primary">$0.00</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-lg pt-lg border-t border-surface-container-highest flex flex-col md:flex-row justify-end items-center gap-md">
+<button class="w-full md:w-auto px-lg py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                        Cancelar
+                    </button>
+<button class="w-full md:w-auto px-lg py-sm rounded-lg font-label-md text-label-md text-primary border-2 border-primary hover:bg-surface-container-low transition-colors">
+                        Guardar como pendiente
+                    </button>
+<button class="w-full md:w-auto px-lg py-sm rounded-lg font-label-md text-label-md text-on-primary bg-primary-container hover:opacity-90 transition-opacity">
+                        Crear pedido
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

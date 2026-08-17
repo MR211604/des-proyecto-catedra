@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Producción - Confecciones Azucena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#ecb6e0",
+                        "on-secondary-fixed-variant": "#613c45",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#7b5074",
+                        "inverse-surface": "#342f36",
+                        "surface-bright": "#fff7fc",
+                        "primary-fixed": "#ffd7f4",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#80747b",
+                        "outline-variant": "#d1c2cb",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#f7ecf5",
+                        "on-surface": "#1f1a20",
+                        "tertiary-fixed": "#eadfe9",
+                        "secondary": "#7b535c",
+                        "primary": "#70466a",
+                        "secondary-container": "#fecad4",
+                        "on-primary-fixed-variant": "#61395b",
+                        "inverse-primary": "#ecb6e0",
+                        "on-surface-variant": "#4e444b",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e9dfe9",
+                        "on-tertiary-fixed": "#1f1a20",
+                        "primary-container": "#8b5e83",
+                        "on-background": "#1f1a20",
+                        "surface": "#fff7fc",
+                        "tertiary-container": "#726a72",
+                        "surface-container-highest": "#e9dfe9",
+                        "inverse-on-surface": "#f8eef7",
+                        "on-secondary-fixed": "#2f121a",
+                        "tertiary-fixed-dim": "#cec3cd",
+                        "surface-container-high": "#efe5ef",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#f5ebf4",
+                        "surface-container-low": "#fbf1fa",
+                        "on-primary-container": "#ffeaf7",
+                        "tertiary": "#59525a",
+                        "background": "#fff7fc",
+                        "on-tertiary-fixed-variant": "#4b454c",
+                        "on-secondary-container": "#7a525b",
+                        "on-primary-fixed": "#310d2e",
+                        "secondary-fixed": "#ffd9e0",
+                        "secondary-fixed-dim": "#ecb9c4",
+                        "surface-dim": "#e1d7e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "margin-desktop": "32px",
+                        "xxl": "48px",
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1c2cb;
+            border-radius: 10px;
+        }
+        .task-card {
+            box-shadow: 0 4px 12px rgba(47, 41, 48, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<aside class="hidden md:flex bg-surface-dim dark:bg-inverse-surface text-primary dark:text-primary-fixed-dim font-body-md text-body-md fixed left-0 top-0 h-full w-[260px] flex-col py-gutter px-base z-20">
+<div class="mb-xxl px-md">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Confecciones Azucena</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Studio Atelier</p>
+</div>
+<nav class="flex-1 flex flex-col gap-sm">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">group</span>
+                Clientes
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                Pedidos
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg bg-surface-container-high text-primary dark:text-primary-fixed-dim font-bold border-l-4 border-primary dark:border-primary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">architecture</span>
+                Producción
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Inventario
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">payments</span>
+                Ventas
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Reportes
+            </a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Configuración
+            </a>
+</nav>
+<div class="mt-auto pt-xl">
+<button class="w-full bg-primary-container text-on-primary h-10 rounded text-label-md font-label-md flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                Nuevo Pedido
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-[260px] h-screen bg-surface">
+<!-- TopNavBar -->
+<header class="hidden md:flex bg-surface dark:bg-surface-dim text-primary dark:text-primary-fixed-dim font-label-md text-label-md fixed top-0 right-0 w-[calc(100%-260px)] h-16 border-b border-outline-variant dark:border-outline justify-between items-center px-xl z-10 focus-within:ring-2 ring-primary dark:ring-primary-fixed-dim">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style="font-size: 20px;">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-body-md font-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="Buscar prenda o cliente..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a master tailor, warm studio lighting, elegant sewing workspace background, high resolution, modern cinematic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOAkcH4BbVf4q1n5sXBj2JeRZRzR7CyCwGe0dakYlCxI88G2AjcZhXsvbujrEay3K6g0m0FE5TORGWf5j5rgqAH17r1ZT3KDMpbJNV36e73nl6YlufMIrPfGWCs_dP5UjgsIF-aSVxvobfN2uEke90C_qVeq0yVCrbaC5FK50ZoagoXp98LKLt8Vw5TnF55IajbRAagfU2cMYOmrcVixnf77acUTBVdB-Ev5fX99rOp4iP1KQoq-w9Qg"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 overflow-x-auto overflow-y-hidden pt-16 p-gutter custom-scrollbar flex gap-gutter">
+<!-- Column: Pendiente -->
+<div class="w-[320px] shrink-0 flex flex-col h-full bg-surface-container-lowest rounded-xl border border-surface-dim">
+<div class="p-md border-b border-surface-dim flex justify-between items-center bg-surface-container-lowest rounded-t-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface">Pendiente</h2>
+<span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded text-label-sm font-label-sm">2</span>
+</div>
+<div class="flex-1 overflow-y-auto p-md gap-md flex flex-col custom-scrollbar">
+<!-- Card 1 -->
+<div class="task-card bg-surface-container-lowest border border-surface-dim rounded-lg p-md cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-error/10 text-error px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold">Alta</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">#ORD-2023-092</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Traje de novio</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-xs">Confección</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                            Carlos Mendoza
+                        </p>
+<div class="flex justify-between items-center mt-auto pt-sm border-t border-surface-dim">
+<span class="text-error font-label-sm flex items-center gap-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 16px;">warning</span>
+                                12 Oct
+                            </span>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm font-semibold transition-colors">
+                                Ver detalle
+                            </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="task-card bg-surface-container-lowest border border-surface-dim rounded-lg p-md cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold">Media</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">#ORD-2023-093</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Vestido de Noche Seda</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-xs">Confección</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                            Ana Sofía Ríos
+                        </p>
+<div class="flex justify-between items-center mt-auto pt-sm border-t border-surface-dim">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
+                                22 Oct
+                            </span>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm font-semibold transition-colors">
+                                Ver detalle
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: En producción -->
+<div class="w-[320px] shrink-0 flex flex-col h-full bg-surface-container-lowest rounded-xl border border-surface-dim">
+<div class="p-md border-b border-surface-dim flex justify-between items-center bg-surface-container-lowest rounded-t-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+                        En producción
+                    </h2>
+<span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded text-label-sm font-label-sm">2</span>
+</div>
+<div class="flex-1 overflow-y-auto p-md gap-md flex flex-col custom-scrollbar">
+<!-- Card 3 -->
+<div class="task-card bg-surface-container-lowest border border-surface-dim rounded-lg p-md cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold">Media</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">#ORD-2023-094</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Camisas a Medida (x3)</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-xs">Confección</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                            Roberto Silva
+                        </p>
+<div class="flex justify-between items-center mt-auto pt-sm border-t border-surface-dim">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
+                                18 Oct
+                            </span>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm font-semibold transition-colors">
+                                Ver detalle
+                            </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="task-card bg-surface-container-lowest border border-surface-dim rounded-lg p-md cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-error/10 text-error px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold">Alta</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">#ORD-2023-095</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Chaqueta Tweed</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-xs">Arreglo</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                            Elena Valdés
+                        </p>
+<div class="flex justify-between items-center mt-auto pt-sm border-t border-surface-dim">
+<span class="text-error font-label-sm flex items-center gap-xs font-semibold">
+<span class="material-symbols-outlined" style="font-size: 16px;">warning</span>
+                                10 Oct
+                            </span>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm font-semibold transition-colors">
+                                Ver detalle
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Listo para entregar -->
+<div class="w-[320px] shrink-0 flex flex-col h-full bg-surface-container-lowest rounded-xl border border-surface-dim">
+<div class="p-md border-b border-surface-dim flex justify-between items-center bg-surface-container-lowest rounded-t-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-[#8fb38f]"></span>
+                        Listo para entregar
+                    </h2>
+<span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded text-label-sm font-label-sm">1</span>
+</div>
+<div class="flex-1 overflow-y-auto p-md gap-md flex flex-col custom-scrollbar">
+<!-- Card 5 -->
+<div class="task-card bg-surface-container-lowest border border-surface-dim rounded-lg p-md cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold">Baja</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">#ORD-2023-096</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Pantalón Sastre Lino</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-xs">Confección</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">person</span>
+                            Luis Herrera
+                        </p>
+<div class="flex justify-between items-center mt-auto pt-sm border-t border-surface-dim">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
+                                14 Oct
+                            </span>
+<button class="text-primary hover:text-primary-container text-label-sm font-label-sm font-semibold transition-colors">
+                                Ver detalle
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column: Entregado -->
+<div class="w-[320px] shrink-0 flex flex-col h-full bg-surface-container-lowest rounded-xl border border-surface-dim">
+<div class="p-md border-b border-surface-dim flex justify-between items-center bg-surface-container-lowest rounded-t-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                        Entregado
+                    </h2>
+<span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded text-label-sm font-label-sm">0</span>
+</div>
+<div class="flex-1 p-md flex items-center justify-center flex-col text-center opacity-50">
+<span class="material-symbols-outlined text-outline mb-sm" style="font-size: 32px; font-weight: 200;">check_circle</span>
+<p class="font-body-md text-on-surface-variant">Sin pedidos entregados recientes</p>
+</div>
+</div>
+<!-- Spacer for scrolling padding -->
+<div class="w-4 shrink-0"></div>
+</div>
+</main>
+</body></html>

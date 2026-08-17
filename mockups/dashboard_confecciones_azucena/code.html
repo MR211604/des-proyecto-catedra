@@ -1,0 +1,380 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Dashboard - Confecciones Azucena</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#ecb6e0",
+                        "on-secondary-fixed-variant": "#613c45",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#7b5074",
+                        "inverse-surface": "#342f36",
+                        "surface-bright": "#fff7fc",
+                        "primary-fixed": "#ffd7f4",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#80747b",
+                        "outline-variant": "#d1c2cb",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#f7ecf5",
+                        "on-surface": "#1f1a20",
+                        "tertiary-fixed": "#eadfe9",
+                        "secondary": "#7b535c",
+                        "primary": "#70466a",
+                        "secondary-container": "#fecad4",
+                        "on-primary-fixed-variant": "#61395b",
+                        "inverse-primary": "#ecb6e0",
+                        "on-surface-variant": "#4e444b",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e9dfe9",
+                        "on-tertiary-fixed": "#1f1a20",
+                        "primary-container": "#8b5e83",
+                        "on-background": "#1f1a20",
+                        "surface": "#fff7fc",
+                        "tertiary-container": "#726a72",
+                        "surface-container-highest": "#e9dfe9",
+                        "inverse-on-surface": "#f8eef7",
+                        "on-secondary-fixed": "#2f121a",
+                        "tertiary-fixed-dim": "#cec3cd",
+                        "surface-container-high": "#efe5ef",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#f5ebf4",
+                        "surface-container-low": "#fbf1fa",
+                        "on-primary-container": "#ffeaf7",
+                        "tertiary": "#59525a",
+                        "background": "#fff7fc",
+                        "on-tertiary-fixed-variant": "#4b454c",
+                        "on-secondary-container": "#7a525b",
+                        "on-primary-fixed": "#310d2e",
+                        "secondary-fixed": "#ffd9e0",
+                        "secondary-fixed-dim": "#ecb9c4",
+                        "surface-dim": "#e1d7e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "margin-desktop": "32px",
+                        "xxl": "48px",
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F8F6F7; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
+        .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+        .shadow-level-1 { box-shadow: 0 4px 12px rgba(47, 41, 48, 0.05); }
+        .shadow-level-2 { box-shadow: 0 8px 24px rgba(47, 41, 48, 0.10); }
+    </style>
+</head>
+<body class="font-body-md text-body-md text-on-surface antialiased overflow-x-hidden min-h-screen">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-gutter px-base bg-surface-dim dark:bg-inverse-surface fixed left-0 top-0 w-[260px] z-20">
+<div class="mb-xl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim truncate">Confecciones Azucena</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Studio Atelier</p>
+</div>
+<ul class="flex flex-col gap-xs flex-1">
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-l-4 border-primary dark:border-primary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clientes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Pedidos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">architecture</span>
+<span>Producción</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Inventario</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Ventas</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reportes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-sm py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors active:scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configuración</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto px-sm pt-md">
+<button class="w-full bg-primary-container text-on-primary flex items-center justify-center gap-sm py-[10px] rounded text-label-md font-label-md font-semibold hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Nuevo Pedido
+            </button>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="hidden md:flex justify-between items-center px-xl w-full fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline z-10 transition-all">
+<div class="flex-1 flex items-center">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all font-body-md text-body-md placeholder-outline" placeholder="Buscar pedidos, clientes..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/50 mx-xs"></div>
+<img alt="Tailor Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A close-up portrait of an elegant tailor in a modern, bright atelier setting. The lighting is soft and natural, emphasizing a professional and creative mood. The color palette is neutral with soft warm tones, reflecting a high-end fashion environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUDbgAnulrfHNJPm-Nm0VHyxQ7B_cX3fQYpQkgSWgnoPnv1avS4-x0AaurkjFNk59VfeFklWOTdEo9JLvgHQnhMS-Ok4SMzcEUo34MTyZJXay0F6p8OJV028hqJSJsh161-5Qhd-H6usb4s7LnGaFNRjmi-Zw-gmxOOum6Hg42RAMjGD9OPhFM5YMyH65V0LJaOuxCDhiDlefrRo_rdeGCe7kUVJLtk372mRjDT6HXcja-RNALVLUd2g">
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-16 md:pl-[260px] min-h-screen pb-xl">
+<div class="max-w-[1440px] mx-auto p-gutter md:p-xl">
+<!-- Header Greeting -->
+<div class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Buen día, Azucena</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-xs">Aquí está el resumen de tu taller para hoy.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Summary Cards Row (Spans full 12 cols, grid inside) -->
+<div class="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-surface rounded-xl p-lg shadow-level-1 border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-md">
+<p class="font-label-md text-label-md text-on-surface-variant">Pedidos Activos</p>
+<span class="material-symbols-outlined text-primary-container p-sm bg-surface-container-low rounded-lg">receipt_long</span>
+</div>
+<div>
+<p class="font-display text-display text-on-surface">42</p>
+<p class="font-body-md text-body-md text-surface-tint mt-xs">+3 nuevos hoy</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface rounded-xl p-lg shadow-level-1 border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-md">
+<p class="font-label-md text-label-md text-on-surface-variant">Entregas Hoy</p>
+<span class="material-symbols-outlined text-secondary p-sm bg-surface-container-low rounded-lg">local_shipping</span>
+</div>
+<div>
+<p class="font-display text-display text-on-surface">8</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">3 pendientes</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface rounded-xl p-lg shadow-level-1 border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-md">
+<p class="font-label-md text-label-md text-on-surface-variant">Pendiente Producción</p>
+<span class="material-symbols-outlined text-tertiary p-sm bg-surface-container-low rounded-lg">content_cut</span>
+</div>
+<div>
+<p class="font-display text-display text-on-surface">15</p>
+<p class="font-body-md text-body-md text-error mt-xs">2 retrasados</p>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface rounded-xl p-lg shadow-level-1 border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start mb-md">
+<p class="font-label-md text-label-md text-on-surface-variant">Ventas del Mes</p>
+<span class="material-symbols-outlined text-primary-container p-sm bg-surface-container-low rounded-lg">payments</span>
+</div>
+<div>
+<p class="font-display text-display text-on-surface">$4,250</p>
+<p class="font-body-md text-body-md text-surface-tint mt-xs">+12% vs mes anterior</p>
+</div>
+</div>
+</div>
+<!-- Recent Orders Table (Spans 8 cols) -->
+<div class="md:col-span-8 bg-surface rounded-xl shadow-level-1 border border-outline-variant/30 overflow-hidden flex flex-col h-full">
+<div class="p-lg border-b border-outline-variant/20 flex justify-between items-center bg-surface">
+<h3 class="font-title-lg text-title-lg text-on-surface">Pedidos Recientes</h3>
+<button class="font-label-md text-label-md text-primary-container hover:text-primary transition-colors flex items-center gap-xs">
+                            Ver todos
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest text-on-surface font-label-md text-label-md border-b border-outline-variant/20">
+<th class="py-[12px] px-[16px] font-semibold">Order ID</th>
+<th class="py-[12px] px-[16px] font-semibold">Cliente</th>
+<th class="py-[12px] px-[16px] font-semibold">Servicio</th>
+<th class="py-[12px] px-[16px] font-semibold">Estado</th>
+<th class="py-[12px] px-[16px] font-semibold">Entrega</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-surface-container-highest hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<td class="py-[12px] px-[16px] font-medium">#ORD-092</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">María González</td>
+<td class="py-[12px] px-[16px]">Sastrería</td>
+<td class="py-[12px] px-[16px]">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-primary-container/10 text-primary-container font-label-sm text-label-sm font-semibold">En Proceso</span>
+</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Oct 24</td>
+</tr>
+<tr class="border-b border-surface-container-highest hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<td class="py-[12px] px-[16px] font-medium">#ORD-091</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Carlos Ruiz</td>
+<td class="py-[12px] px-[16px]">Arreglo</td>
+<td class="py-[12px] px-[16px]">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">Completado</span>
+</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Oct 23</td>
+</tr>
+<tr class="border-b border-surface-container-highest hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<td class="py-[12px] px-[16px] font-medium">#ORD-090</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Ana Silva</td>
+<td class="py-[12px] px-[16px]">Confección</td>
+<td class="py-[12px] px-[16px]">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-tertiary/10 text-tertiary font-label-sm text-label-sm font-semibold">Pendiente</span>
+</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Oct 28</td>
+</tr>
+<tr class="border-b border-surface-container-highest hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<td class="py-[12px] px-[16px] font-medium">#ORD-089</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Elena Torres</td>
+<td class="py-[12px] px-[16px]">Sastrería</td>
+<td class="py-[12px] px-[16px]">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-primary-container/10 text-primary-container font-label-sm text-label-sm font-semibold">En Proceso</span>
+</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Oct 25</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<td class="py-[12px] px-[16px] font-medium">#ORD-088</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Luis Medina</td>
+<td class="py-[12px] px-[16px]">Arreglo</td>
+<td class="py-[12px] px-[16px]">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-error/10 text-error font-label-sm text-label-sm font-semibold">Retrasado</span>
+</td>
+<td class="py-[12px] px-[16px] text-on-surface-variant">Oct 22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Appointments Widget (Spans 4 cols) -->
+<div class="md:col-span-4 bg-surface rounded-xl shadow-level-1 border border-outline-variant/30 flex flex-col h-full">
+<div class="p-lg border-b border-outline-variant/20 flex justify-between items-center bg-surface">
+<h3 class="font-title-lg text-title-lg text-on-surface">Citas de Hoy</h3>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-primary-container hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="p-md flex flex-col gap-sm overflow-y-auto flex-1">
+<!-- Appointment Item -->
+<div class="flex gap-md p-md rounded-lg border border-outline-variant/20 hover:border-primary-container/50 transition-colors bg-surface-container-lowest relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex flex-col items-center justify-center min-w-[60px] pr-md border-r border-outline-variant/20">
+<span class="font-label-md text-label-md text-on-surface">10:00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">AM</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Toma de medidas</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Sofía Vargas - Vestido Noche</p>
+</div>
+</div>
+<!-- Appointment Item -->
+<div class="flex gap-md p-md rounded-lg border border-outline-variant/20 hover:border-primary-container/50 transition-colors bg-surface-container-lowest relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="flex flex-col items-center justify-center min-w-[60px] pr-md border-r border-outline-variant/20">
+<span class="font-label-md text-label-md text-on-surface">14:30</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">PM</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Prueba final</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Roberto Gómez - Traje Sastre</p>
+</div>
+</div>
+<!-- Appointment Item -->
+<div class="flex gap-md p-md rounded-lg border border-outline-variant/20 hover:border-primary-container/50 transition-colors bg-surface-container-lowest relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<div class="flex flex-col items-center justify-center min-w-[60px] pr-md border-r border-outline-variant/20">
+<span class="font-label-md text-label-md text-on-surface-variant">16:00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">PM</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface-variant">Entrega</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Lucía Peña - Ajustes Varios</p>
+</div>
+</div>
+</div>
+<div class="p-md mt-auto">
+<button class="w-full bg-surface border-[1.5px] border-primary-container text-primary-container py-2 rounded text-label-md font-label-md font-semibold hover:bg-surface-container-low transition-colors">
+                            Ver Calendario
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

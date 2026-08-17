@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clientes - Confecciones Azucena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface": "#fff7fc",
+                "on-background": "#1f1a20",
+                "on-tertiary-container": "#f7ecf5",
+                "on-primary-container": "#ffeaf7",
+                "surface-container-highest": "#e9dfe9",
+                "tertiary-fixed": "#eadfe9",
+                "surface-container-high": "#efe5ef",
+                "on-tertiary": "#ffffff",
+                "surface-container-low": "#fbf1fa",
+                "inverse-on-surface": "#f8eef7",
+                "error-container": "#ffdad6",
+                "tertiary-container": "#726a72",
+                "surface-bright": "#fff7fc",
+                "on-secondary-fixed": "#2f121a",
+                "secondary-container": "#fecad4",
+                "inverse-primary": "#ecb6e0",
+                "on-tertiary-fixed": "#1f1a20",
+                "on-error-container": "#93000a",
+                "outline-variant": "#d1c2cb",
+                "on-surface": "#1f1a20",
+                "surface-dim": "#e1d7e0",
+                "surface-variant": "#e9dfe9",
+                "surface-container-lowest": "#ffffff",
+                "primary-container": "#8b5e83",
+                "secondary": "#7b535c",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#cec3cd",
+                "on-primary-fixed-variant": "#61395b",
+                "primary": "#70466a",
+                "tertiary": "#59525a",
+                "primary-fixed": "#ffd7f4",
+                "outline": "#80747b",
+                "on-secondary-container": "#7a525b",
+                "on-secondary-fixed-variant": "#613c45",
+                "secondary-fixed-dim": "#ecb9c4",
+                "surface-container": "#f5ebf4",
+                "on-tertiary-fixed-variant": "#4b454c",
+                "on-primary-fixed": "#310d2e",
+                "on-error": "#ffffff",
+                "on-surface-variant": "#4e444b",
+                "secondary-fixed": "#ffd9e0",
+                "inverse-surface": "#342f36",
+                "surface-tint": "#7b5074",
+                "error": "#ba1a1a",
+                "background": "#fff7fc",
+                "primary-fixed-dim": "#ecb6e0",
+                "on-primary": "#ffffff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "24px",
+                "base": "8px",
+                "xl": "32px",
+                "margin-mobile": "16px",
+                "md": "16px",
+                "sm": "12px",
+                "xxl": "48px",
+                "margin-desktop": "32px",
+                "xs": "4px",
+                "lg": "24px"
+        },
+        "fontFamily": {
+                "display": [
+                        "Inter"
+                ],
+                "label-sm": [
+                        "Inter"
+                ],
+                "title-lg": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "label-md": [
+                        "Inter"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ],
+                "headline-lg-mobile": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "display": [
+                        "40px",
+                        {
+                                "lineHeight": "48px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "title-lg": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .custom-shadow-1 {
+            box-shadow: 0 4px 12px rgba(47, 41, 48, 0.05);
+        }
+        .custom-shadow-2 {
+            box-shadow: 0 8px 24px rgba(47, 41, 48, 0.10);
+        }
+        .focus-glow:focus-within {
+            box-shadow: 0 0 0 2px rgba(139, 94, 131, 0.2);
+            border-color: #8b5e83;
+        }
+        
+        .table-row-hover:hover {
+            background-color: #f8f6f7;
+        }
+
+        .measurement-card {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-[#F8F6F7] text-on-surface font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-gutter px-base bg-surface-dim dark:bg-inverse-surface fixed left-0 top-0 h-full w-[260px] z-20">
+<div class="mb-xl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Confecciones Azucena</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Studio Atelier</p>
+</div>
+<div class="flex-1 flex flex-col gap-xs">
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-primary font-bold border-l-4 border-primary bg-surface-container-high font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+                Clientes
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                Pedidos
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">architecture</span>
+                Producción
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Inventario
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">payments</span>
+                Ventas
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Reportes
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Configuración
+            </a>
+</div>
+<div class="mt-auto pt-md">
+<button class="w-full bg-primary-container text-on-primary h-[40px] rounded-lg font-label-md text-label-md hover:bg-primary transition-colors flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">add</span>
+                Nuevo Pedido
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-0 md:ml-[260px] w-full flex-1 flex flex-col max-w-[1440px] mx-auto min-h-screen">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-xl w-full fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-surface border-b border-outline-variant z-10 hidden md:flex">
+<div class="flex-1 flex items-center gap-md max-w-md">
+<div class="relative w-full focus-glow rounded-lg">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-[#6F6870]">search</span>
+<input class="w-full h-10 pl-10 pr-sm rounded-lg border border-[#6F6870]/20 bg-surface focus:outline-none font-body-md text-body-md text-on-surface placeholder:text-outline" placeholder="Buscar clientes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-xs rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-xs rounded-full transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Tailor Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a mature tailor in a well-lit studio environment. They are looking confidently slightly off-camera. The lighting is soft and bright, emphasizing a clean, modern aesthetic with subtle hints of tailoring tools in the blurred background. The overall mood is experienced and welcoming, fitting for a high-end atelier interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX-qnR0WrvaAA0JOuwVIR2RlJDaBIe931Y1aPJNxCOryA0Mgjs8Gmfk9GlfqLpengEp0kWa73wXlaIZ23czziT1gWu5G4wZg5RBUdUaMeR1k0_CmxYpsCBqTQ4ziCc0yTHKQdJRlJcahX0nwqr0coZrzTCQchrsLxzhJtCQBzFtGXLan0-IkfoC7JvT8JhsZSf9pHJQfqMhJwutK5pWGj49D2aKYKzTy4mVB55n7SpIFMao-73zpvniQ"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="pt-24 px-gutter md:px-margin-desktop pb-xl flex-1 flex flex-col gap-lg lg:flex-row">
+<!-- Left Column: Table & Actions -->
+<div class="flex-1 flex flex-col gap-lg">
+<!-- Page Header & Actions -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Clientes</h2>
+</div>
+<button class="bg-[#8B5E83] text-on-primary h-[40px] px-lg rounded-lg font-label-md text-label-md hover:bg-primary transition-colors flex items-center gap-sm shrink-0 shadow-sm">
+<span class="material-symbols-outlined">add</span>
+                        Nuevo cliente
+                    </button>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap gap-sm">
+<button class="px-sm py-xs rounded-full border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-low transition-colors bg-surface-container">Todos</button>
+<button class="px-sm py-xs rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-low transition-colors">Activos</button>
+<button class="px-sm py-xs rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-low transition-colors">Inactivos</button>
+</div>
+<!-- Data Table Container -->
+<div class="bg-surface rounded-xl custom-shadow-1 overflow-hidden border border-outline-variant/30 flex-1 flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#F8F6F7] border-b border-outline-variant/30 font-label-md text-label-md text-[#2F2930]">
+<th class="py-sm px-md w-16"></th>
+<th class="py-sm px-md font-semibold">Nombre completo</th>
+<th class="py-sm px-md font-semibold">Teléfono</th>
+<th class="py-sm px-md font-semibold">Correo</th>
+<th class="py-sm px-md font-semibold text-center">Pedidos</th>
+<th class="py-sm px-md font-semibold">Último Pedido</th>
+<th class="py-sm px-md font-semibold text-center">Estado</th>
+<th class="py-sm px-md font-semibold text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="border-b border-[#F8F6F7] table-row-hover cursor-pointer transition-colors" onclick="document.getElementById('measurements-panel').classList.remove('opacity-50', 'scale-95')">
+<td class="py-sm px-md">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A portrait of a well-dressed woman in her 30s, natural lighting, smiling gently. The background is a blurred elegant interior. The styling suggests high-end fashion, fitting a bespoke tailoring client. Clean, modern light mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsGMKx_PmP6hjbwufuPYutwjlWpQ4edhNKNsuxtExdxZjDUcCzKLcsaImvyT0Wf2PE9X9Eh5IGPn8aDJiVXvXdW3FqyJ2oKMcizm3iySvuOJTCb4fewiX0IAuG3kByl3WdATwQJ4pgXH3lyROlupzsRj4wziaYiHv3cySv9M1Ff51juHj9fWiUNRoP7dpBjCk4KFqa-UJTaM-bXfI7lLDhPtwGpT342ec1bLYHvH6_-HQFHNzDo5z3rg"/>
+</div>
+</td>
+<td class="py-sm px-md">
+<p class="font-semibold text-on-surface">Elena Rodriguez</p>
+</td>
+<td class="py-sm px-md text-on-surface-variant">+34 612 345 678</td>
+<td class="py-sm px-md text-on-surface-variant">elena.r@email.com</td>
+<td class="py-sm px-md text-center">
+<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm">4</span>
+</td>
+<td class="py-sm px-md">
+<p>12 May 2023</p>
+</td>
+<td class="py-sm px-md text-center">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B5E83]/10 text-[#8B5E83]">Activo</span>
+</td>
+<td class="py-sm px-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Ver detalle">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-[#F8F6F7] table-row-hover cursor-pointer transition-colors">
+<td class="py-sm px-md">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container flex items-center justify-center text-[#8B5E83] font-bold">
+                                            MG
+                                        </div>
+</td>
+<td class="py-sm px-md">
+<p class="font-semibold text-on-surface">Miguel Garcia</p>
+</td>
+<td class="py-sm px-md text-on-surface-variant">+34 689 123 456</td>
+<td class="py-sm px-md text-on-surface-variant">miguel.g@email.com</td>
+<td class="py-sm px-md text-center">
+<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm">1</span>
+</td>
+<td class="py-sm px-md">
+<p>28 Abr 2023</p>
+</td>
+<td class="py-sm px-md text-center">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B5E83]/10 text-[#8B5E83]">Activo</span>
+</td>
+<td class="py-sm px-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Ver detalle">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-[#F8F6F7] table-row-hover cursor-pointer transition-colors">
+<td class="py-sm px-md">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A portrait of a mature gentleman in a sharp suit, warm studio lighting. The aesthetic is sophisticated and professional, reflecting the high standards of a traditional tailor shop. Modern minimal composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhzZnC0rVDht6dkIurmDxhzHumgPXZ7cgRiBpMIfzIrI67w5_pwyEO5dwbveB--lPXkUYvj5P2JiAjRo9IBHEkq8FbIyYTHtZctF8zbVRmuLkjkdHDe27rQwLldPjZNBe53GsM27aYk3XA56wfVqi5qEwDOoll0qmmsfHM6QTUrTWemkC90ut2Ib0IagQoYCP5gjzU73KMVDDvWq-t21cpISaBmUQJZrbgGhASNjpdnLUr7HyHngvTaQ"/>
+</div>
+</td>
+<td class="py-sm px-md">
+<p class="font-semibold text-on-surface">Carlos Fernandez</p>
+</td>
+<td class="py-sm px-md text-on-surface-variant">+34 677 889 900</td>
+<td class="py-sm px-md text-on-surface-variant">carlos.f@email.com</td>
+<td class="py-sm px-md text-center">
+<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm">0</span>
+</td>
+<td class="py-sm px-md text-on-surface-variant">
+<p>--</p>
+</td>
+<td class="py-sm px-md text-center">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-variant text-on-surface-variant">Inactivo</span>
+</td>
+<td class="py-sm px-md text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Ver detalle">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Static for visual) -->
+<div class="mt-auto border-t border-outline-variant/30 px-md py-sm flex justify-between items-center bg-surface">
+<span class="text-sm text-on-surface-variant">Mostrando 1-3 de 42</span>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant disabled:opacity-50"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Measurements Panel (Bento/Card Style) -->
+<aside class="w-full lg:w-[320px] xl:w-[380px] shrink-0 flex flex-col gap-md">
+<div class="bg-surface rounded-xl custom-shadow-2 border border-[#D8A7B1] p-lg flex flex-col measurement-card" id="measurements-panel">
+<!-- Profile Summary -->
+<div class="flex items-center gap-md border-b border-outline-variant/30 pb-md mb-md">
+<div class="w-14 h-14 rounded-full overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a female client, elegant styling, soft natural light. Matches the first row in the table to show selected state. Minimalist high-end atelier aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWI9ObOY0vJOLEvbzf3bmgg9tcL-mizkpuWOUj_B27CrPHOuOzN7a-4tCyMjwTq_dLM7c9b1jyDwEtRp5EVIxrZ4gduY1C5gdidUEQrhgE1X6aaHO0HkidNhdDFDReG4GMUV7zaWe1rP0ldkVSQ-qR9PFq21Gqdw76vBNaVTA4uVKLawtJ6xmElOkjsIRQwIYNey6OQNAFD7TzyywB6r18c2NDMP1vgDzpZGyP7HponKs0l9qa7Me4Fg"/>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface font-semibold">Elena Rodriguez</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">straighten</span>
+                                Perfil Base: Vestido
+                            </p>
+</div>
+</div>
+<!-- Quick Measurements Grid -->
+<div class="flex justify-between items-center mb-sm">
+<h4 class="font-label-md text-label-md font-semibold text-[#2F2930]">Últimas Medidas</h4>
+<button class="text-[#8B5E83] hover:bg-[#8B5E83]/10 p-1 rounded transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-sm mb-lg">
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Cuello</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">38 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Pecho</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">92 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Cintura</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">74 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Cadera</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">98 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Largo Talle</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">42 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+<div class="bg-[#F8F6F7] p-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Ancho Espalda</span>
+<span class="font-title-lg text-title-lg text-primary-container font-semibold">39 <span class="text-sm font-normal text-on-surface-variant">cm</span></span>
+</div>
+</div>
+<!-- Order History List -->
+<div class="mb-lg">
+<div class="flex justify-between items-center mb-sm">
+<h4 class="font-label-md text-label-md font-semibold text-[#2F2930]">Historial de Pedidos</h4>
+<button class="text-[#8B5E83] hover:bg-[#8B5E83]/10 px-2 py-1 rounded transition-colors text-sm font-medium">Ver todos</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center bg-[#F8F6F7] p-sm rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">ORD-2023-089</span>
+<span class="text-xs text-on-surface-variant">12 May 2023</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B5E83]/10 text-[#8B5E83]">Completado</span>
+</div>
+<div class="flex justify-between items-center bg-[#F8F6F7] p-sm rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">ORD-2022-145</span>
+<span class="text-xs text-on-surface-variant">04 Nov 2022</span>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B5E83]/10 text-[#8B5E83]">Completado</span>
+</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full h-[40px] bg-surface text-[#8B5E83] border-[1.5px] border-[#8B5E83] rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">visibility</span>
+                            Ver Ficha Completa
+                        </button>
+</div>
+</div>
+<!-- Notes Section (Glassmorphism inspired subtle card) -->
+<div class="bg-surface/80 backdrop-blur-sm rounded-xl custom-shadow-1 border border-outline-variant/20 p-md flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md font-semibold text-[#2F2930] flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">note_alt</span> Notas del Sastre
+                    </h4>
+<p class="font-body-sm text-body-md text-on-surface-variant bg-[#F8F6F7] p-sm rounded-md italic border-l-2 border-[#8B5E83]">
+                        "Prefiere cortes holgados en la sisa. Ajustar 1cm extra en cadera para mayor comodidad al sentarse."
+                    </p>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

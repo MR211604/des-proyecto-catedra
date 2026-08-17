@@ -1,0 +1,309 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pedidos - Confecciones Azucena</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#ecb6e0",
+                      "on-secondary-fixed-variant": "#613c45",
+                      "error": "#ba1a1a",
+                      "surface-tint": "#7b5074",
+                      "inverse-surface": "#342f36",
+                      "surface-bright": "#fff7fc",
+                      "primary-fixed": "#ffd7f4",
+                      "on-secondary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "outline": "#80747b",
+                      "outline-variant": "#d1c2cb",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#f7ecf5",
+                      "on-surface": "#1f1a20",
+                      "tertiary-fixed": "#eadfe9",
+                      "secondary": "#7b535c",
+                      "primary": "#70466a",
+                      "secondary-container": "#fecad4",
+                      "on-primary-fixed-variant": "#61395b",
+                      "inverse-primary": "#ecb6e0",
+                      "on-surface-variant": "#4e444b",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e9dfe9",
+                      "on-tertiary-fixed": "#1f1a20",
+                      "primary-container": "#8b5e83",
+                      "on-background": "#1f1a20",
+                      "surface": "#fff7fc",
+                      "tertiary-container": "#726a72",
+                      "surface-container-highest": "#e9dfe9",
+                      "inverse-on-surface": "#f8eef7",
+                      "on-secondary-fixed": "#2f121a",
+                      "tertiary-fixed-dim": "#cec3cd",
+                      "surface-container-high": "#efe5ef",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface-container": "#f5ebf4",
+                      "surface-container-low": "#fbf1fa",
+                      "on-primary-container": "#ffeaf7",
+                      "tertiary": "#59525a",
+                      "background": "#fff7fc",
+                      "on-tertiary-fixed-variant": "#4b454c",
+                      "on-secondary-container": "#7a525b",
+                      "on-primary-fixed": "#310d2e",
+                      "secondary-fixed": "#ffd9e0",
+                      "secondary-fixed-dim": "#ecb9c4",
+                      "surface-dim": "#e1d7e0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "margin-desktop": "32px",
+                      "xxl": "48px",
+                      "margin-mobile": "16px",
+                      "xs": "4px",
+                      "lg": "24px",
+                      "sm": "12px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shadow-level-1 {
+            box-shadow: 0 4px 12px rgba(47, 41, 48, 0.05);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .status-recibido { background-color: rgba(112, 70, 106, 0.1); color: #70466a; }
+        .status-medidas { background-color: rgba(123, 83, 92, 0.1); color: #7b535c; }
+        .status-costura { background-color: rgba(139, 94, 131, 0.1); color: #8b5e83; }
+        .status-ajustes { background-color: rgba(89, 82, 90, 0.1); color: #59525a; }
+        .status-entregado { background-color: rgba(97, 60, 69, 0.1); color: #613c45; }
+      </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-gutter px-base bg-surface-dim fixed left-0 top-0 h-full w-[260px] z-50">
+<div class="mb-xxl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Confecciones Azucena</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Studio Atelier</p>
+</div>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md h-10 w-full rounded-DEFAULT flex justify-center items-center mb-xl hover:bg-primary transition-colors">
+            Nuevo Pedido
+        </button>
+<div class="flex-1 space-y-sm">
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Clientes</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-primary font-bold border-l-4 border-primary bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-body-md text-body-md">Pedidos</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">architecture</span>
+<span class="font-body-md text-body-md">Producción</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-md text-body-md">Inventario</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Ventas</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="hidden md:flex justify-between items-center px-xl w-full bg-surface fixed top-0 right-0 w-[calc(100%-260px)] h-16 border-b border-outline-variant z-40">
+<div class="flex items-center w-96 relative">
+<span class="material-symbols-outlined absolute left-sm text-outline">search</span>
+<input class="w-full h-10 pl-10 pr-sm rounded-DEFAULT border border-outline-variant bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none font-body-md text-body-md transition-all" placeholder="Buscar pedidos..." type="text">
+</div>
+<div class="flex items-center gap-md">
+<button class="p-sm rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-sm rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden ml-sm">
+<img alt="Tailor Profile" class="w-full h-full object-cover" data-alt="A close-up, softly lit portrait of a professional tailor with a measuring tape around their neck. The background is a slightly blurred, bright, and airy tailoring studio with natural light streaming in, emphasizing a clean, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgnQ4QmBQOM8tzXDTkpiDjtEquh6j3HcwsSZK9W69r-ECYLZPvBSC0ziB06292ARGIcNKqh8S_D1jRyiwsj_Apm4hVf4hUuywduua2XYQip4Suu_k6CjTARP5LdsfwUzaof4m0EBM6qfvJIDhuyeY4KI-EigD-Nns3PR20LRHHCKDhs8gkAbxHzXkF0SyJrq-UzZgDs1g7BSqG5YZ29_1pFvYsIOPhAFaX9v3QE9nmNHr5mEDiNRVTfA">
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="w-full md:ml-[260px] md:mt-16 p-margin-mobile md:p-margin-desktop min-h-screen">
+<div class="max-w-[1440px] mx-auto">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-xl gap-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-background">Pedidos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Gestión y seguimiento de órdenes de confección.</p>
+</div>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md h-10 px-lg rounded-DEFAULT flex justify-center items-center hover:bg-primary transition-colors shadow-level-1">+ Nuevo pedido</button>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap gap-sm mb-lg"><button class="px-md py-sm rounded-full border border-primary bg-primary text-on-primary font-label-md text-label-md transition-colors">Todos</button><button class="px-md py-sm rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Pendiente</button><button class="px-md py-sm rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">En producción</button><button class="px-md py-sm rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Listo para entregar</button><button class="px-md py-sm rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Entregado</button><button class="px-md py-sm rounded-full border border-outline-variant bg-surface-bright text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Cancelado</button></div>
+<!-- Table Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-level-1 overflow-hidden border border-surface-variant">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead><tr class="bg-inverse-on-surface border-b border-surface-variant"><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Código</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Cliente</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Tipo de trabajo</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Fecha de creación</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Fecha prometida</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold">Estado</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold text-right">Total</th><th class="py-sm px-md font-label-md text-label-md text-on-background font-semibold text-center">Acciones</th></tr></thead>
+<tbody class="font-body-md text-body-md text-on-surface"><tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group"><td class="py-sm px-md text-outline font-medium">#ORD-1042</td><td class="py-sm px-md"><div class="flex items-center gap-sm"><div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-label-sm">MR</div><span class="font-medium">Maria Rodriguez</span></div></td><td class="py-sm px-md text-on-surface-variant">Vestido de Noche</td><td class="py-sm px-md text-on-surface-variant">01 Oct, 2023</td><td class="py-sm px-md text-error font-semibold flex items-center gap-xs"><span class="material-symbols-outlined text-[18px]">schedule</span> 15 Oct, 2023</td><td class="py-sm px-md"><span class="px-2 py-1 rounded bg-primary-container text-on-primary text-label-sm">En producción</span></td><td class="py-sm px-md text-right font-medium">$450.00</td><td class="py-sm px-md text-center"><button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></td></tr><tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group"><td class="py-sm px-md text-outline font-medium">#ORD-1043</td><td class="py-sm px-md"><div class="flex items-center gap-sm"><div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-label-sm">CG</div><span class="font-medium">Carlos Gomez</span></div></td><td class="py-sm px-md text-on-surface-variant">Traje a Medida</td><td class="py-sm px-md text-on-surface-variant">05 Oct, 2023</td><td class="py-sm px-md text-on-surface-variant">22 Oct, 2023</td><td class="py-sm px-md"><span class="px-2 py-1 rounded bg-surface-container-high text-on-surface-variant text-label-sm">Pendiente</span></td><td class="py-sm px-md text-right font-medium">$850.00</td><td class="py-sm px-md text-center"><button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></td></tr><tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors group"><td class="py-sm px-md text-outline font-medium">#ORD-1044</td><td class="py-sm px-md"><div class="flex items-center gap-sm"><div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-label-sm">LF</div><span class="font-medium">Laura Fernandez</span></div></td><td class="py-sm px-md text-on-surface-variant">Blusa Seda</td><td class="py-sm px-md text-on-surface-variant">10 Oct, 2023</td><td class="py-sm px-md text-on-surface-variant">05 Nov, 2023</td><td class="py-sm px-md"><span class="px-2 py-1 rounded bg-on-secondary-fixed-variant text-on-primary text-label-sm">Entregado</span></td><td class="py-sm px-md text-right font-medium">$120.00</td><td class="py-sm px-md text-center"><button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></td></tr></tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between px-md py-sm border-t border-surface-variant bg-surface-bright">
+<span class="font-body-md text-body-md text-on-surface-variant">Mostrando 1 a 5 de 42 pedidos</span>
+<div class="flex items-center gap-xs">
+<button class="p-1 rounded text-outline hover:bg-surface-container-low transition-colors disabled:opacity-50">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary">1</button>
+<button class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">2</button>
+<button class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">3</button>
+<span class="text-outline mx-1">...</span>
+<button class="p-1 rounded text-outline hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

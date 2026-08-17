@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iniciar Sesión - Confecciones Azucena</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1f1a20",
+                        "surface-bright": "#fff7fc",
+                        "secondary": "#7b535c",
+                        "on-secondary-fixed": "#2f121a",
+                        "on-surface": "#1f1a20",
+                        "outline-variant": "#d1c2cb",
+                        "secondary-fixed-dim": "#ecb9c4",
+                        "surface-container-highest": "#e9dfe9",
+                        "secondary-fixed": "#ffd9e0",
+                        "on-secondary-container": "#7a525b",
+                        "on-secondary-fixed-variant": "#613c45",
+                        "primary-container": "#8b5e83",
+                        "surface-container-low": "#fbf1fa",
+                        "surface-variant": "#e9dfe9",
+                        "tertiary": "#59525a",
+                        "inverse-surface": "#342f36",
+                        "tertiary-fixed-dim": "#cec3cd",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#efe5ef",
+                        "outline": "#80747b",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#eadfe9",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#ecb6e0",
+                        "on-tertiary-fixed": "#1f1a20",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#61395b",
+                        "on-primary": "#ffffff",
+                        "background": "#fff7fc",
+                        "surface": "#fff7fc",
+                        "surface-tint": "#7b5074",
+                        "on-primary-fixed": "#310d2e",
+                        "primary": "#70466a",
+                        "surface-container": "#f5ebf4",
+                        "inverse-primary": "#ecb6e0",
+                        "on-primary-container": "#ffeaf7",
+                        "on-surface-variant": "#4e444b",
+                        "inverse-on-surface": "#f8eef7",
+                        "primary-fixed": "#ffd7f4",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#4b454c",
+                        "on-tertiary-container": "#f7ecf5",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#e1d7e0",
+                        "secondary-container": "#fecad4",
+                        "tertiary-container": "#726a72"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "xxl": "48px",
+                        "lg": "24px",
+                        "base": "8px",
+                        "margin-desktop": "32px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "title-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen text-on-background font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<div class="flex min-h-screen w-full">
+<!-- Left Panel: Illustration (Hidden on Mobile) -->
+<div class="hidden lg:flex w-1/2 relative bg-surface-container-highest items-center justify-center overflow-hidden">
+<img alt="Sewing machine illustration" class="absolute inset-0 w-full h-full object-cover object-center mix-blend-multiply opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQKihEWywy_1tya_PQbfh5-oCqqTCQnIcOXRkLKIgITgaf29_f7S2hH6hIPszjN_XIWJeSfeRZQx8k-QODQgIhsvO-1BAeDXDEyQFiQZKZmYQU7RPOD28wnXYRvtRuZ4pjyjCW30-tpZXMZwzGVbbLVvS1Otj3AVUd5Cmh4FhLDRxAlXcdgUxlOt_r2uzxKJMF8QIYRbRz38pKJqxa7MQUK6zi-XLaR28MjmJN27MtM5eIxLikFxoT7A"/>
+<!-- Subtle gradient overlay to ensure image blends elegantly -->
+<div class="absolute inset-0 bg-gradient-to-tr from-surface-tint/10 to-transparent pointer-events-none"></div>
+</div>
+<!-- Right Panel: Login Form -->
+<div class="w-full lg:w-1/2 flex items-center justify-center p-margin-mobile md:p-gutter">
+<!-- Login Card -->
+<div class="w-full max-w-[440px] bg-surface-container-lowest rounded-xl p-xl md:p-xxl shadow-[0_4px_12px_rgba(47,41,48,0.05)] border border-surface-variant">
+<!-- Header -->
+<div class="text-center mb-xl">
+<div class="mx-auto w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center mb-md text-primary-container">
+<span class="material-symbols-outlined" style="font-size: 28px;">architecture</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-background">Confecciones Azucena</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Sistema de gestión del taller</p>
+</div>
+<!-- Form -->
+<form class="flex flex-col gap-lg" onsubmit="event.preventDefault();">
+<!-- Email Input -->
+<div class="flex flex-col gap-xs relative">
+<label class="font-label-md text-label-md text-on-background" for="email">Correo electrónico</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-md text-outline" style="font-size: 20px;">mail</span>
+<input class="w-full pl-[44px] pr-md h-10 bg-surface-container-lowest border border-outline-variant/50 rounded-lg text-body-md font-body-md text-on-background placeholder:text-outline-variant focus:border-primary-container focus:ring-[2px] focus:ring-primary-container/20 outline-none transition-all duration-200" id="email" placeholder="tu@ejemplo.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-xs relative">
+<label class="font-label-md text-label-md text-on-background" for="password">Contraseña</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-md text-outline" style="font-size: 20px;">lock</span>
+<input class="w-full pl-[44px] pr-[44px] h-10 bg-surface-container-lowest border border-outline-variant/50 rounded-lg text-body-md font-body-md text-on-background placeholder:text-outline-variant focus:border-primary-container focus:ring-[2px] focus:ring-primary-container/20 outline-none transition-all duration-200" id="password" placeholder="••••••••" required="" type="password"/>
+<!-- Toggle Visibility Button -->
+<button class="absolute right-md text-outline hover:text-on-background transition-colors flex items-center justify-center focus:outline-none focus:text-primary-container" onclick="togglePassword()" type="button">
+<span class="material-symbols-outlined" id="toggleIcon" style="font-size: 20px;">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Actions Row -->
+<div class="flex items-center justify-between mt-xs">
+<label class="flex items-center gap-base cursor-pointer group">
+<input class="w-4 h-4 rounded border-outline-variant/50 text-primary-container focus:ring-primary-container focus:ring-offset-0 bg-surface-container-lowest transition-colors" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-background transition-colors">Recordarme</span>
+</label>
+<a class="font-label-md text-label-md text-primary-container hover:text-surface-tint hover:underline transition-colors" href="#">¿Olvidaste tu contraseña?</a>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-10 mt-sm bg-primary-container text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-base hover:bg-surface-tint focus:ring-2 focus:ring-primary-container/50 focus:ring-offset-2 focus:ring-offset-surface-container-lowest active:scale-[0.98] transition-all duration-200" type="submit">
+<span>Iniciar sesión</span>
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+</button>
+</form>
+</div>
+</div>
+</div>
+<!-- Interactive Script -->
+<script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = 'visibility';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = 'visibility_off';
+            }
+        }
+    </script>
+</body></html>
