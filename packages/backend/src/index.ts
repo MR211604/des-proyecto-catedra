@@ -11,7 +11,19 @@ export const app: Express = express();
 
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN }));
-app.use(pinoHttp());
+app.use(
+  pinoHttp({
+    serializers: {
+      req: (request) => ({
+        id: request.id,
+        method: request.method,
+        url: request.originalUrl ?? request.url,
+        userAgent: request.headers["user-agent"],
+      }),
+      res: (response) => ({ statusCode: response.statusCode }),
+    },
+  }),
+);
 app.use(express.json());
 app.use(clerk);
 

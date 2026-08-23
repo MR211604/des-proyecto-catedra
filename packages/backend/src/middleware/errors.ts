@@ -15,9 +15,16 @@ export const notFoundHandler: RequestHandler = (_request, response) => {
   response.status(404).json({ error: "Route not found" });
 };
 
-export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+export const errorHandler: ErrorRequestHandler = (
+  error,
+  _request,
+  response,
+  _next,
+) => {
   if (error instanceof z.ZodError) {
-    response.status(400).json({ error: "Validation failed", issues: error.issues });
+    response
+      .status(400)
+      .json({ error: "Validation failed", issues: error.issues });
     return;
   }
 

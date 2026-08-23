@@ -19,51 +19,21 @@ button {
 }
 
 .auth-workshop {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: space-between;
-  gap: 12px;
-  padding: 48px;
-  color: var(--primary);
-  background: #e9dfe8;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #e8dfe8;
 }
 
-.auth-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border: 1px solid #bd9fb8;
-  border-radius: 10px;
-  color: var(--primary);
-  background: #f8edf7;
-  font-weight: 700;
-  letter-spacing: -2px;
-}
-
-.auth-workshop strong,
-.auth-workshop span {
+.auth-workshop-image {
   display: block;
-}
-
-.auth-workshop strong {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-}
-
-.auth-workshop span {
-  margin-top: 4px;
-  color: #4f3a4d;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.auth-workshop p {
-  align-self: flex-end;
   width: 100%;
-  color: #977c92;
-  font-size: 13px;
+  height: 100%;
+  min-height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
 }
 
 .auth-form-area {
@@ -78,8 +48,11 @@ button {
   }
 
   .auth-workshop {
-    min-height: 220px;
-    padding: 28px;
+    min-height: 300px;
+  }
+
+  .auth-workshop-image {
+    min-height: 300px;
   }
 
   .auth-form-area {

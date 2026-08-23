@@ -33,7 +33,6 @@ export function GoogleSignInButton() {
   async function handleGoogleSignIn() {
     if (isSubmitting) return;
     if (!signIn) {
-      console.log("errorrrr");
       setError("El servicio de autenticación aún no está listo.");
       return;
     }
@@ -47,8 +46,6 @@ export function GoogleSignInButton() {
         redirectCallbackUrl: "/sso-callback",
         redirectUrl: "/",
       });
-
-      console.log("result", result);
 
       if (result.error) {
         setError(getErrorMessage(result.error));
