@@ -15,3 +15,9 @@ coverage/
 # Logs and local files
 *.log
 .DS_Store
+
+# AI development related stuff
+.ai/
+.opencode/
+.agents/
+AGENTS.md
