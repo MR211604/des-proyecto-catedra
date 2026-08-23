@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  STAFF
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum OrderStatus {
+  CONFIRMED
+  IN_PRODUCTION
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum ProductionJobStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+}
+
+enum UnitOfMeasure {
+  METER
+  UNIT
+  ROLL
+  KILOGRAM
+}
+
+enum StockMovementType {
+  RECEIPT
+  ISSUE
+  SALE
+  ADJUSTMENT
+  RETURN
+}
+
+enum SaleStatus {
+  OPEN
+  PAID
+  VOIDED
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+model Client {
+  id           String              @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  notes        String?
+  measurements ClientMeasurement?
+  quotes       Quote[]
+  orders       CustomerOrder[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  deletedAt    DateTime?
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model ClientMeasurement {
+  id        String   @id @default(cuid())
+  clientId  String   @unique
+  client    Client   @relation(fields: [clientId], references: [id])
+  unit      String   @default("cm")
+  values    Json
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  number      Int         @unique @default(autoincrement())
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  status      QuoteStatus @default(DRAFT)
+  validUntil  DateTime?
+  notes       String?
+  subtotal    Decimal     @db.Decimal(12, 2)
+  total       Decimal     @db.Decimal(12, 2)
+  items       QuoteItem[]
+  order       CustomerOrder?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+
+  @@index([clientId, status])
+}
+
+model QuoteItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  total       Decimal  @db.Decimal(12, 2)
+  specifications Json?
+}
+
+model CustomerOrder {
+  id          String       @id @default(cuid())
+  number      Int          @unique @default(autoincrement())
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id])
+  quoteId     String?      @unique
+  quote       Quote?       @relation(fields: [quoteId], references: [id])
+  status      OrderStatus  @default(CONFIRMED)
+  dueDate     DateTime?
+  deliveredAt DateTime?
+  lockedAt    DateTime?
+  notes       String?
+  items       OrderItem[]
+  jobs        ProductionJob[]
+  sale        Sale?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([clientId, status])
+  @@index([status, dueDate])
+}
+
+model OrderItem {
+  id             String         @id @default(cuid())
+  orderId        String
+  order          CustomerOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Decimal        @db.Decimal(10, 3)
+  unitPrice      Decimal        @db.Decimal(12, 2)
+  total          Decimal        @db.Decimal(12, 2)
+  specifications Json?
+  productionJobs ProductionJob[]
+  createdAt      DateTime       @default(now())
+}
+
+model ProductionStage {
+  id        String          @id @default(cuid())
+  name      String
+  position  Int
+  isActive  Boolean         @default(true)
+  jobs      ProductionJob[]
+  enteredEvents ProductionEvent[] @relation("toStage")
+  exitedEvents ProductionEvent[] @relation("fromStage")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([name])
+  @@unique([position])
+}
+
+model ProductionJob {
+  id          String              @id @default(cuid())
+  orderId     String
+  order       CustomerOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  orderItem   OrderItem?          @relation(fields: [orderItemId], references: [id])
+  stageId     String
+  stage       ProductionStage     @relation(fields: [stageId], references: [id])
+  description String
+  status      ProductionJobStatus @default(TODO)
+  assignedTo  String?
+  dueDate     DateTime?
+  events      ProductionEvent[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([stageId, status])
+  @@index([orderId])
+}
+
+model ProductionEvent {
+  id        String        @id @default(cuid())
+  jobId     String
+  job       ProductionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fromStageId String?
+  fromStage   ProductionStage? @relation("fromStage", fields: [fromStageId], references: [id])
+  toStageId   String
+  toStage     ProductionStage  @relation("toStage", fields: [toStageId], references: [id])
+  actorId   String
+  notes     String?
+  createdAt DateTime      @default(now())
+
+  @@index([jobId, createdAt])
+}
+
+model Supplier {
+  id        String          @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  notes     String?
+  items     InventoryItem[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  deletedAt DateTime?
+}
+
+model InventoryItem {
+  id             String           @id @default(cuid())
+  name           String
+  sku            String?          @unique
+  unit           UnitOfMeasure
+  quantity       Decimal          @db.Decimal(14, 3)
+  reorderPoint   Decimal          @db.Decimal(14, 3)
+  supplierId     String?
+  supplier       Supplier?        @relation(fields: [supplierId], references: [id])
+  movements      StockMovement[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+
+  @@index([name])
+  @@index([supplierId])
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  itemId      String
+  item        InventoryItem     @relation(fields: [itemId], references: [id])
+  type        StockMovementType
+  quantity    Decimal           @db.Decimal(14, 3)
+  unit        UnitOfMeasure
+  reference   String?
+  reason      String?
+  actorId     String
+  createdAt   DateTime          @default(now())
+
+  @@index([itemId, createdAt])
+}
+
+model Sale {
+  id          String         @id @default(cuid())
+  number      Int            @unique @default(autoincrement())
+  orderId     String         @unique
+  order       CustomerOrder  @relation(fields: [orderId], references: [id])
+  status      SaleStatus     @default(OPEN)
+  subtotal    Decimal        @db.Decimal(12, 2)
+  total       Decimal        @db.Decimal(12, 2)
+  items       SaleItem[]
+  payments    Payment[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  total       Decimal  @db.Decimal(12, 2)
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  saleId    String
+  sale      Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  method    PaymentMethod
+  amount    Decimal       @db.Decimal(12, 2)
+  paidAt    DateTime      @default(now())
+  reference String?
+  actorId   String
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+}

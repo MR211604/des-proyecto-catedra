@@ -6,6 +6,7 @@ dist/
 .turbo/
 coverage/
 *.tsbuildinfo
+packages/backend/src/generated/
 
 # Environment files
 .env
