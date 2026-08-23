@@ -1,6 +1,7 @@
 import { esES } from "@clerk/localizations";
 import { ClerkProvider } from "@clerk/react";
 import { createRoot } from "react-dom/client";
+import "./App.css";
 import "./index.css";
 import App from "./App.tsx";
 
