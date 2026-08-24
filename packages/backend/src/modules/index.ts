@@ -1,7 +1,10 @@
 import { getAuth } from "@clerk/express";
 import { Router, type Router as RouterType } from "express";
+import { clientRouter } from "./clients/router.js";
 
 export const apiRouter: RouterType = Router();
+
+apiRouter.use("/clients", clientRouter);
 
 apiRouter.get("/", (request, response) => {
   const { userId } = getAuth(request);
