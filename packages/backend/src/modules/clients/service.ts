@@ -1,6 +1,6 @@
 import { prisma } from "../../db/prisma.js";
-import { AppError } from "../../middleware/errors.js";
 import { createAuditLog } from "../../lib/audit.js";
+import { AppError } from "../../middleware/errors.js";
 import type {
   CreateClientInput,
   ListClientsQuery,
