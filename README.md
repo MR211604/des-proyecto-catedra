@@ -25,8 +25,9 @@ pnpm typecheck
 ```
 
 La aplicación frontend estará disponible en `http://localhost:5173` y la API en
-`http://localhost:3000`. El endpoint `GET /api/health` permite verificar el
-estado del backend.
+`http://localhost:3000`. El endpoint público `GET /api/v1/health` permite
+verificar el estado del backend. La información del usuario está disponible en
+`GET /api/v1/health/userInfo` y requiere autenticación.
 
 ## Integrantes
 | Nombre | Carnet | 

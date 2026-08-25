@@ -21,4 +21,4 @@ packages/backend/src/generated/
 .ai/
 .opencode/
 .agents/
-AGENTS.md
+packages/backend/prisma/migrations/
