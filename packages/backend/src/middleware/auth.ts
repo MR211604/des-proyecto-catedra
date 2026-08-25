@@ -15,18 +15,14 @@ export const requireUser: RequestHandler = (request, response, next) => {
   next();
 };
 
-export function requireRole(role: "owner" | "staff") {
+export function requireRole(role: "org:admin" | "org:member") {
   return (request: Request, response: Response, next: NextFunction) => {
     const auth = getAuth(request);
-    const metadata = auth.sessionClaims?.metadata;
-    const assignedRole =
-      typeof metadata === "object" && metadata !== null && "role" in metadata
-        ? metadata.role
-        : undefined;
+    const assignedRole = auth.orgRole;
 
     if (
       assignedRole !== role &&
-      !(role === "staff" && assignedRole === "owner")
+      !(role === "org:member" && assignedRole === "org:admin")
     ) {
       response
         .status(403)

@@ -6,12 +6,12 @@ import * as service from "./service.js";
 type ParamWithId = { id: string };
 
 export async function list(
-  request: Request,
+  _request: Request,
   response: Response,
   next: NextFunction,
 ) {
   try {
-    const query = request.query as unknown as ListClientsQuery;
+    const query = response.locals.validatedQuery as ListClientsQuery;
     const result = await service.listClients(query);
     response.json(result);
   } catch (error) {

@@ -15,9 +15,11 @@
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@clerk/express": "^2.1.61",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@scalar/express-api-reference": "^0.10.16",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",

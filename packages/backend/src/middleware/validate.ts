@@ -9,9 +9,8 @@ export function validateBody<T extends z.ZodType>(schema: T) {
 }
 
 export function validateQuery<T extends z.ZodType>(schema: T) {
-  return (request: Request, _response: Response, next: NextFunction) => {
-    // biome-ignore lint/suspicious/noExplicitAny: Zod output is not assignable to ParsedQs; cast is safe because parse already validated the shape
-    request.query = schema.parse(request.query) as any;
+  return (request: Request, response: Response, next: NextFunction) => {
+    response.locals.validatedQuery = schema.parse(request.query);
     next();
   };
 }

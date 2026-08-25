@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createClientSchema = z.object({
   name: z.string().trim().min(1).max(150),
   phone: z.string().max(30).optional(),
-  email: z.string().email().optional(),
+  email: z.email().optional(),
   notes: z.string().max(1000).optional(),
 });
 
@@ -15,11 +15,7 @@ export const listClientsQuerySchema = z.object({
   search: z.string().trim().optional(),
   sortBy: z.enum(["name", "createdAt"]).default("name"),
   order: z.enum(["asc", "desc"]).default("asc"),
-  includeDeleted: z
-    .preprocess(
-      (v) => v === "true",
-      z.boolean().default(false),
-    ),
+  includeDeleted: z.preprocess((v) => v === "true", z.boolean().default(false)),
 });
 
 export type CreateClientInput = z.infer<typeof createClientSchema>;
