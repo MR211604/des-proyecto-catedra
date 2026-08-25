@@ -1,24 +1,9 @@
-import { getAuth } from "@clerk/express";
 import { Router, type Router as RouterType } from "express";
+import { requireUser } from "../middleware/auth.js";
 import { clientRouter } from "./clients/router.js";
+import { healthCheckRouter } from "./health/router.js";
 
 export const apiRouter: RouterType = Router();
 
-apiRouter.use("/clients", clientRouter);
-
-apiRouter.get("/", (request, response) => {
-  const { userId } = getAuth(request);
-  response.json({
-    name: "sewing-erp-api",
-    version: "v1",
-    user: userId,
-    modules: [
-      "dashboard",
-      "clients",
-      "production",
-      "sales",
-      "inventory",
-      "orders",
-    ],
-  });
-});
+apiRouter.use("/health", healthCheckRouter);
+apiRouter.use("/clients", requireUser, clientRouter);

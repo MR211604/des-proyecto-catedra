@@ -1,15 +1,16 @@
+import { apiReference } from "@scalar/express-api-reference";
 import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env.js";
-import { apiReference } from "@scalar/express-api-reference";
-import { clerk, requireUser } from "./middleware/auth.js";
+import { generateOpenAPIDocument } from "./lib/openapi.js";
+import { clerk } from "./middleware/auth.js";
 import { errorHandler, notFoundHandler } from "./middleware/errors.js";
-import { generateOpenAPIDocument, registry } from "./lib/openapi.js";
 import { apiRouter } from "./modules/index.js";
 
 export const app: Express = express();
+const openApiDocument = generateOpenAPIDocument();
 
 app.use(
   helmet({
@@ -39,30 +40,6 @@ app.use(
 );
 app.use(express.json());
 app.use(clerk);
-
-registry.registerPath({
-  method: "get",
-  path: "/api/health",
-  summary: "Check API health",
-  tags: ["health"],
-  responses: {
-    200: {
-      description: "API is healthy",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-            properties: { status: { type: "string", example: "ok" } },
-            required: ["status"],
-          },
-        },
-      },
-    },
-  },
-});
-
-const openApiDocument = generateOpenAPIDocument();
-
 app.use(
   "/docs",
   apiReference({
@@ -72,11 +49,8 @@ app.use(
   }),
 );
 
-app.get("/api/health", (_request, response) => {
-  response.json({ status: "ok" });
-});
-
-app.use("/api/v1", requireUser, apiRouter);
+// The module router controls authentication per route group.
+app.use("/api/v1", apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
