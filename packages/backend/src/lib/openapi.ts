@@ -53,6 +53,10 @@ export function generateOpenAPIDocument(): ReturnType<
         name: "clients",
         description: "Customer management operations",
       },
+      {
+        name: "quotes",
+        description: "Quote management operations",
+      },
     ],
     servers: [
       {
