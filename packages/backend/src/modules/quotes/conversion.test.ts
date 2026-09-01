@@ -57,7 +57,8 @@ const tx = {
   quote: { findUnique },
   customerOrder: { create },
 };
-const quoteItem = quote.items[0]!;
+const quoteItem = quote.items.at(0);
+if (!quoteItem) throw new Error("Quote fixture requires an item");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -115,6 +116,8 @@ describe("convertQuote", () => {
         entityId: "quote_1",
         before: expect.objectContaining({ id: "quote_1" }),
         after: expect.objectContaining({
+          clientId: "client_1",
+          notes: "Use the blue fabric",
           order: expect.objectContaining({
             id: "order_1",
             items: [
@@ -122,6 +125,7 @@ describe("convertQuote", () => {
                 quantity: "2.5",
                 unitPrice: "10",
                 total: "25",
+                specifications: { fabric: "blue", collar: "mandarin" },
               }),
             ],
           }),
@@ -164,6 +168,21 @@ describe("convertQuote", () => {
     await expect(convertQuote("quote_1", "user_1")).rejects.toEqual(
       new AppError(409, "Quote state changed; retry the operation"),
     );
+  });
+
+  it("returns a conflict on a repeated request without creating a second order", async () => {
+    create.mockResolvedValueOnce(order).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("duplicate", {
+        code: "P2002",
+        clientVersion: "test",
+      }),
+    );
+
+    await expect(convertQuote("quote_1", "user_1")).resolves.toBeDefined();
+    await expect(convertQuote("quote_1", "user_1")).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it("propagates audit failures so the transaction can roll back", async () => {
