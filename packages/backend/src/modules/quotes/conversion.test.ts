@@ -66,13 +66,9 @@ beforeEach(() => {
   committed = false;
   transaction.mockImplementation(
     async (callback: (client: typeof tx) => unknown) => {
-      try {
-        const result = await callback(tx);
-        committed = true;
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      const result = await callback(tx);
+      committed = true;
+      return result;
     },
   );
   findUnique.mockResolvedValue(quote);
