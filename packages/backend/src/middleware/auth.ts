@@ -18,6 +18,11 @@ export const requireUser: RequestHandler = (request, response, next) => {
 export function requireRole(role: "org:admin" | "org:member") {
   return (request: Request, response: Response, next: NextFunction) => {
     const auth = getAuth(request);
+    if (!auth.isAuthenticated) {
+      response.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
     const assignedRole = auth.orgRole;
 
     if (

@@ -3,15 +3,17 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { errorHandler } from "../../middleware/errors.js";
 
+const auth = vi.hoisted(() => ({
+  isAuthenticated: true,
+  orgRole: "org:member",
+  userId: "user_1",
+}));
+
 vi.mock("@clerk/express", () => ({
   clerkMiddleware:
     () => (_request: unknown, _response: unknown, next: () => void) =>
       next(),
-  getAuth: () => ({
-    isAuthenticated: true,
-    orgRole: "org:member",
-    userId: "user_1",
-  }),
+  getAuth: () => auth,
 }));
 
 vi.mock("./service.js", () => ({
@@ -38,8 +40,17 @@ vi.mock("./service.js", () => ({
 }));
 
 const { quoteRouter } = await import("./router.js");
-const { createQuote, listQuotes, sendQuote, acceptQuote, rejectQuote, convertQuote } =
-  await import("./service.js");
+const {
+  createQuote,
+  getQuoteById,
+  listQuotes,
+  updateQuote,
+  deleteQuote,
+  sendQuote,
+  acceptQuote,
+  rejectQuote,
+  convertQuote,
+} = await import("./service.js");
 
 function testApp() {
   const app = express();
@@ -50,7 +61,35 @@ function testApp() {
 }
 
 describe("Quotes HTTP contract", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auth.isAuthenticated = true;
+    auth.orgRole = "org:member";
+  });
+
+  it("requires an authenticated workshop user", async () => {
+    auth.isAuthenticated = false;
+
+    const response = await request(testApp()).get("/quotes");
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toBe("Authentication required");
+    expect(listQuotes).not.toHaveBeenCalled();
+  });
+
+  it("allows owners and rejects users without the workshop role", async () => {
+    auth.orgRole = "org:admin";
+    await expect(request(testApp()).get("/quotes")).resolves.toHaveProperty(
+      "status",
+      200,
+    );
+
+    auth.orgRole = "org:guest";
+    const response = await request(testApp()).get("/quotes");
+
+    expect(response.status).toBe(403);
+    expect(listQuotes).toHaveBeenCalledOnce();
+  });
 
   it("creates a draft quote and ignores client-supplied calculated amounts", async () => {
     const response = await request(testApp())
@@ -112,6 +151,55 @@ describe("Quotes HTTP contract", () => {
       total: 0,
       totalPages: 0,
     });
+  });
+
+  it("rejects invalid list filters before calling the service", async () => {
+    const response = await request(testApp()).get("/quotes?page=0&limit=101");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Validation failed");
+    expect(listQuotes).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["get", "getQuoteById", () => request(testApp()).get("/quotes/quote_1")],
+    [
+      "update",
+      "updateQuote",
+      () =>
+        request(testApp())
+          .put("/quotes/quote_1")
+          .send({
+            clientId: "client_1",
+            items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
+          }),
+    ],
+    ["delete", "deleteQuote", () => request(testApp()).delete("/quotes/quote_1")],
+  ] as const)("supports the %s CRUD operation", async (_operation, serviceName, makeRequest) => {
+    const response = await makeRequest();
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked({ getQuoteById, updateQuote, deleteQuote }[serviceName])).toHaveBeenCalledWith(
+      ...(serviceName === "updateQuote"
+        ? [
+            "quote_1",
+            {
+              clientId: "client_1",
+              items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
+            },
+            "user_1",
+          ]
+        : ["quote_1", ...(serviceName === "deleteQuote" ? ["user_1"] : [])]),
+    );
+  });
+
+  it("passes service errors through the HTTP error contract", async () => {
+    vi.mocked(getQuoteById).mockRejectedValueOnce(new Error("database unavailable"));
+
+    const response = await request(testApp()).get("/quotes/quote_1");
+
+    expect(response.status).toBe(500);
+    expect(response.body.error).toBe("Internal server error");
   });
 
   it.each([
