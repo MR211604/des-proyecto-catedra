@@ -17,3 +17,7 @@ quoteRouter.get("/:id", controller.getById);
 quoteRouter.post("/", validateBody(createQuoteSchema), controller.create);
 quoteRouter.put("/:id", validateBody(updateQuoteSchema), controller.update);
 quoteRouter.delete("/:id", controller.remove);
+quoteRouter.post("/:id/send", controller.send);
+quoteRouter.post("/:id/accept", controller.accept);
+quoteRouter.post("/:id/reject", controller.reject);
+quoteRouter.post("/:id/convert", controller.convert);

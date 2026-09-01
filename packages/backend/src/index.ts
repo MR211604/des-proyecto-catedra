@@ -48,7 +48,6 @@ app.use(
     title: "Sewing ERP API",
   }),
 );
-
 // The module router controls authentication per route group.
 app.use("/api/v1", apiRouter);
 app.use(notFoundHandler);

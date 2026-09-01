@@ -87,3 +87,32 @@ export async function remove(
     next(error);
   }
 }
+
+async function runQuoteAction(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+  operation: (id: string, actorId: string) => Promise<unknown>,
+) {
+  try {
+    response.json(await operation(request.params.id, actorId(request)));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export function send(request: Request<IdParams>, response: Response, next: NextFunction) {
+  return runQuoteAction(request, response, next, service.sendQuote);
+}
+
+export function accept(request: Request<IdParams>, response: Response, next: NextFunction) {
+  return runQuoteAction(request, response, next, service.acceptQuote);
+}
+
+export function reject(request: Request<IdParams>, response: Response, next: NextFunction) {
+  return runQuoteAction(request, response, next, service.rejectQuote);
+}
+
+export function convert(request: Request<IdParams>, response: Response, next: NextFunction) {
+  return runQuoteAction(request, response, next, service.convertQuote);
+}

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   bearerAuth,
   errorResponseSchema,
@@ -5,7 +6,6 @@ import {
   validationErrorResponseSchema,
 } from "../../../lib/openapi.js";
 import { createQuoteSchema, listQuotesQuerySchema } from "../schema.js";
-import { z } from "zod";
 
 const security = [{ [bearerAuth.name]: [] }];
 const validationResponse = {
@@ -161,3 +161,23 @@ registry.registerPath({
   request: { params: z.object({ id: z.string() }) },
   responses: { 200: { description: "Quote deleted" }, ...responses },
 });
+
+for (const [action, summary] of [
+  ["send", "Send quote"],
+  ["accept", "Accept quote"],
+  ["reject", "Reject quote"],
+  ["convert", "Convert accepted quote to order"],
+] as const) {
+  registry.registerPath({
+    method: "post",
+    path: `/api/v1/quotes/{id}/${action}`,
+    summary,
+    tags: ["quotes"],
+    security,
+    request: { params: z.object({ id: z.string() }) },
+    responses: {
+      200: { description: summary },
+      ...responses,
+    },
+  });
+}

@@ -31,10 +31,15 @@ vi.mock("./service.js", () => ({
   })),
   updateQuote: vi.fn(async () => ({ id: "quote_1" })),
   deleteQuote: vi.fn(async () => ({ id: "quote_1", deleted: true })),
+  sendQuote: vi.fn(async () => ({ id: "quote_1", status: "SENT" })),
+  acceptQuote: vi.fn(async () => ({ id: "quote_1", status: "ACCEPTED" })),
+  rejectQuote: vi.fn(async () => ({ id: "quote_1", status: "REJECTED" })),
+  convertQuote: vi.fn(async () => ({ id: "order_1", status: "CONFIRMED" })),
 }));
 
 const { quoteRouter } = await import("./router.js");
-const { createQuote, listQuotes } = await import("./service.js");
+const { createQuote, listQuotes, sendQuote, acceptQuote, rejectQuote, convertQuote } =
+  await import("./service.js");
 
 function testApp() {
   const app = express();
@@ -107,5 +112,18 @@ describe("Quotes HTTP contract", () => {
       total: 0,
       totalPages: 0,
     });
+  });
+
+  it.each([
+    ["send", sendQuote, "SENT"],
+    ["accept", acceptQuote, "ACCEPTED"],
+    ["reject", rejectQuote, "REJECTED"],
+    ["convert", convertQuote, "CONFIRMED"],
+  ] as const)("supports the %s lifecycle action", async (action, operation, status) => {
+    const response = await request(testApp()).post(`/quotes/quote_1/${action}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(status);
+    expect(operation).toHaveBeenCalledWith("quote_1", "user_1");
   });
 });
