@@ -31,3 +31,17 @@
 - Sales flow is one `Sale` per `CustomerOrder` (`Sale.orderId` unique), with many `SaleItem` and `Payment`; sale items and payments cascade on sale deletion. Sale totals/money use `Decimal(12,2)`.
 - `AuditLog` is independent and records external actor, entity type/id, action, and optional JSON `before`/`after` snapshots; do not infer relational integrity from `entityId`.
 - Preserve enum/state vocabulary from the schema: `QuoteStatus`, `OrderStatus`, `ProductionJobStatus`, `UnitOfMeasure`, `StockMovementType`, `SaleStatus`, and `PaymentMethod`. Use Prisma `Decimal` values deliberately at API boundaries rather than silently converting business quantities or money to binary floating point.
+
+## Agent skills
+
+### Issue tracker
+
+Issues y especificaciones de este repositorio viven en GitHub Issues. Ver `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Se usan las etiquetas predeterminadas `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` y `wontfix`. Ver `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+El repositorio usa un diseño single-context con `CONTEXT.md` en la raíz y ADRs en `docs/adr/`. Ver `docs/agents/domain.md`.
