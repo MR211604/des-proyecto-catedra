@@ -326,7 +326,7 @@ export async function convertQuote(id: string, actorId: string) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       throw new AppError(409, "Quote has already been converted to an order");
     }
-    throw error;
+    return stateConflict(error);
   });
 }
 
