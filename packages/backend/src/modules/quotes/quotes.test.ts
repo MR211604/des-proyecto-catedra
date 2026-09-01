@@ -77,7 +77,7 @@ describe("Quotes HTTP contract", () => {
     expect(listQuotes).not.toHaveBeenCalled();
   });
 
-  it("allows owners and rejects users without the workshop role", async () => {
+  it("allows administrators and rejects users without the workshop role", async () => {
     auth.orgRole = "org:admin";
     await expect(request(testApp()).get("/quotes")).resolves.toHaveProperty(
       "status",
