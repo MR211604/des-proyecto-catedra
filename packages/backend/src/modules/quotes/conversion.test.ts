@@ -59,11 +59,21 @@ const tx = {
 };
 const quoteItem = quote.items.at(0);
 if (!quoteItem) throw new Error("Quote fixture requires an item");
+let committed = false;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  transaction.mockImplementation(async (callback: (client: typeof tx) => unknown) =>
-    callback(tx),
+  committed = false;
+  transaction.mockImplementation(
+    async (callback: (client: typeof tx) => unknown) => {
+      try {
+        const result = await callback(tx);
+        committed = true;
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    },
   );
   findUnique.mockResolvedValue(quote);
   create.mockResolvedValue(order);
@@ -90,6 +100,7 @@ describe("convertQuote", () => {
         quoteId: "quote_1",
         notes: "Use the blue fabric",
         status: "CONFIRMED",
+        dueDate: null,
         items: {
           create: [
             {
@@ -192,5 +203,6 @@ describe("convertQuote", () => {
       "audit unavailable",
     );
     expect(create).toHaveBeenCalledOnce();
+    expect(committed).toBe(false);
   });
 });
