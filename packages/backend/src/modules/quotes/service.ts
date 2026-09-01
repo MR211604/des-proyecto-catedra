@@ -147,7 +147,9 @@ export async function listQuotes(params: ListQuotesQuery) {
     prisma.quote.count({ where }),
   ]);
   const currentQuotes = await Promise.all(
-    quotes.map((quote) => expireQuoteIfNeeded(quote.id, READ_EXPIRATION_ACTOR, quote)),
+    quotes.map((quote) =>
+      expireQuoteIfNeeded(quote.id, READ_EXPIRATION_ACTOR, quote),
+    ),
   );
   return {
     data: serialize(currentQuotes),
@@ -155,72 +157,31 @@ export async function listQuotes(params: ListQuotesQuery) {
   };
 }
 
-async function expireQuoteIfNeeded<T extends { status: string; validUntil: Date | null }>(
-  id: string,
-  actorId: string,
-  quote: T,
-) {
-  if (quote.status !== "SENT" || !quote.validUntil || quote.validUntil > new Date()) {
+async function expireQuoteIfNeeded<
+  T extends { status: string; validUntil: Date | null },
+>(id: string, actorId: string, quote: T) {
+  if (
+    quote.status !== "SENT" ||
+    !quote.validUntil ||
+    quote.validUntil > new Date()
+  ) {
     return quote;
   }
 
-  return prisma.$transaction(
-    async (tx) => {
-      const before = await tx.quote.findUnique({
-        where: { id },
-        include: quoteInclude,
-      });
-      if (
-        before?.status !== "SENT" ||
-        !before.validUntil ||
-        before.validUntil > new Date()
-      ) {
-        return before ?? quote;
-      }
-      const expired = await tx.quote.update({
-        where: { id, status: "SENT" },
-        data: { status: "EXPIRED" },
-        include: quoteInclude,
-      });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "quote.expired",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(before),
-        after: serialize(expired),
-      });
-      return expired;
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  ).catch(stateConflict);
-}
-
-async function transitionQuote(
-  id: string,
-  actorId: string,
-  fromStatus: "DRAFT" | "SENT",
-  toStatus: "SENT" | "ACCEPTED" | "REJECTED",
-  action: "sent" | "accepted" | "rejected",
-) {
-  return prisma.$transaction(
-    async (tx) => {
-      const before = await tx.quote.findUnique({
-        where: { id },
-        include: quoteInclude,
-      });
-      if (!before) throw new AppError(404, "Quote not found");
-      if (before.status !== fromStatus) {
-        throw new AppError(
-          409,
-          `Quote cannot transition from ${before.status} to ${toStatus}`,
-        );
-      }
-      if (
-        fromStatus === "SENT" &&
-        before.validUntil &&
-        before.validUntil <= new Date()
-      ) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const before = await tx.quote.findUnique({
+          where: { id },
+          include: quoteInclude,
+        });
+        if (
+          before?.status !== "SENT" ||
+          !before.validUntil ||
+          before.validUntil > new Date()
+        ) {
+          return before ?? quote;
+        }
         const expired = await tx.quote.update({
           where: { id, status: "SENT" },
           data: { status: "EXPIRED" },
@@ -234,37 +195,91 @@ async function transitionQuote(
           before: serialize(before),
           after: serialize(expired),
         });
-        return { expired: true as const };
+        return expired;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch(stateConflict);
+}
+
+async function transitionQuote(
+  id: string,
+  actorId: string,
+  fromStatus: "DRAFT" | "SENT",
+  toStatus: "SENT" | "ACCEPTED" | "REJECTED",
+  action: "sent" | "accepted" | "rejected",
+) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const before = await tx.quote.findUnique({
+          where: { id },
+          include: quoteInclude,
+        });
+        if (!before) throw new AppError(404, "Quote not found");
+        if (before.status !== fromStatus) {
+          throw new AppError(
+            409,
+            `Quote cannot transition from ${before.status} to ${toStatus}`,
+          );
+        }
+        if (
+          fromStatus === "SENT" &&
+          before.validUntil &&
+          before.validUntil <= new Date()
+        ) {
+          const expired = await tx.quote.update({
+            where: { id, status: "SENT" },
+            data: { status: "EXPIRED" },
+            include: quoteInclude,
+          });
+          await createAuditLog(tx as typeof prisma, {
+            actorId,
+            action: "quote.expired",
+            entityType: ENTITY_TYPE,
+            entityId: id,
+            before: serialize(before),
+            after: serialize(expired),
+          });
+          return { expired: true as const };
+        }
+        if (
+          toStatus === "SENT" &&
+          (!before.validUntil || before.validUntil <= new Date())
+        ) {
+          throw new AppError(
+            409,
+            "A quote can only be sent with a future validUntil",
+          );
+        }
+        const after = await tx.quote.update({
+          where: { id, status: fromStatus },
+          data: {
+            status: toStatus,
+            ...(toStatus === "ACCEPTED" ? { acceptedAt: new Date() } : {}),
+            ...(toStatus === "REJECTED" ? { rejectedAt: new Date() } : {}),
+          },
+          include: quoteInclude,
+        });
+        await createAuditLog(tx as typeof prisma, {
+          actorId,
+          action: `quote.${action}`,
+          entityType: ENTITY_TYPE,
+          entityId: id,
+          before: serialize(before),
+          after: serialize(after),
+        });
+        return { expired: false as const, quote: serialize(after) };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .then((result) => {
+      if (result.expired) {
+        throw new AppError(409, "Quote has expired and cannot be transitioned");
       }
-      if (toStatus === "SENT" && (!before.validUntil || before.validUntil <= new Date())) {
-        throw new AppError(409, "A quote can only be sent with a future validUntil");
-      }
-      const after = await tx.quote.update({
-        where: { id, status: fromStatus },
-        data: {
-          status: toStatus,
-          ...(toStatus === "ACCEPTED" ? { acceptedAt: new Date() } : {}),
-          ...(toStatus === "REJECTED" ? { rejectedAt: new Date() } : {}),
-        },
-        include: quoteInclude,
-      });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: `quote.${action}`,
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(before),
-        after: serialize(after),
-      });
-      return { expired: false as const, quote: serialize(after) };
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  ).then((result) => {
-    if (result.expired) {
-      throw new AppError(409, "Quote has expired and cannot be transitioned");
-    }
-    return result.quote;
-  }).catch(stateConflict);
+      return result.quote;
+    })
+    .catch(stateConflict);
 }
 
 export function sendQuote(id: string, actorId: string) {
@@ -280,54 +295,66 @@ export function rejectQuote(id: string, actorId: string) {
 }
 
 export async function convertQuote(id: string, actorId: string) {
-  return prisma.$transaction(
-    async (tx) => {
-      const quote = await tx.quote.findUnique({
-        where: { id },
-        include: quoteInclude,
-      });
-      if (!quote) throw new AppError(404, "Quote not found");
-      if (quote.status !== "ACCEPTED") {
-        throw new AppError(409, "Only accepted quotes can be converted to an order");
-      }
-      if (quote.order) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const quote = await tx.quote.findUnique({
+          where: { id },
+          include: quoteInclude,
+        });
+        if (!quote) throw new AppError(404, "Quote not found");
+        if (quote.status !== "ACCEPTED") {
+          throw new AppError(
+            409,
+            "Only accepted quotes can be converted to an order",
+          );
+        }
+        if (quote.order) {
+          throw new AppError(
+            409,
+            "Quote has already been converted to an order",
+          );
+        }
+        const order = await tx.customerOrder.create({
+          data: {
+            clientId: quote.clientId,
+            quoteId: quote.id,
+            notes: quote.notes,
+            status: "CONFIRMED",
+            dueDate: null,
+            items: {
+              create: quote.items.map((item) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                total: item.total,
+                specifications: item.specifications ?? undefined,
+              })),
+            },
+          },
+          include: { items: true },
+        });
+        await createAuditLog(tx as typeof prisma, {
+          actorId,
+          action: "quote.converted",
+          entityType: ENTITY_TYPE,
+          entityId: id,
+          before: serialize(quote),
+          after: serialize({ ...quote, order }),
+        });
+        return serialize(order);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch((error: unknown) => {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         throw new AppError(409, "Quote has already been converted to an order");
       }
-      const order = await tx.customerOrder.create({
-        data: {
-          clientId: quote.clientId,
-          quoteId: quote.id,
-          notes: quote.notes,
-          status: "CONFIRMED",
-          items: {
-            create: quote.items.map((item) => ({
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              total: item.total,
-              specifications: item.specifications ?? undefined,
-            })),
-          },
-        },
-        include: { items: true },
-      });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "quote.converted",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(quote),
-        after: serialize({ ...quote, order }),
-      });
-      return serialize(order);
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  ).catch((error: unknown) => {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new AppError(409, "Quote has already been converted to an order");
-    }
-    return stateConflict(error);
-  });
+      return stateConflict(error);
+    });
 }
 
 export async function updateQuote(

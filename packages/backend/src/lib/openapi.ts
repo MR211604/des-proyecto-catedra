@@ -23,7 +23,7 @@ export const bearerAuth = registry.registerComponent(
 );
 
 export const errorResponseSchema = z.object({
-  error: z.string().meta({ example: "Client not found" }),
+  error: z.string().meta({ example: "Registry not found" }),
 });
 
 export const validationErrorResponseSchema = z.object({

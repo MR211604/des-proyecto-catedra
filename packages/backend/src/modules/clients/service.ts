@@ -1,7 +1,9 @@
 import { prisma } from "../../db/prisma.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import type {
+  ClientMeasurementInput,
   CreateClientInput,
   ListClientsQuery,
   UpdateClientInput,
@@ -9,6 +11,15 @@ import type {
 
 const ENTITY_TYPE = "Client";
 
+function toMeasurementInput(measurement: ClientMeasurementInput) {
+  return {
+    unit: measurement.unit,
+    values: measurement.values as Prisma.InputJsonValue,
+    notes: measurement.notes,
+  };
+}
+
+// ------------ OPERACIONES CRUD ------------
 export async function listClients(params: ListClientsQuery) {
   const { page, limit, search, sortBy, order, includeDeleted } = params;
   const skip = (page - 1) * limit;
@@ -59,7 +70,16 @@ export async function getClientById(id: string) {
 
 export async function createClient(data: CreateClientInput, actorId: string) {
   return prisma.$transaction(async (tx) => {
-    const client = await tx.client.create({ data });
+    const { measurements, ...clientData } = data;
+
+    const client = await tx.client.create({
+      data: {
+        ...clientData,
+        ...(measurements
+          ? { measurements: { create: toMeasurementInput(measurements) } }
+          : {}),
+      },
+    });
 
     await createAuditLog(tx as typeof prisma, {
       actorId,
@@ -85,7 +105,25 @@ export async function updateClient(
       throw new AppError(404, "Client not found");
     }
 
-    const after = await tx.client.update({ where: { id }, data });
+    const { measurements, ...clientData } = data;
+
+    const after = await tx.client.update({
+      where: { id },
+      data: {
+        ...clientData,
+        ...(measurements
+          ? {
+              measurements: {
+                upsert: {
+                  where: { clientId: id },
+                  create: toMeasurementInput(measurements),
+                  update: toMeasurementInput(measurements),
+                },
+              },
+            }
+          : {}),
+      },
+    });
 
     await createAuditLog(tx as typeof prisma, {
       actorId,
