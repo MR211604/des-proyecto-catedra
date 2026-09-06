@@ -2,6 +2,7 @@ import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
+import { type ActiveStage, deriveJobStatus } from "../production/service.js";
 import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
 import type { CreateOrderInput, ListOrdersQuery } from "./schema.js";
 
@@ -39,15 +40,21 @@ async function validateJobs(tx: typeof prisma, input: CreateOrderInput) {
 
   const stageIds = [...new Set(input.jobs.map((job) => job.stageId))];
   const activeStages = await tx.productionStage.findMany({
-    where: { id: { in: stageIds }, isActive: true },
-    select: { id: true },
+    where: { isActive: true },
+    select: { id: true, position: true },
   });
-  if (activeStages.length !== stageIds.length) {
+  const activeStageIds = new Set(activeStages.map((stage) => stage.id));
+  if (stageIds.some((stageId) => !activeStageIds.has(stageId))) {
     throw new AppError(404, "Active production stage not found");
   }
+  return activeStages;
 }
 
-function jobData(input: CreateOrderInput, items: Array<{ id: string }>) {
+function jobData(
+  input: CreateOrderInput,
+  items: Array<{ id: string }>,
+  activeStages: ActiveStage[],
+) {
   return input.jobs.map((job) => ({
     stageId: job.stageId,
     orderItemId:
@@ -55,6 +62,10 @@ function jobData(input: CreateOrderInput, items: Array<{ id: string }>) {
         ? undefined
         : items[job.orderItemIndex]?.id,
     description: job.description,
+    status: deriveJobStatus(
+      activeStages.find((stage) => stage.id === job.stageId)?.position ?? -1,
+      activeStages,
+    ),
     assignedTo: job.assignedTo,
     dueDate: job.dueDate,
   }));
@@ -65,9 +76,13 @@ async function createJobs(
   orderId: string,
   input: CreateOrderInput,
   items: Array<{ id: string }>,
+  activeStages: ActiveStage[],
 ) {
   await tx.productionJob.createMany({
-    data: jobData(input, items).map((job) => ({ ...job, orderId })),
+    data: jobData(input, items, activeStages).map((job) => ({
+      ...job,
+      orderId,
+    })),
   });
 }
 
@@ -79,7 +94,7 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
         where: { id: input.clientId, deletedAt: null },
       });
       if (!client) throw new AppError(404, "Active client not found");
-      await validateJobs(tx as typeof prisma, input);
+      const activeStages = await validateJobs(tx as typeof prisma, input);
 
       const order = await tx.customerOrder.create({
         data: {
@@ -90,7 +105,13 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
         },
         include: { items: true },
       });
-      await createJobs(tx as typeof prisma, order.id, input, order.items);
+      await createJobs(
+        tx as typeof prisma,
+        order.id,
+        input,
+        order.items,
+        activeStages,
+      );
       const completeOrder = await tx.customerOrder.findUniqueOrThrow({
         where: { id: order.id },
         include: orderInclude,
@@ -187,7 +208,7 @@ export async function updateOrder(
         where: { id: input.clientId, deletedAt: null },
       });
       if (!client) throw new AppError(404, "Active client not found");
-      await validateJobs(tx as typeof prisma, input);
+      const activeStages = await validateJobs(tx as typeof prisma, input);
 
       await tx.productionJob.deleteMany({ where: { orderId: id } });
       await tx.orderItem.deleteMany({ where: { orderId: id } });
@@ -201,7 +222,13 @@ export async function updateOrder(
         },
         include: { items: true },
       });
-      await createJobs(tx as typeof prisma, id, input, updated.items);
+      await createJobs(
+        tx as typeof prisma,
+        id,
+        input,
+        updated.items,
+        activeStages,
+      );
       const completeOrder = await tx.customerOrder.findUniqueOrThrow({
         where: { id },
         include: orderInclude,

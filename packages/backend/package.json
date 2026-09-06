@@ -12,6 +12,7 @@
     "format": "biome format --write .",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit --pretty false",
     "db:generate": "prisma generate",
+    "db:seed": "tsx src/modules/production/seed.ts",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev"
   },

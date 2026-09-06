@@ -2,6 +2,7 @@ import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
+import { deriveJobStatus } from "../production/service.js";
 import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
 
 import type { CreateQuoteInput, ListQuotesQuery } from "./schema.js";
@@ -295,11 +296,16 @@ export async function convertQuote(
             "Quote has already been converted to an order",
           );
         }
-        const stage = await tx.productionStage.findFirst({
-          where: { id: stageId, isActive: true },
+        const activeStages = await tx.productionStage.findMany({
+          where: { isActive: true },
+          select: { id: true, position: true },
         });
-        if (!stage)
+        const stage = activeStages.find(
+          (candidate) => candidate.id === stageId,
+        );
+        if (!stage) {
           throw new AppError(404, "Active production stage not found");
+        }
         const order = await tx.customerOrder.create({
           data: {
             clientId: quote.clientId,
@@ -325,6 +331,7 @@ export async function convertQuote(
             orderItemId: item.id,
             stageId,
             description: quote.items[index]?.description ?? item.description,
+            status: deriveJobStatus(stage.position, activeStages),
           })),
         });
         const completeOrder = await tx.customerOrder.findUniqueOrThrow({
@@ -352,6 +359,12 @@ export async function convertQuote(
         error.code === "P2002"
       ) {
         throw new AppError(409, "Quote has already been converted to an order");
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034"
+      ) {
+        throw new AppError(409, "Quote state changed; retry the operation");
       }
       return stateConflict(error);
     });
