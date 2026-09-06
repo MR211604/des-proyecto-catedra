@@ -25,7 +25,7 @@ The pricing proposal for one or more jobs that the workshop presents to a custom
 _Avoid_: estimate, order, invoice
 
 **Order**:
-The work commitment accepted by the workshop for a customer, containing one or more garment or service details, a price, and an estimated delivery date.
+The work commitment accepted by the workshop for a customer, containing one or more garment or service details, a price, and an estimated delivery date. An order may begin directly or originate from an accepted quote, and always contains at least one production job.
 _Avoid_: job, work order, quote, sale
 
 **Order Item**:
@@ -63,11 +63,11 @@ The craft work required to complete accepted orders, from preparation until they
 _Avoid_: manufacturing, order
 
 **Production Job**:
-An executable unit of work within an order, possibly associated with a specific order item, that occupies a stage and has its own status.
+An executable unit of work within an order, possibly associated with a specific order item, that occupies a stage and has its own status. Its normal status is derived from its position in the active production flow: to do at the first stage, in progress at an intermediate stage, and completed at the last stage. A job may be blocked explicitly and later reactivated at its current stage. An order must have one or more production jobs.
 _Avoid_: order, task, service
 
 **Production Stage**:
-An ordered position in the workshop's production flow, such as cutting, sewing, or finishing. Stages form the route through which a production job progresses.
+An ordered position in the workshop's production flow, such as cutting, sewing, or finishing. Stages form the route through which a production job progresses, and a job may be moved forward or returned to an earlier stage when the work requires it.
 _Avoid_: status, department, priority
 
 **Order Status**:
@@ -75,12 +75,16 @@ The order's overall situation in its lifecycle: confirmed, in production, ready,
 _Avoid_: stage, payment status, progress
 
 **Job Status**:
-The operational situation of a production job: to do, in progress, blocked, or completed.
+The operational situation of a production job: to do, in progress, blocked, or completed. The first, intermediate, and last meanings are determined by the active production stages; blocked is an explicit operational interruption.
 _Avoid_: order status, stage
 
 **Production Event**:
 A record of a production job changing stage, identifying where it came from, where it went, and who recorded the change.
 _Avoid_: comment, status, task
+
+**Production Board**:
+A live view of production jobs grouped by their current production stage, used by the workshop to see operational progress and interruptions without changing the order's commercial status.
+_Avoid_: order status, report, schedule
 
 **Delivery**:
 The moment when the customer receives the completed garment. It is distinct from the work being ready and from having an estimated delivery date.
