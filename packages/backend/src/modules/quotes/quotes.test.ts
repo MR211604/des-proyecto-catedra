@@ -208,10 +208,16 @@ describe("Quotes HTTP contract", () => {
     ["reject", rejectQuote, "REJECTED"],
     ["convert", convertQuote, "CONFIRMED"],
   ] as const)("supports the %s lifecycle action", async (action, operation, status) => {
-    const response = await request(testApp()).post(`/quotes/quote_1/${action}`);
+    const response = await request(testApp())
+      .post(`/quotes/quote_1/${action}`)
+      .send(action === "convert" ? { stageId: "stage_1" } : undefined);
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe(status);
-    expect(operation).toHaveBeenCalledWith("quote_1", "user_1");
+    expect(operation).toHaveBeenCalledWith(
+      ...(action === "convert"
+        ? ["quote_1", "stage_1", "user_1"]
+        : ["quote_1", "user_1"]),
+    );
   });
 });

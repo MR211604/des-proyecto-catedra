@@ -5,7 +5,11 @@ import {
   registry,
   validationErrorResponseSchema,
 } from "../../../lib/openapi.js";
-import { createQuoteSchema, listQuotesQuerySchema } from "../schema.js";
+import {
+  convertQuoteSchema,
+  createQuoteSchema,
+  listQuotesQuerySchema,
+} from "../schema.js";
 
 const security = [{ [bearerAuth.name]: [] }];
 const validationResponse = {
@@ -162,11 +166,11 @@ registry.registerPath({
   responses: { 200: { description: "Quote deleted" }, ...responses },
 });
 
-for (const [action, summary] of [
+  for (const [action, summary] of [
   ["send", "Send quote"],
   ["accept", "Accept quote"],
   ["reject", "Reject quote"],
-  ["convert", "Convert accepted quote to order"],
+    ["convert", "Convert accepted quote to order"],
 ] as const) {
   registry.registerPath({
     method: "post",
@@ -174,7 +178,12 @@ for (const [action, summary] of [
     summary,
     tags: ["quotes"],
     security,
-    request: { params: z.object({ id: z.string() }) },
+    request: {
+      params: z.object({ id: z.string() }),
+      ...(action === "convert"
+        ? { body: { required: true, content: { "application/json": { schema: convertQuoteSchema } } } }
+        : {}),
+    },
     responses: {
       200: { description: summary },
       ...responses,

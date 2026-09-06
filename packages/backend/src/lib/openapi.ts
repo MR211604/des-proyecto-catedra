@@ -57,6 +57,10 @@ export function generateOpenAPIDocument(): ReturnType<
         name: "quotes",
         description: "Quote management operations",
       },
+      {
+        name: "orders",
+        description: "Order management operations",
+      },
     ],
     servers: [
       {

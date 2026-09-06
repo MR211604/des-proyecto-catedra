@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "../../generated/prisma/client.js";
 import { AppError } from "../../middleware/errors.js";
 
-const { transaction, findUnique, create, audit } = vi.hoisted(() => ({
+const { transaction, findUnique, create, createMany, audit } = vi.hoisted(() => ({
   transaction: vi.fn(),
   findUnique: vi.fn(),
   create: vi.fn(),
+  createMany: vi.fn(),
   audit: vi.fn(),
 }));
 
@@ -51,11 +52,23 @@ const order = {
       specifications: { fabric: "blue", collar: "mandarin" },
     },
   ],
+  jobs: [
+    {
+      id: "job_1",
+      orderId: "order_1",
+      orderItemId: "order_item_1",
+      stageId: "stage_1",
+      description: "Custom shirt",
+      status: "TODO",
+    },
+  ],
 };
 
 const tx = {
   quote: { findUnique },
-  customerOrder: { create },
+  customerOrder: { create, findUniqueOrThrow: vi.fn() },
+  productionStage: { findFirst: vi.fn() },
+  productionJob: { createMany },
 };
 const quoteItem = quote.items.at(0);
 if (!quoteItem) throw new Error("Quote fixture requires an item");
@@ -73,12 +86,15 @@ beforeEach(() => {
   );
   findUnique.mockResolvedValue(quote);
   create.mockResolvedValue(order);
+  tx.customerOrder.findUniqueOrThrow.mockResolvedValue(order);
+  tx.productionStage.findFirst.mockResolvedValue({ id: "stage_1", isActive: true });
+  createMany.mockResolvedValue({ count: 1 });
   audit.mockResolvedValue(undefined);
 });
 
 describe("convertQuote", () => {
   it("creates one confirmed order with all quote data and audits it atomically", async () => {
-    await expect(convertQuote("quote_1", "user_1")).resolves.toEqual({
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).resolves.toEqual({
       ...order,
       items: [
         {
@@ -110,6 +126,16 @@ describe("convertQuote", () => {
         },
       },
       include: { items: true },
+    });
+    expect(createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          orderId: "order_1",
+          orderItemId: "order_item_1",
+          stageId: "stage_1",
+          description: "Custom shirt",
+        },
+      ],
     });
     expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -143,13 +169,13 @@ describe("convertQuote", () => {
 
   it("does not create an order when the quote is not accepted or is already linked", async () => {
     findUnique.mockResolvedValueOnce({ ...quote, status: "SENT" });
-    await expect(convertQuote("quote_1", "user_1")).rejects.toMatchObject({
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toMatchObject({
       statusCode: 409,
     });
     expect(create).not.toHaveBeenCalled();
 
     findUnique.mockResolvedValueOnce({ ...quote, order });
-    await expect(convertQuote("quote_1", "user_1")).rejects.toMatchObject({
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toMatchObject({
       statusCode: 409,
     });
     expect(create).not.toHaveBeenCalled();
@@ -162,7 +188,7 @@ describe("convertQuote", () => {
         clientVersion: "test",
       }),
     );
-    await expect(convertQuote("quote_1", "user_1")).rejects.toEqual(
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toEqual(
       new AppError(409, "Quote has already been converted to an order"),
     );
 
@@ -172,7 +198,7 @@ describe("convertQuote", () => {
         clientVersion: "test",
       }),
     );
-    await expect(convertQuote("quote_1", "user_1")).rejects.toEqual(
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toEqual(
       new AppError(409, "Quote state changed; retry the operation"),
     );
   });
@@ -185,8 +211,8 @@ describe("convertQuote", () => {
       }),
     );
 
-    await expect(convertQuote("quote_1", "user_1")).resolves.toBeDefined();
-    await expect(convertQuote("quote_1", "user_1")).rejects.toMatchObject({
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).resolves.toBeDefined();
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toMatchObject({
       statusCode: 409,
     });
     expect(create).toHaveBeenCalledTimes(2);
@@ -195,7 +221,7 @@ describe("convertQuote", () => {
   it("propagates audit failures so the transaction can roll back", async () => {
     audit.mockRejectedValueOnce(new Error("audit unavailable"));
 
-    await expect(convertQuote("quote_1", "user_1")).rejects.toThrow(
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).rejects.toThrow(
       "audit unavailable",
     );
     expect(create).toHaveBeenCalledOnce();

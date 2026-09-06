@@ -2,6 +2,8 @@ import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
+import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
+
 import type { CreateQuoteInput, ListQuotesQuery } from "./schema.js";
 
 const ENTITY_TYPE = "Quote";
@@ -11,32 +13,6 @@ const quoteInclude = {
   order: { include: { items: true } },
 } as const;
 const READ_EXPIRATION_ACTOR = "system:quote-expiration";
-
-function toPrismaDecimal(value: string) {
-  return new Prisma.Decimal(value);
-}
-
-function serialize(value: unknown): unknown {
-  if (value instanceof Prisma.Decimal) return value.toString();
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.map(serialize);
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, serialize(entry)]),
-    );
-  }
-  return value;
-}
-
-function stateConflict(error: unknown): never {
-  if (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    (error.code === "P2025" || error.code === "P2034")
-  ) {
-    throw new AppError(409, "Quote state changed; retry the operation");
-  }
-  throw error;
-}
 
 function quoteData(input: CreateQuoteInput) {
   const items = input.items.map((item) => ({
@@ -294,7 +270,11 @@ export function rejectQuote(id: string, actorId: string) {
   return transitionQuote(id, actorId, "SENT", "REJECTED", "rejected");
 }
 
-export async function convertQuote(id: string, actorId: string) {
+export async function convertQuote(
+  id: string,
+  stageId: string,
+  actorId: string,
+) {
   return prisma
     .$transaction(
       async (tx) => {
@@ -315,6 +295,11 @@ export async function convertQuote(id: string, actorId: string) {
             "Quote has already been converted to an order",
           );
         }
+        const stage = await tx.productionStage.findFirst({
+          where: { id: stageId, isActive: true },
+        });
+        if (!stage)
+          throw new AppError(404, "Active production stage not found");
         const order = await tx.customerOrder.create({
           data: {
             clientId: quote.clientId,
@@ -334,15 +319,30 @@ export async function convertQuote(id: string, actorId: string) {
           },
           include: { items: true },
         });
+        await tx.productionJob.createMany({
+          data: order.items.map((item, index) => ({
+            orderId: order.id,
+            orderItemId: item.id,
+            stageId,
+            description: quote.items[index]?.description ?? item.description,
+          })),
+        });
+        const completeOrder = await tx.customerOrder.findUniqueOrThrow({
+          where: { id: order.id },
+          include: {
+            items: true,
+            jobs: { include: { stage: true, events: true } },
+          },
+        });
         await createAuditLog(tx as typeof prisma, {
           actorId,
           action: "quote.converted",
           entityType: ENTITY_TYPE,
           entityId: id,
           before: serialize(quote),
-          after: serialize({ ...quote, order }),
+          after: serialize({ ...quote, order: completeOrder }),
         });
-        return serialize(order);
+        return serialize(completeOrder);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     )
@@ -376,6 +376,7 @@ export async function updateQuote(
         where: { id: data.clientId, deletedAt: null },
       });
       if (!client) throw new AppError(404, "Active client not found");
+
       const quote = await tx.quote.update({
         where: { id },
         data: {
@@ -388,6 +389,7 @@ export async function updateQuote(
         },
         include: quoteInclude,
       });
+
       await createAuditLog(tx as typeof prisma, {
         actorId,
         action: "quote.updated",

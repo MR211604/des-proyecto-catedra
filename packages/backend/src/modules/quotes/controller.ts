@@ -1,6 +1,10 @@
 import { getAuth } from "@clerk/express";
 import type { NextFunction, Request, Response } from "express";
-import type { CreateQuoteInput, ListQuotesQuery } from "./schema.js";
+import type {
+  ConvertQuoteInput,
+  CreateQuoteInput,
+  ListQuotesQuery,
+} from "./schema.js";
 import * as service from "./service.js";
 
 type IdParams = { id: string };
@@ -101,18 +105,42 @@ async function runQuoteAction(
   }
 }
 
-export function send(request: Request<IdParams>, response: Response, next: NextFunction) {
+export function send(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
   return runQuoteAction(request, response, next, service.sendQuote);
 }
 
-export function accept(request: Request<IdParams>, response: Response, next: NextFunction) {
+export function accept(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
   return runQuoteAction(request, response, next, service.acceptQuote);
 }
 
-export function reject(request: Request<IdParams>, response: Response, next: NextFunction) {
+export function reject(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
   return runQuoteAction(request, response, next, service.rejectQuote);
 }
 
-export function convert(request: Request<IdParams>, response: Response, next: NextFunction) {
-  return runQuoteAction(request, response, next, service.convertQuote);
+export function convert(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
+  try {
+    const { stageId } = request.body as ConvertQuoteInput;
+    return service
+      .convertQuote(request.params.id, stageId, actorId(request))
+      .then((result) => response.json(result))
+      .catch(next);
+  } catch (error) {
+    next(error);
+  }
 }

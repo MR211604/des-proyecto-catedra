@@ -3,6 +3,7 @@ import { requireRole } from "../../middleware/auth.js";
 import { validateBody, validateQuery } from "../../middleware/validate.js";
 import * as controller from "./controller.js";
 import {
+  convertQuoteSchema,
   createQuoteSchema,
   listQuotesQuerySchema,
   updateQuoteSchema,
@@ -20,4 +21,8 @@ quoteRouter.delete("/:id", controller.remove);
 quoteRouter.post("/:id/send", controller.send);
 quoteRouter.post("/:id/accept", controller.accept);
 quoteRouter.post("/:id/reject", controller.reject);
-quoteRouter.post("/:id/convert", controller.convert);
+quoteRouter.post(
+  "/:id/convert",
+  validateBody(convertQuoteSchema),
+  controller.convert,
+);

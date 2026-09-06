@@ -26,6 +26,10 @@ export const createQuoteSchema = z.object({
 
 export const updateQuoteSchema = createQuoteSchema;
 
+export const convertQuoteSchema = z.object({
+  stageId: z.string().trim().min(1),
+});
+
 export const listQuotesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -40,3 +44,4 @@ export const listQuotesQuerySchema = z.object({
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
 export type ListQuotesQuery = z.infer<typeof listQuotesQuerySchema>;
+export type ConvertQuoteInput = z.infer<typeof convertQuoteSchema>;
