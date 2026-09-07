@@ -8,6 +8,8 @@ import { generateOpenAPIDocument } from "./lib/openapi.js";
 import { clerk } from "./middleware/auth.js";
 import { errorHandler, notFoundHandler } from "./middleware/errors.js";
 import { apiRouter } from "./modules/index.js";
+import { attachProductionWebSocket } from "./modules/production/events.js";
+import { createServer } from "node:http";
 
 export const app: Express = express();
 const openApiDocument = generateOpenAPIDocument();
@@ -53,6 +55,11 @@ app.use("/api/v1", apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`Backend listening on http://localhost:${env.PORT}`);
-});
+export const server = createServer(app);
+attachProductionWebSocket(server);
+
+if (process.env.NODE_ENV !== "test") {
+  server.listen(env.PORT, () => {
+    console.log(`Backend listening on http://localhost:${env.PORT}`);
+  });
+}

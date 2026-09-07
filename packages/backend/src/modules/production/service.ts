@@ -3,6 +3,7 @@ import { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { serialize, stateConflict } from "../utils.js";
+import { productionEvents } from "./events.js";
 import type {
   CreateStageInput,
   MoveJobInput,
@@ -14,6 +15,20 @@ import type { ProductionBoardQuery } from "./schema.js";
 const ENTITY_TYPE = "ProductionStage";
 const JOB_ENTITY_TYPE = "ProductionJob";
 export const DEFAULT_STAGES = ["Preparación", "Corte", "Confección", "Acabado"];
+
+function publishChange(
+  operation: string,
+  actorId: string,
+  context: Parameters<typeof productionEvents.publish>[0]["context"],
+) {
+  productionEvents.publish({
+    type: "production.changed",
+    operation,
+    actorId,
+    occurredAt: new Date().toISOString(),
+    context,
+  });
+}
 
 export type ActiveStage = { id: string; position: number };
 
@@ -34,7 +49,7 @@ export async function listStages() {
 }
 
 export async function createStage(input: CreateStageInput, actorId: string) {
-  return prisma
+  const stage = (await prisma
     .$transaction(
       async (tx) => {
         const last = await tx.productionStage.findFirst({
@@ -76,7 +91,11 @@ export async function createStage(input: CreateStageInput, actorId: string) {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     )
-    .catch(mapStageConflict);
+    .catch(mapStageConflict)) as { id: string };
+  publishChange("production.stage.created", actorId, {
+    stage: { id: stage.id },
+  });
+  return stage;
 }
 
 export async function updateStage(
@@ -84,7 +103,7 @@ export async function updateStage(
   input: UpdateStageInput,
   actorId: string,
 ) {
-  return prisma
+  const stage = (await prisma
     .$transaction(
       async (tx) => {
         const before = await tx.productionStage.findUnique({
@@ -171,7 +190,11 @@ export async function updateStage(
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     )
-    .catch(mapStageConflict);
+    .catch(mapStageConflict)) as { id: string };
+  publishChange("production.stage.updated", actorId, {
+    stage: { id: stage.id },
+  });
+  return stage;
 }
 
 export async function seedDefaultStages(actorId = "system:production-seed") {
@@ -311,7 +334,7 @@ export async function moveJob(
   input: MoveJobInput,
   actorId: string,
 ) {
-  return prisma
+  const job = (await prisma
     .$transaction(
       async (tx) => {
         const before = await findJob(tx as typeof prisma, id);
@@ -363,11 +386,21 @@ export async function moveJob(
     )
     .catch((error) =>
       stateConflict(error, "Production job state changed; retry the operation"),
-    );
+    )) as {
+    id: string;
+    order?: { id: string } | null;
+    stage?: { id: string } | null;
+  };
+  publishChange("production.job.moved", actorId, {
+    job: { id: job.id },
+    order: job.order ? { id: job.order.id } : undefined,
+    stage: job.stage ? { id: job.stage.id } : undefined,
+  });
+  return job;
 }
 
 async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
-  return prisma
+  const job = (await prisma
     .$transaction(
       async (tx) => {
         const before = await findJob(tx as typeof prisma, id);
@@ -408,7 +441,21 @@ async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
     )
     .catch((error) =>
       stateConflict(error, "Production job state changed; retry the operation"),
-    );
+    )) as {
+    id: string;
+    order?: { id: string } | null;
+    stage?: { id: string } | null;
+  };
+  publishChange(
+    blocked ? "production.job.blocked" : "production.job.unblocked",
+    actorId,
+    {
+      job: { id: job.id },
+      order: job.order ? { id: job.order.id } : undefined,
+      stage: job.stage ? { id: job.stage.id } : undefined,
+    },
+  );
+  return job;
 }
 
 export function blockJob(id: string, actorId: string) {
@@ -424,7 +471,7 @@ export async function updateJob(
   input: UpdateJobInput,
   actorId: string,
 ) {
-  return prisma
+  const job = (await prisma
     .$transaction(
       async (tx) => {
         const before = await findJob(tx as typeof prisma, id);
@@ -448,7 +495,17 @@ export async function updateJob(
     )
     .catch((error) =>
       stateConflict(error, "Production job state changed; retry the operation"),
-    );
+    )) as {
+    id: string;
+    order?: { id: string } | null;
+    stage?: { id: string } | null;
+  };
+  publishChange("production.job.updated", actorId, {
+    job: { id: job.id },
+    order: job.order ? { id: job.order.id } : undefined,
+    stage: job.stage ? { id: job.stage.id } : undefined,
+  });
+  return job;
 }
 
 function mapStageConflict(error: unknown): never {
