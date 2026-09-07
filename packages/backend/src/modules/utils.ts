@@ -17,12 +17,15 @@ export function serialize(value: unknown): unknown {
   return value;
 }
 
-export function stateConflict(error: unknown): never {
+export function stateConflict(
+  error: unknown,
+  message = "Order state changed; retry the operation",
+): never {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     (error.code === "P2025" || error.code === "P2034")
   ) {
-    throw new AppError(409, "Order state changed; retry the operation");
+    throw new AppError(409, message);
   }
   throw error;
 }

@@ -18,3 +18,21 @@ export const updateStageSchema = z
 
 export type CreateStageInput = z.infer<typeof createStageSchema>;
 export type UpdateStageInput = z.infer<typeof updateStageSchema>;
+
+export const moveJobSchema = z.object({
+  stageId: z.string().trim().min(1),
+  notes: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const updateJobSchema = z
+  .object({
+    description: z.string().trim().min(1).max(500).optional(),
+    assignedTo: z.string().trim().min(1).max(150).nullable().optional(),
+    dueDate: z.coerce.date().nullable().optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "At least one job field is required",
+  });
+
+export type MoveJobInput = z.infer<typeof moveJobSchema>;
+export type UpdateJobInput = z.infer<typeof updateJobSchema>;

@@ -22,6 +22,10 @@ vi.mock("./service.js", () => ({
   ]),
   createStage: vi.fn(async (input) => ({ id: "stage_2", ...input })),
   updateStage: vi.fn(async (id, input) => ({ id, ...input })),
+  moveJob: vi.fn(async (id, input, actorId) => ({ id, ...input, actorId })),
+  blockJob: vi.fn(async (id, actorId) => ({ id, status: "BLOCKED", actorId })),
+  unblockJob: vi.fn(async (id, actorId) => ({ id, status: "TODO", actorId })),
+  updateJob: vi.fn(async (id, input, actorId) => ({ id, ...input, actorId })),
 }));
 
 const { productionRouter } = await import("./router.js");
@@ -78,5 +82,47 @@ describe("Production stages HTTP contract", () => {
 
     expect(response.status).toBe(400);
     expect(service.updateStage).not.toHaveBeenCalled();
+  });
+
+  it("moves, blocks, unblocks, and edits jobs through validated routes", async () => {
+    const app = testApp();
+    const moveResponse = await request(app)
+      .post("/production/jobs/job_1/move")
+      .send({ stageId: "stage_2", notes: "Revisar costura" });
+    const blockResponse = await request(app).post(
+      "/production/jobs/job_1/block",
+    );
+    const unblockResponse = await request(app).post(
+      "/production/jobs/job_1/unblock",
+    );
+    const updateResponse = await request(app)
+      .put("/production/jobs/job_1")
+      .send({ description: "Dobladillo", assignedTo: null, dueDate: null });
+
+    expect(moveResponse.status).toBe(200);
+    expect(blockResponse.status).toBe(200);
+    expect(unblockResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(200);
+    expect(service.moveJob).toHaveBeenCalledWith(
+      "job_1",
+      { stageId: "stage_2", notes: "Revisar costura" },
+      "user_1",
+    );
+    expect(service.blockJob).toHaveBeenCalledWith("job_1", "user_1");
+    expect(service.unblockJob).toHaveBeenCalledWith("job_1", "user_1");
+    expect(service.updateJob).toHaveBeenCalledWith(
+      "job_1",
+      { description: "Dobladillo", assignedTo: null, dueDate: null },
+      "user_1",
+    );
+  });
+
+  it("rejects malformed job operations before reaching the service", async () => {
+    const response = await request(testApp())
+      .post("/production/jobs/job_1/move")
+      .send({ stageId: "" });
+
+    expect(response.status).toBe(400);
+    expect(service.moveJob).not.toHaveBeenCalled();
   });
 });

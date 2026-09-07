@@ -3,9 +3,15 @@ import { Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { serialize, stateConflict } from "../utils.js";
-import type { CreateStageInput, UpdateStageInput } from "./schema.js";
+import type {
+  CreateStageInput,
+  MoveJobInput,
+  UpdateJobInput,
+  UpdateStageInput,
+} from "./schema.js";
 
 const ENTITY_TYPE = "ProductionStage";
+const JOB_ENTITY_TYPE = "ProductionJob";
 export const DEFAULT_STAGES = ["Preparación", "Corte", "Confección", "Acabado"];
 
 export type ActiveStage = { id: string; position: number };
@@ -193,6 +199,179 @@ export async function seedDefaultStages(actorId = "system:production-seed") {
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     )
     .catch(mapStageConflict);
+}
+
+const jobInclude = {
+  stage: true,
+  order: { select: { id: true, status: true } },
+} as const;
+
+async function findJob(tx: typeof prisma, id: string) {
+  const job = await tx.productionJob.findUnique({
+    where: { id },
+    include: jobInclude,
+  });
+  if (!job) throw new AppError(404, "Production job not found");
+  return job;
+}
+
+async function activeStages(tx: typeof prisma) {
+  return tx.productionStage.findMany({
+    where: { isActive: true },
+    select: { id: true, position: true },
+    orderBy: { position: "asc" },
+  });
+}
+
+function requireProductionOrder(job: { order: { status: string } }) {
+  if (job.order.status !== "IN_PRODUCTION") {
+    throw new AppError(409, "Production jobs require an order in production");
+  }
+}
+
+export async function moveJob(
+  id: string,
+  input: MoveJobInput,
+  actorId: string,
+) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const before = await findJob(tx as typeof prisma, id);
+        requireProductionOrder(before);
+        if (before.status === "BLOCKED") {
+          throw new AppError(409, "Blocked production jobs cannot be moved");
+        }
+
+        const stages = await activeStages(tx as typeof prisma);
+        const destination = stages.find((stage) => stage.id === input.stageId);
+        if (!destination)
+          throw new AppError(404, "Active production stage not found");
+        if (destination.id === before.stageId) {
+          throw new AppError(409, "Production job is already in this stage");
+        }
+
+        const after = await tx.productionJob.update({
+          where: {
+            id: before.id,
+            stageId: before.stageId,
+            status: before.status,
+          },
+          data: {
+            stageId: destination.id,
+            status: deriveJobStatus(destination.position, stages),
+          },
+          include: jobInclude,
+        });
+        await tx.productionEvent.create({
+          data: {
+            jobId: id,
+            fromStageId: before.stageId,
+            toStageId: destination.id,
+            actorId,
+            notes: input.notes ?? null,
+          },
+        });
+        await createAuditLog(tx as typeof prisma, {
+          actorId,
+          action: "production.job.moved",
+          entityType: JOB_ENTITY_TYPE,
+          entityId: id,
+          before: serialize(before),
+          after: serialize(after),
+        });
+        return serialize(after);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch((error) =>
+      stateConflict(error, "Production job state changed; retry the operation"),
+    );
+}
+
+async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const before = await findJob(tx as typeof prisma, id);
+        requireProductionOrder(before);
+        if (blocked && before.status === "BLOCKED") {
+          throw new AppError(409, "Production job is already blocked");
+        }
+        if (!blocked && before.status !== "BLOCKED") {
+          throw new AppError(409, "Production job is not blocked");
+        }
+        const stages = await activeStages(tx as typeof prisma);
+        const stage = stages.find(
+          (candidate) => candidate.id === before.stageId,
+        );
+        if (!stage) throw new AppError(409, "Job stage is no longer active");
+        const after = await tx.productionJob.update({
+          where: { id: before.id, status: before.status },
+          data: {
+            status: blocked
+              ? "BLOCKED"
+              : deriveJobStatus(stage.position, stages),
+          },
+          include: jobInclude,
+        });
+        await createAuditLog(tx as typeof prisma, {
+          actorId,
+          action: blocked
+            ? "production.job.blocked"
+            : "production.job.unblocked",
+          entityType: JOB_ENTITY_TYPE,
+          entityId: id,
+          before: serialize(before),
+          after: serialize(after),
+        });
+        return serialize(after);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch((error) =>
+      stateConflict(error, "Production job state changed; retry the operation"),
+    );
+}
+
+export function blockJob(id: string, actorId: string) {
+  return setJobBlocked(id, actorId, true);
+}
+
+export function unblockJob(id: string, actorId: string) {
+  return setJobBlocked(id, actorId, false);
+}
+
+export async function updateJob(
+  id: string,
+  input: UpdateJobInput,
+  actorId: string,
+) {
+  return prisma
+    .$transaction(
+      async (tx) => {
+        const before = await findJob(tx as typeof prisma, id);
+        requireProductionOrder(before);
+        const after = await tx.productionJob.update({
+          where: { id: before.id, updatedAt: before.updatedAt },
+          data: input,
+          include: jobInclude,
+        });
+        await createAuditLog(tx as typeof prisma, {
+          actorId,
+          action: "production.job.updated",
+          entityType: JOB_ENTITY_TYPE,
+          entityId: id,
+          before: serialize(before),
+          after: serialize(after),
+        });
+        return serialize(after);
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+    .catch((error) =>
+      stateConflict(error, "Production job state changed; retry the operation"),
+    );
 }
 
 function mapStageConflict(error: unknown): never {
