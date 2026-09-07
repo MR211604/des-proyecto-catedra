@@ -9,6 +9,7 @@ import type {
   UpdateJobInput,
   UpdateStageInput,
 } from "./schema.js";
+import type { ProductionBoardQuery } from "./schema.js";
 
 const ENTITY_TYPE = "ProductionStage";
 const JOB_ENTITY_TYPE = "ProductionJob";
@@ -205,6 +206,82 @@ const jobInclude = {
   stage: true,
   order: { select: { id: true, status: true } },
 } as const;
+
+const readJobInclude = {
+  stage: true,
+  orderItem: true,
+  order: {
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      dueDate: true,
+      client: {
+        select: { id: true, name: true, phone: true, email: true },
+      },
+    },
+  },
+} as const;
+
+const eventInclude = {
+  fromStage: { select: { id: true, name: true, position: true } },
+  toStage: { select: { id: true, name: true, position: true } },
+} as const;
+
+export async function getProductionBoard(filters: ProductionBoardQuery) {
+  const stages = await prisma.productionStage.findMany({
+    where: {
+      OR: [
+        { isActive: true },
+        { isActive: false, jobs: { some: { status: "COMPLETED" } } },
+      ],
+    },
+    orderBy: { position: "asc" },
+    include: {
+      jobs: {
+        where: {
+          ...(filters.orderId ? { orderId: filters.orderId } : {}),
+          ...(filters.status ? { status: filters.status } : {}),
+          ...(filters.assignedTo ? { assignedTo: filters.assignedTo } : {}),
+        },
+        orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
+        include: readJobInclude,
+      },
+    },
+  });
+
+  return serialize(
+    stages.map(({ jobs, ...stage }) => ({
+      ...stage,
+      isHistorical: !stage.isActive,
+      jobs,
+    })),
+  );
+}
+
+export async function getProductionJob(id: string) {
+  const job = await prisma.productionJob.findUnique({
+    where: { id },
+    include: readJobInclude,
+  });
+  if (!job) throw new AppError(404, "Production job not found");
+  return serialize(job);
+}
+
+export async function listProductionEvents(id: string) {
+  const job = await prisma.productionJob.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!job) throw new AppError(404, "Production job not found");
+
+  const events = await prisma.productionEvent.findMany({
+    where: { jobId: id },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    include: eventInclude,
+  });
+  return serialize(events);
+}
 
 async function findJob(tx: typeof prisma, id: string) {
   const job = await tx.productionJob.findUnique({

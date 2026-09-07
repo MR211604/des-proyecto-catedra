@@ -63,7 +63,7 @@ export function generateOpenAPIDocument(): ReturnType<
       },
       {
         name: "production",
-        description: "Production flow configuration operations",
+        description: "Production flow and board operations",
       },
     ],
     servers: [

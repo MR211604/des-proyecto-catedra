@@ -17,6 +17,38 @@ vi.mock("@clerk/express", () => ({
 }));
 
 vi.mock("./service.js", () => ({
+  getProductionBoard: vi.fn(async () => [
+    {
+      id: "stage_1",
+      name: "Preparacion",
+      position: 1,
+      isActive: true,
+      isHistorical: false,
+      jobs: [
+        {
+          id: "job_1",
+          orderId: "order_1",
+          orderItemId: "item_1",
+          status: "IN_PROGRESS",
+          assignedTo: "tailor_1",
+          dueDate: "2026-09-10T00:00:00.000Z",
+          order: { id: "order_1", client: { id: "client_1", name: "Ana" } },
+          orderItem: { id: "item_1", description: "Vestido" },
+        },
+      ],
+    },
+  ]),
+  getProductionJob: vi.fn(async () => ({
+    id: "job_1",
+    status: "IN_PROGRESS",
+    stage: { id: "stage_1", name: "Preparacion" },
+    order: { id: "order_1", client: { id: "client_1", name: "Ana" } },
+    orderItem: { id: "item_1", description: "Vestido" },
+    dueDate: "2026-09-10T00:00:00.000Z",
+  })),
+  listProductionEvents: vi.fn(async () => [
+    { id: "event_1", fromStageId: null, toStageId: "stage_1" },
+  ]),
   listStages: vi.fn(async () => [
     { id: "stage_1", name: "Preparacion", position: 1, isActive: true },
   ]),
@@ -52,6 +84,51 @@ describe("Production stages HTTP contract", () => {
     expect(response.status).toBe(200);
     expect(response.body[0].position).toBe(1);
     expect(service.listStages).toHaveBeenCalledOnce();
+  });
+
+  it("reads the enriched board, job detail, and chronological history", async () => {
+    const boardResponse = await request(testApp()).get(
+      "/production/board?orderId=order_1&status=BLOCKED&assignedTo=tailor_1",
+    );
+    const jobResponse = await request(testApp()).get(
+      "/production/jobs/job_1",
+    );
+    const eventsResponse = await request(testApp()).get(
+      "/production/jobs/job_1/events",
+    );
+
+    expect(boardResponse.status).toBe(200);
+    expect(boardResponse.body[0].isHistorical).toBe(false);
+    expect(boardResponse.body[0].jobs[0].orderId).toBe("order_1");
+    expect(boardResponse.body[0].jobs[0].order.client.name).toBe("Ana");
+    expect(boardResponse.body[0].jobs[0].orderItem.description).toBe("Vestido");
+    expect(jobResponse.status).toBe(200);
+    expect(jobResponse.body.id).toBe("job_1");
+    expect(jobResponse.body.stage.name).toBe("Preparacion");
+    expect(jobResponse.body.order.client.name).toBe("Ana");
+    expect(jobResponse.body.orderItem.description).toBe("Vestido");
+    expect(eventsResponse.status).toBe(200);
+    expect(eventsResponse.body[0]).toMatchObject({
+      id: "event_1",
+      fromStageId: null,
+      toStageId: "stage_1",
+    });
+    expect(service.getProductionBoard).toHaveBeenCalledWith({
+      orderId: "order_1",
+      status: "BLOCKED",
+      assignedTo: "tailor_1",
+    });
+    expect(service.getProductionJob).toHaveBeenCalledWith("job_1");
+    expect(service.listProductionEvents).toHaveBeenCalledWith("job_1");
+  });
+
+  it("rejects invalid board filters before calling the service", async () => {
+    const response = await request(testApp()).get(
+      "/production/board?status=UNKNOWN",
+    );
+
+    expect(response.status).toBe(400);
+    expect(service.getProductionBoard).not.toHaveBeenCalled();
   });
 
   it("creates and updates stages with validated input and actor", async () => {

@@ -6,6 +6,7 @@ import type {
   UpdateJobInput,
   UpdateStageInput,
 } from "./schema.js";
+import type { ProductionBoardQuery } from "./schema.js";
 import * as service from "./service.js";
 
 type IdParams = { id: string };
@@ -18,6 +19,43 @@ export async function list(
 ) {
   try {
     response.json(await service.listStages());
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function board(
+  _request: Request,
+  response: Response,
+  next: NextFunction,
+) {
+  try {
+    const query = response.locals.validatedQuery as ProductionBoardQuery;
+    response.json(await service.getProductionBoard(query));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getJob(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
+  try {
+    response.json(await service.getProductionJob(request.params.id));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function events(
+  request: Request<IdParams>,
+  response: Response,
+  next: NextFunction,
+) {
+  try {
+    response.json(await service.listProductionEvents(request.params.id));
   } catch (error) {
     next(error);
   }

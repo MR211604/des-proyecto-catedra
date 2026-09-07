@@ -8,6 +8,7 @@ import {
 import {
   createStageSchema,
   moveJobSchema,
+  productionBoardQuerySchema,
   updateJobSchema,
   updateStageSchema,
 } from "../schema.js";
@@ -34,6 +35,56 @@ const job = z.object({
   stage: stage,
   order: z.object({ id: z.string(), status: z.string() }),
 });
+const boardJob = z.object({
+  id: z.string(),
+  orderId: z.string(),
+  orderItemId: z.string().nullable(),
+  stageId: z.string(),
+  description: z.string(),
+  status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "COMPLETED"]),
+  assignedTo: z.string().nullable(),
+  dueDate: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  stage,
+  orderItem: z
+    .object({
+      id: z.string(),
+      orderId: z.string(),
+      description: z.string(),
+      quantity: z.string(),
+      unitPrice: z.string(),
+      total: z.string(),
+      specifications: z.unknown().nullable(),
+      createdAt: z.string(),
+    })
+    .nullable(),
+  order: z.object({
+    id: z.string(),
+    number: z.number(),
+    status: z.string(),
+    dueDate: z.string().nullable(),
+    client: z.object({
+      id: z.string(),
+      name: z.string(),
+      phone: z.string().nullable(),
+      email: z.string().nullable(),
+    }),
+  }),
+});
+const event = z.object({
+  id: z.string(),
+  jobId: z.string(),
+  fromStageId: z.string().nullable(),
+  toStageId: z.string(),
+  actorId: z.string(),
+  notes: z.string().nullable(),
+  createdAt: z.string(),
+  fromStage: z
+    .object({ id: z.string(), name: z.string(), position: z.number() })
+    .nullable(),
+  toStage: z.object({ id: z.string(), name: z.string(), position: z.number() }),
+});
 const responses = {
   401: {
     description: "Authentication required",
@@ -43,11 +94,78 @@ const responses = {
     description: "Insufficient permissions",
     content: { "application/json": { schema: errorResponseSchema } },
   },
+  404: {
+    description: "Production job or stage not found",
+    content: { "application/json": { schema: errorResponseSchema } },
+  },
   409: {
     description: "Production stage conflict",
     content: { "application/json": { schema: errorResponseSchema } },
   },
 };
+const readResponses = {
+  401: responses[401],
+  403: responses[403],
+  404: responses[404],
+};
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/production/board",
+  summary: "Read the production board",
+  tags: ["production"],
+  security,
+  request: { query: productionBoardQuerySchema },
+  responses: {
+    200: {
+      description: "Production board retrieved",
+      content: {
+        "application/json": {
+          schema: z.array(
+            stage.extend({
+              isHistorical: z.boolean(),
+              jobs: z.array(boardJob),
+            }),
+          ),
+        },
+      },
+    },
+    400: {
+      description: "Validation failed",
+      content: { "application/json": { schema: validationErrorResponseSchema } },
+    },
+    ...readResponses,
+  },
+});
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/production/jobs/{id}",
+  summary: "Get a production job",
+  tags: ["production"],
+  security,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "Production job retrieved",
+      content: { "application/json": { schema: boardJob } },
+    },
+    ...readResponses,
+  },
+});
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/production/jobs/{id}/events",
+  summary: "List production job events",
+  tags: ["production"],
+  security,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "Production job events retrieved",
+      content: { "application/json": { schema: z.array(event) } },
+    },
+    ...readResponses,
+  },
+});
 registry.registerPath({
   method: "get",
   path: "/api/v1/production/stages",
@@ -117,10 +235,6 @@ for (const operation of [
           "application/json": { schema: validationErrorResponseSchema },
         },
       },
-      404: {
-        description: "Production job or stage not found",
-        content: { "application/json": { schema: errorResponseSchema } },
-      },
       ...responses,
     },
   });
@@ -149,10 +263,6 @@ registry.registerPath({
       content: {
         "application/json": { schema: validationErrorResponseSchema },
       },
-    },
-    404: {
-      description: "Production job not found",
-      content: { "application/json": { schema: errorResponseSchema } },
     },
     ...responses,
   },
@@ -206,10 +316,6 @@ registry.registerPath({
       content: {
         "application/json": { schema: validationErrorResponseSchema },
       },
-    },
-    404: {
-      description: "Stage not found",
-      content: { "application/json": { schema: errorResponseSchema } },
     },
     ...responses,
   },

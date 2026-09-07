@@ -1,18 +1,26 @@
 import { Router, type Router as RouterType } from "express";
 import { requireRole } from "../../middleware/auth.js";
-import { validateBody } from "../../middleware/validate.js";
+import { validateBody, validateQuery } from "../../middleware/validate.js";
 import * as controller from "./controller.js";
 import {
   createStageSchema,
   moveJobSchema,
   updateJobSchema,
   updateStageSchema,
+  productionBoardQuerySchema,
 } from "./schema.js";
 import "./docs/index.js";
 
 export const productionRouter: RouterType = Router();
 productionRouter.use(requireRole("org:member"));
+productionRouter.get(
+  "/board",
+  validateQuery(productionBoardQuerySchema),
+  controller.board,
+);
 productionRouter.get("/stages", controller.list);
+productionRouter.get("/jobs/:id/events", controller.events);
+productionRouter.get("/jobs/:id", controller.getJob);
 productionRouter.post(
   "/stages",
   validateBody(createStageSchema),
