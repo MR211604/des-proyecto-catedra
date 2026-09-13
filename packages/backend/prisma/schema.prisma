@@ -118,6 +118,18 @@ model QuoteItem {
   unitPrice   Decimal  @db.Decimal(12, 2)
   total       Decimal  @db.Decimal(12, 2)
   specifications Json?
+  materials   QuoteItemMaterial[]
+}
+
+model QuoteItemMaterial {
+  id              String        @id @default(cuid())
+  quoteItemId     String
+  quoteItem       QuoteItem     @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Decimal       @db.Decimal(14, 3)
+
+  @@unique([quoteItemId, inventoryItemId])
 }
 
 model CustomerOrder {
@@ -143,16 +155,29 @@ model CustomerOrder {
 }
 
 model OrderItem {
-  id             String         @id @default(cuid())
+  id             String               @id @default(cuid())
   orderId        String
-  order          CustomerOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order          CustomerOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   description    String
-  quantity       Decimal        @db.Decimal(10, 3)
-  unitPrice      Decimal        @db.Decimal(12, 2)
-  total          Decimal        @db.Decimal(12, 2)
+  quantity       Decimal              @db.Decimal(10, 3)
+  unitPrice      Decimal              @db.Decimal(12, 2)
+  total          Decimal              @db.Decimal(12, 2)
   specifications Json?
   productionJobs ProductionJob[]
-  createdAt      DateTime       @default(now())
+  materials      OrderItemMaterial[]
+  stockMovements StockMovement[]
+  createdAt      DateTime             @default(now())
+}
+
+model OrderItemMaterial {
+  id              String        @id @default(cuid())
+  orderItemId     String
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Decimal       @db.Decimal(14, 3)
+
+  @@unique([orderItemId, inventoryItemId])
 }
 
 model ProductionStage {
@@ -227,26 +252,14 @@ model InventoryItem {
   supplierId     String?
   supplier       Supplier?        @relation(fields: [supplierId], references: [id])
   movements      StockMovement[]
+  orderItemMaterials OrderItemMaterial[]
+  quoteItemMaterials QuoteItemMaterial[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
 
   @@index([name])
   @@index([supplierId])
-}
-
-model StockMovement {
-  id          String            @id @default(cuid())
-  itemId      String
-  item        InventoryItem     @relation(fields: [itemId], references: [id])
-  type        StockMovementType
-  quantity    Decimal           @db.Decimal(14, 3)
-  unit        UnitOfMeasure
-  reference   String?
-  reason      String?
-  actorId     String
-  createdAt   DateTime          @default(now())
-  @@index([itemId, createdAt])
 }
 
 model Sale {
@@ -282,6 +295,23 @@ model Payment {
   paidAt    DateTime      @default(now())
   reference String?
   actorId   String
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  itemId      String
+  item        InventoryItem     @relation(fields: [itemId], references: [id])
+  orderItemId String?
+  orderItem   OrderItem?        @relation(fields: [orderItemId], references: [id])
+  type        StockMovementType
+  quantity    Decimal           @db.Decimal(14, 3)
+  unit        UnitOfMeasure
+  reference   String?
+  reason      String?
+  actorId     String
+  createdAt   DateTime          @default(now())
+  @@index([itemId, createdAt])
+  @@index([orderItemId])
 }
 
 model AuditLog {
