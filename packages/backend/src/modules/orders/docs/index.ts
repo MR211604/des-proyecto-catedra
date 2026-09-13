@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { inventoryItemSchema } from "../../inventory/docs/schemas.js";
 import {
   bearerAuth,
   errorResponseSchema,
@@ -24,6 +25,13 @@ const jobResponse = z.object({
   assignedTo: z.string().nullable(),
   dueDate: z.string().nullable(),
 });
+const materialResponse = z.object({
+  id: z.string(),
+  orderItemId: z.string(),
+  inventoryItemId: z.string(),
+  quantity: z.string(),
+  inventoryItem: inventoryItemSchema,
+});
 const itemResponse = z.object({
   id: z.string(),
   orderId: z.string(),
@@ -32,6 +40,7 @@ const itemResponse = z.object({
   unitPrice: z.string(),
   total: z.string(),
   specifications: z.unknown().nullable(),
+  materials: z.array(materialResponse),
 });
 const orderResponse = z.object({
   id: z.string(),
@@ -56,10 +65,22 @@ const listResponse = z.object({
   }),
 });
 const responses = {
-  401: { description: "Authentication required", content: { "application/json": { schema: errorResponseSchema } } },
-  403: { description: "Insufficient permissions", content: { "application/json": { schema: errorResponseSchema } } },
-  404: { description: "Order, client, or production stage not found", content: { "application/json": { schema: errorResponseSchema } } },
-  409: { description: "Order state conflict", content: { "application/json": { schema: errorResponseSchema } } },
+  401: {
+    description: "Authentication required",
+    content: { "application/json": { schema: errorResponseSchema } },
+  },
+  403: {
+    description: "Insufficient permissions",
+    content: { "application/json": { schema: errorResponseSchema } },
+  },
+  404: {
+    description: "Order, client, or production stage not found",
+    content: { "application/json": { schema: errorResponseSchema } },
+  },
+  409: {
+    description: "Order state conflict",
+    content: { "application/json": { schema: errorResponseSchema } },
+  },
 };
 
 registry.registerPath({
@@ -68,8 +89,20 @@ registry.registerPath({
   summary: "Create order",
   tags: ["orders"],
   security,
-  request: { body: { required: true, content: { "application/json": { schema: createOrderSchema } } } },
-  responses: { 201: { description: "Order created", content: { "application/json": { schema: orderResponse } } }, ...validationResponse, ...responses },
+  request: {
+    body: {
+      required: true,
+      content: { "application/json": { schema: createOrderSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: "Order created",
+      content: { "application/json": { schema: orderResponse } },
+    },
+    ...validationResponse,
+    ...responses,
+  },
 });
 registry.registerPath({
   method: "get",
@@ -78,7 +111,13 @@ registry.registerPath({
   tags: ["orders"],
   security,
   request: { query: listOrdersQuerySchema },
-  responses: { 200: { description: "Orders retrieved", content: { "application/json": { schema: listResponse } } }, ...responses },
+  responses: {
+    200: {
+      description: "Orders retrieved",
+      content: { "application/json": { schema: listResponse } },
+    },
+    ...responses,
+  },
 });
 registry.registerPath({
   method: "get",
@@ -87,7 +126,13 @@ registry.registerPath({
   tags: ["orders"],
   security,
   request: { params: z.object({ id: z.string() }) },
-  responses: { 200: { description: "Order retrieved", content: { "application/json": { schema: orderResponse } } }, ...responses },
+  responses: {
+    200: {
+      description: "Order retrieved",
+      content: { "application/json": { schema: orderResponse } },
+    },
+    ...responses,
+  },
 });
 registry.registerPath({
   method: "put",
@@ -95,8 +140,21 @@ registry.registerPath({
   summary: "Update confirmed order",
   tags: ["orders"],
   security,
-  request: { params: z.object({ id: z.string() }), body: { required: true, content: { "application/json": { schema: createOrderSchema } } } },
-  responses: { 200: { description: "Order updated", content: { "application/json": { schema: orderResponse } } }, ...validationResponse, ...responses },
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      required: true,
+      content: { "application/json": { schema: createOrderSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Order updated",
+      content: { "application/json": { schema: orderResponse } },
+    },
+    ...validationResponse,
+    ...responses,
+  },
 });
 registry.registerPath({
   method: "delete",
@@ -121,6 +179,12 @@ for (const [action, summary] of [
     tags: ["orders"],
     security,
     request: { params: z.object({ id: z.string() }) },
-    responses: { 200: { description: summary, content: { "application/json": { schema: orderResponse } } }, ...responses },
+    responses: {
+      200: {
+        description: summary,
+        content: { "application/json": { schema: orderResponse } },
+      },
+      ...responses,
+    },
   });
 }

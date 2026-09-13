@@ -10,7 +10,7 @@ const ENTITY_TYPE = "CustomerOrder";
 const orderInclude = {
   client: true,
   quote: true,
-  items: true,
+  items: { include: { materials: { include: { inventoryItem: true } } } },
   jobs: { include: { stage: true, events: true } },
 } as const;
 
@@ -23,9 +23,55 @@ function orderData(input: CreateOrderInput) {
       .mul(toPrismaDecimal(item.unitPrice))
       .toDecimalPlaces(2),
     specifications: item.specifications as Prisma.InputJsonValue | undefined,
+    materials: item.materials
+      ? {
+          create: item.materials.map((material) => ({
+            inventoryItemId: material.inventoryItemId,
+            quantity: toPrismaDecimal(material.quantity),
+          })),
+        }
+      : undefined,
   }));
 
   return { items };
+}
+
+async function validateMaterials(tx: typeof prisma, input: CreateOrderInput) {
+  const entries = input.items.flatMap((item, itemIndex) =>
+    (item.materials ?? []).map((material) => ({ itemIndex, material })),
+  );
+  if (entries.length === 0) return;
+
+  const inventoryIds = [
+    ...new Set(entries.map(({ material }) => material.inventoryItemId)),
+  ];
+  const inventoryItems = await tx.inventoryItem.findMany({
+    where: { id: { in: inventoryIds }, deletedAt: null },
+    select: { id: true, unit: true },
+  });
+  const inventoryById = new Map(
+    inventoryItems.map((inventoryItem) => [inventoryItem.id, inventoryItem]),
+  );
+
+  const seenPerItem = new Map<number, Set<string>>();
+  for (const { itemIndex, material } of entries) {
+    const inventoryItem = inventoryById.get(material.inventoryItemId);
+    if (!inventoryItem) {
+      throw new AppError(400, "Material not found or deactivated");
+    }
+    if (material.unit !== inventoryItem.unit) {
+      throw new AppError(
+        400,
+        "Material unit does not match the inventory item unit",
+      );
+    }
+    const seen = seenPerItem.get(itemIndex) ?? new Set<string>();
+    if (seen.has(material.inventoryItemId)) {
+      throw new AppError(400, "Duplicate material within the same order item");
+    }
+    seen.add(material.inventoryItemId);
+    seenPerItem.set(itemIndex, seen);
+  }
 }
 
 async function validateJobs(tx: typeof prisma, input: CreateOrderInput) {
@@ -95,6 +141,7 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
       });
       if (!client) throw new AppError(404, "Active client not found");
       const activeStages = await validateJobs(tx as typeof prisma, input);
+      await validateMaterials(tx as typeof prisma, input);
 
       const order = await tx.customerOrder.create({
         data: {
@@ -212,6 +259,7 @@ export async function updateOrder(
       });
       if (!client) throw new AppError(404, "Active client not found");
       const activeStages = await validateJobs(tx as typeof prisma, input);
+      await validateMaterials(tx as typeof prisma, input);
 
       await tx.productionJob.deleteMany({ where: { orderId: id } });
       await tx.orderItem.deleteMany({ where: { orderId: id } });

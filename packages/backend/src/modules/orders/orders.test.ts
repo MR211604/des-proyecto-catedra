@@ -1,7 +1,7 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { errorHandler } from "../../middleware/errors.js";
+import { AppError, errorHandler } from "../../middleware/errors.js";
 
 const auth = vi.hoisted(() => ({
   isAuthenticated: true,
@@ -74,6 +74,168 @@ describe("Orders HTTP contract", () => {
 
     expect(response.status).toBe(400);
     expect(service.createOrder).not.toHaveBeenCalled();
+  });
+
+  it("passes a per-item material list to the service on create", async () => {
+    const order = {
+      ...validOrder,
+      items: [
+        {
+          description: "Hem",
+          quantity: "2",
+          unitPrice: "10",
+          materials: [
+            { inventoryItemId: "item_1", quantity: "1.5", unit: "METER" },
+          ],
+        },
+      ],
+    };
+
+    const response = await request(testApp()).post("/orders").send(order);
+
+    expect(response.status).toBe(201);
+    expect(service.createOrder).toHaveBeenCalledWith(order, "user_1");
+  });
+
+  it("rejects a material with a non-positive quantity", async () => {
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "0", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(service.createOrder).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material whose unit is outside the unit vocabulary", async () => {
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "BOXES" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(service.createOrder).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material without an inventory item id", async () => {
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [{ quantity: "1", unit: "METER" }],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(service.createOrder).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material that does not exist or is deactivated with 400", async () => {
+    vi.mocked(service.createOrder).mockRejectedValueOnce(
+      new AppError(400, "Material not found or deactivated"),
+    );
+
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_missing", quantity: "1", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Material not found or deactivated");
+  });
+
+  it("rejects a material whose unit differs from the inventory item unit with 400", async () => {
+    vi.mocked(service.createOrder).mockRejectedValueOnce(
+      new AppError(400, "Material unit does not match the inventory item unit"),
+    );
+
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "ROLL" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Material unit does not match the inventory item unit",
+    );
+  });
+
+  it("rejects duplicate materials within the same order item with 400", async () => {
+    vi.mocked(service.createOrder).mockRejectedValueOnce(
+      new AppError(400, "Duplicate material within the same order item"),
+    );
+
+    const response = await request(testApp())
+      .post("/orders")
+      .send({
+        ...validOrder,
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "METER" },
+              { inventoryItemId: "item_1", quantity: "2", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Duplicate material within the same order item",
+    );
   });
 
   it("lists orders with validated defaults", async () => {
