@@ -3,10 +3,10 @@ import type { NextFunction, Request, Response } from "express";
 import type {
   CreateStageInput,
   MoveJobInput,
+  ProductionBoardQuery,
   UpdateJobInput,
   UpdateStageInput,
 } from "./schema.js";
-import type { ProductionBoardQuery } from "./schema.js";
 import * as service from "./service.js";
 
 type IdParams = { id: string };

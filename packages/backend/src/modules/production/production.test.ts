@@ -38,6 +38,7 @@ vi.mock("./service.js", () => ({
       ],
     },
   ]),
+
   getProductionJob: vi.fn(async () => ({
     id: "job_1",
     status: "IN_PROGRESS",
@@ -46,12 +47,15 @@ vi.mock("./service.js", () => ({
     orderItem: { id: "item_1", description: "Vestido" },
     dueDate: "2026-09-10T00:00:00.000Z",
   })),
+
   listProductionEvents: vi.fn(async () => [
     { id: "event_1", fromStageId: null, toStageId: "stage_1" },
   ]),
+
   listStages: vi.fn(async () => [
     { id: "stage_1", name: "Preparacion", position: 1, isActive: true },
   ]),
+
   createStage: vi.fn(async (input) => ({ id: "stage_2", ...input })),
   updateStage: vi.fn(async (id, input) => ({ id, ...input })),
   moveJob: vi.fn(async (id, input, actorId) => ({ id, ...input, actorId })),
@@ -90,9 +94,7 @@ describe("Production stages HTTP contract", () => {
     const boardResponse = await request(testApp()).get(
       "/production/board?orderId=order_1&status=BLOCKED&assignedTo=tailor_1",
     );
-    const jobResponse = await request(testApp()).get(
-      "/production/jobs/job_1",
-    );
+    const jobResponse = await request(testApp()).get("/production/jobs/job_1");
     const eventsResponse = await request(testApp()).get(
       "/production/jobs/job_1/events",
     );

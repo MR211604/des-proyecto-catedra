@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import type { Duplex } from "node:stream";
 import { verifyToken } from "@clerk/backend";
-import { WebSocketServer, type WebSocket } from "ws";
+import { type WebSocket, WebSocketServer } from "ws";
 import { env } from "../../config/env.js";
 
 export const PRODUCTION_PROTOCOL = "clerk.";

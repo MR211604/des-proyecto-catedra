@@ -131,7 +131,9 @@ registry.registerPath({
     },
     400: {
       description: "Validation failed",
-      content: { "application/json": { schema: validationErrorResponseSchema } },
+      content: {
+        "application/json": { schema: validationErrorResponseSchema },
+      },
     },
     ...readResponses,
   },

@@ -5,22 +5,23 @@ import * as controller from "./controller.js";
 import {
   createStageSchema,
   moveJobSchema,
+  productionBoardQuerySchema,
   updateJobSchema,
   updateStageSchema,
-  productionBoardQuerySchema,
 } from "./schema.js";
 import "./docs/index.js";
 
 export const productionRouter: RouterType = Router();
+
 productionRouter.use(requireRole("org:member"));
+
 productionRouter.get(
   "/board",
   validateQuery(productionBoardQuerySchema),
   controller.board,
 );
+
 productionRouter.get("/stages", controller.list);
-productionRouter.get("/jobs/:id/events", controller.events);
-productionRouter.get("/jobs/:id", controller.getJob);
 productionRouter.post(
   "/stages",
   validateBody(createStageSchema),
@@ -31,6 +32,10 @@ productionRouter.put(
   validateBody(updateStageSchema),
   controller.update,
 );
+
+// Jobs - se crean automaticamente cuando una orden es creada. Son los trabajos por cada orden.
+productionRouter.get("/jobs/:id/events", controller.events);
+productionRouter.get("/jobs/:id", controller.getJob);
 productionRouter.put(
   "/jobs/:id",
   validateBody(updateJobSchema),

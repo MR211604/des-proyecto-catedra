@@ -246,7 +246,6 @@ model StockMovement {
   reason      String?
   actorId     String
   createdAt   DateTime          @default(now())
-
   @@index([itemId, createdAt])
 }
 

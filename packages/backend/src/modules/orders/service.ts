@@ -105,6 +105,8 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
         },
         include: { items: true },
       });
+
+      // Creando trabajos de produccion
       await createJobs(
         tx as typeof prisma,
         order.id,
@@ -112,6 +114,7 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
         order.items,
         activeStages,
       );
+
       const completeOrder = await tx.customerOrder.findUniqueOrThrow({
         where: { id: order.id },
         include: orderInclude,

@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { apiReference } from "@scalar/express-api-reference";
 import cors from "cors";
 import express, { type Express } from "express";
@@ -9,7 +10,6 @@ import { clerk } from "./middleware/auth.js";
 import { errorHandler, notFoundHandler } from "./middleware/errors.js";
 import { apiRouter } from "./modules/index.js";
 import { attachProductionWebSocket } from "./modules/production/events.js";
-import { createServer } from "node:http";
 
 export const app: Express = express();
 const openApiDocument = generateOpenAPIDocument();

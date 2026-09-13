@@ -7,10 +7,10 @@ import { productionEvents } from "./events.js";
 import type {
   CreateStageInput,
   MoveJobInput,
+  ProductionBoardQuery,
   UpdateJobInput,
   UpdateStageInput,
 } from "./schema.js";
-import type { ProductionBoardQuery } from "./schema.js";
 
 const ENTITY_TYPE = "ProductionStage";
 const JOB_ENTITY_TYPE = "ProductionJob";
@@ -31,6 +31,32 @@ function publishChange(
 }
 
 export type ActiveStage = { id: string; position: number };
+
+const jobInclude = {
+  stage: true,
+  order: { select: { id: true, status: true } },
+} as const;
+
+const readJobInclude = {
+  stage: true,
+  orderItem: true,
+  order: {
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      dueDate: true,
+      client: {
+        select: { id: true, name: true, phone: true, email: true },
+      },
+    },
+  },
+} as const;
+
+const eventInclude = {
+  fromStage: { select: { id: true, name: true, position: true } },
+  toStage: { select: { id: true, name: true, position: true } },
+} as const;
 
 export function deriveJobStatus(
   position: number,
@@ -225,32 +251,6 @@ export async function seedDefaultStages(actorId = "system:production-seed") {
     .catch(mapStageConflict);
 }
 
-const jobInclude = {
-  stage: true,
-  order: { select: { id: true, status: true } },
-} as const;
-
-const readJobInclude = {
-  stage: true,
-  orderItem: true,
-  order: {
-    select: {
-      id: true,
-      number: true,
-      status: true,
-      dueDate: true,
-      client: {
-        select: { id: true, name: true, phone: true, email: true },
-      },
-    },
-  },
-} as const;
-
-const eventInclude = {
-  fromStage: { select: { id: true, name: true, position: true } },
-  toStage: { select: { id: true, name: true, position: true } },
-} as const;
-
 export async function getProductionBoard(filters: ProductionBoardQuery) {
   const stages = await prisma.productionStage.findMany({
     where: {
@@ -405,12 +405,15 @@ async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
       async (tx) => {
         const before = await findJob(tx as typeof prisma, id);
         requireProductionOrder(before);
+
         if (blocked && before.status === "BLOCKED") {
           throw new AppError(409, "Production job is already blocked");
         }
+
         if (!blocked && before.status !== "BLOCKED") {
           throw new AppError(409, "Production job is not blocked");
         }
+
         const stages = await activeStages(tx as typeof prisma);
         const stage = stages.find(
           (candidate) => candidate.id === before.stageId,
