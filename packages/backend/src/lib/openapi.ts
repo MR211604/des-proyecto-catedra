@@ -65,6 +65,10 @@ export function generateOpenAPIDocument(): ReturnType<
         name: "production",
         description: "Production flow and board operations",
       },
+      {
+        name: "suppliers",
+        description: "Supplier management operations",
+      },
     ],
     servers: [
       {
