@@ -19,6 +19,21 @@ vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
 const { convertQuote } = await import("./service.js");
 
+const inactiveOutOfStockInventoryItem = {
+  id: "inventory_1",
+  unit: "METER",
+  quantity: new Prisma.Decimal("0.000"),
+  deletedAt: new Date("2026-09-02T00:00:00.000Z"),
+};
+
+const quoteMaterial = {
+  id: "quote_material_1",
+  quoteItemId: "quote_item_1",
+  inventoryItemId: "inventory_1",
+  quantity: new Prisma.Decimal("3.000"),
+  inventoryItem: inactiveOutOfStockInventoryItem,
+};
+
 const quote = {
   id: "quote_1",
   clientId: "client_1",
@@ -32,9 +47,18 @@ const quote = {
       unitPrice: new Prisma.Decimal("10.00"),
       total: new Prisma.Decimal("25.00"),
       specifications: { fabric: "blue", collar: "mandarin" },
+      materials: [quoteMaterial],
     },
   ],
   order: null,
+};
+
+const orderMaterial = {
+  id: "order_material_1",
+  orderItemId: "order_item_1",
+  inventoryItemId: "inventory_1",
+  quantity: quoteMaterial.quantity,
+  inventoryItem: inactiveOutOfStockInventoryItem,
 };
 
 const order = {
@@ -52,6 +76,7 @@ const order = {
       unitPrice: new Prisma.Decimal("10.00"),
       total: new Prisma.Decimal("25.00"),
       specifications: { fabric: "blue", collar: "mandarin" },
+      materials: [orderMaterial],
     },
   ],
   jobs: [
@@ -107,6 +132,17 @@ describe("convertQuote", () => {
             quantity: "2.5",
             unitPrice: "10",
             total: "25",
+            materials: [
+              {
+                ...orderMaterial,
+                quantity: "3",
+                inventoryItem: {
+                  ...inactiveOutOfStockInventoryItem,
+                  quantity: "0",
+                  deletedAt: "2026-09-02T00:00:00.000Z",
+                },
+              },
+            ],
           },
         ],
       },
@@ -127,6 +163,14 @@ describe("convertQuote", () => {
               unitPrice: quoteItem.unitPrice,
               total: quoteItem.total,
               specifications: quoteItem.specifications,
+              materials: {
+                create: [
+                  {
+                    inventoryItemId: "inventory_1",
+                    quantity: quoteMaterial.quantity,
+                  },
+                ],
+              },
             },
           ],
         },
@@ -172,6 +216,34 @@ describe("convertQuote", () => {
         }),
       }),
     );
+  });
+
+  it("copies quote item materials onto order items even when the material is inactive or out of stock", async () => {
+    await expect(convertQuote("quote_1", "stage_1", "user_1")).resolves.toMatchObject(
+      {
+        id: "order_1",
+        items: [
+          {
+            materials: [
+              {
+                inventoryItemId: "inventory_1",
+                quantity: "3",
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    const createCall = create.mock.calls[0]?.[0];
+    expect(createCall.data.items.create[0].materials).toEqual({
+      create: [
+        {
+          inventoryItemId: "inventory_1",
+          quantity: quoteMaterial.quantity,
+        },
+      ],
+    });
   });
 
   it("does not create an order when the quote is not accepted or is already linked", async () => {

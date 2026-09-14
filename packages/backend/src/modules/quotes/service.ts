@@ -15,6 +15,19 @@ const quoteInclude = {
 } as const;
 const READ_EXPIRATION_ACTOR = "system:quote-expiration";
 
+function materialCreateInput(
+  materials: Array<{ inventoryItemId: string; quantity: Prisma.Decimal }>,
+) {
+  return materials.length > 0
+    ? {
+        create: materials.map((material) => ({
+          inventoryItemId: material.inventoryItemId,
+          quantity: material.quantity,
+        })),
+      }
+    : undefined;
+}
+
 function quoteData(input: CreateQuoteInput) {
   const items = input.items.map((item) => ({
     description: item.description,
@@ -24,14 +37,12 @@ function quoteData(input: CreateQuoteInput) {
       .mul(toPrismaDecimal(item.unitPrice))
       .toDecimalPlaces(2),
     specifications: item.specifications as Prisma.InputJsonValue | undefined,
-    materials: item.materials
-      ? {
-          create: item.materials.map((material) => ({
-            inventoryItemId: material.inventoryItemId,
-            quantity: toPrismaDecimal(material.quantity),
-          })),
-        }
-      : undefined,
+    materials: materialCreateInput(
+      (item.materials ?? []).map((material) => ({
+        inventoryItemId: material.inventoryItemId,
+        quantity: toPrismaDecimal(material.quantity),
+      })),
+    ),
   }));
   const subtotal = items.reduce(
     (sum, item) => sum.add(item.total),
@@ -370,6 +381,7 @@ export async function convertQuote(
                 unitPrice: item.unitPrice,
                 total: item.total,
                 specifications: item.specifications ?? undefined,
+                materials: materialCreateInput(item.materials),
               })),
             },
           },
@@ -387,7 +399,9 @@ export async function convertQuote(
         const completeOrder = await tx.customerOrder.findUniqueOrThrow({
           where: { id: order.id },
           include: {
-            items: true,
+            items: {
+              include: { materials: { include: { inventoryItem: true } } },
+            },
             jobs: { include: { stage: true, events: true } },
           },
         });
