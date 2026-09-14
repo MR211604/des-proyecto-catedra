@@ -10,7 +10,7 @@ import type { CreateQuoteInput, ListQuotesQuery } from "./schema.js";
 const ENTITY_TYPE = "Quote";
 const quoteInclude = {
   client: true,
-  items: true,
+  items: { include: { materials: { include: { inventoryItem: true } } } },
   order: { include: { items: true } },
 } as const;
 const READ_EXPIRATION_ACTOR = "system:quote-expiration";
@@ -24,6 +24,14 @@ function quoteData(input: CreateQuoteInput) {
       .mul(toPrismaDecimal(item.unitPrice))
       .toDecimalPlaces(2),
     specifications: item.specifications as Prisma.InputJsonValue | undefined,
+    materials: item.materials
+      ? {
+          create: item.materials.map((material) => ({
+            inventoryItemId: material.inventoryItemId,
+            quantity: toPrismaDecimal(material.quantity),
+          })),
+        }
+      : undefined,
   }));
   const subtotal = items.reduce(
     (sum, item) => sum.add(item.total),
@@ -40,6 +48,47 @@ function quoteData(input: CreateQuoteInput) {
   };
 }
 
+async function validateMaterials(
+  tx: typeof prisma,
+  input: CreateQuoteInput,
+) {
+  const entries = input.items.flatMap((item, itemIndex) =>
+    (item.materials ?? []).map((material) => ({ itemIndex, material })),
+  );
+  if (entries.length === 0) return;
+
+  const inventoryIds = [
+    ...new Set(entries.map(({ material }) => material.inventoryItemId)),
+  ];
+  const inventoryItems = await tx.inventoryItem.findMany({
+    where: { id: { in: inventoryIds }, deletedAt: null },
+    select: { id: true, unit: true },
+  });
+  const inventoryById = new Map(
+    inventoryItems.map((inventoryItem) => [inventoryItem.id, inventoryItem]),
+  );
+
+  const seenPerItem = new Map<number, Set<string>>();
+  for (const { itemIndex, material } of entries) {
+    const inventoryItem = inventoryById.get(material.inventoryItemId);
+    if (!inventoryItem) {
+      throw new AppError(400, "Material not found or deactivated");
+    }
+    if (material.unit !== inventoryItem.unit) {
+      throw new AppError(
+        400,
+        "Material unit does not match the inventory item unit",
+      );
+    }
+    const seen = seenPerItem.get(itemIndex) ?? new Set<string>();
+    if (seen.has(material.inventoryItemId)) {
+      throw new AppError(400, "Duplicate material within the same quote item");
+    }
+    seen.add(material.inventoryItemId);
+    seenPerItem.set(itemIndex, seen);
+  }
+}
+
 export async function createQuote(input: CreateQuoteInput, actorId: string) {
   const data = quoteData(input);
 
@@ -49,6 +98,7 @@ export async function createQuote(input: CreateQuoteInput, actorId: string) {
         where: { id: data.clientId, deletedAt: null },
       });
       if (!client) throw new AppError(404, "Active client not found");
+      await validateMaterials(tx as typeof prisma, input);
       const quote = await tx.quote.create({
         data: {
           clientId: data.clientId,
@@ -389,6 +439,7 @@ export async function updateQuote(
         where: { id: data.clientId, deletedAt: null },
       });
       if (!client) throw new AppError(404, "Active client not found");
+      await validateMaterials(tx as typeof prisma, input);
 
       const quote = await tx.quote.update({
         where: { id },

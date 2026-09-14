@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { inventoryItemSchema } from "../../inventory/docs/schemas.js";
 import {
   bearerAuth,
   errorResponseSchema,
@@ -19,7 +20,23 @@ const validationResponse = {
   },
 };
 
+const materialResponse = z.object({
+  id: z.string(),
+  quoteItemId: z.string(),
+  inventoryItemId: z.string(),
+  quantity: z.string(),
+  inventoryItem: inventoryItemSchema,
+});
 const quoteItemResponse = z.object({
+  id: z.string(),
+  description: z.string(),
+  quantity: z.string(),
+  unitPrice: z.string(),
+  total: z.string(),
+  specifications: z.unknown().nullable(),
+  materials: z.array(materialResponse),
+});
+const nestedOrderItemResponse = z.object({
   id: z.string(),
   description: z.string(),
   quantity: z.string(),
@@ -51,7 +68,7 @@ const quoteResponse = z.object({
       status: z.string(),
       dueDate: z.string().nullable(),
       notes: z.string().nullable(),
-      items: z.array(quoteItemResponse),
+      items: z.array(nestedOrderItemResponse),
     })
     .nullable(),
 });

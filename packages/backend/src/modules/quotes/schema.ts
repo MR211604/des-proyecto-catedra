@@ -1,20 +1,29 @@
 import { z } from "zod";
+import { unitOfMeasureSchema } from "../inventory/schema.js";
 
 const decimalString = (scale: number, label: string) =>
   z.string().regex(new RegExp(`^\\d+(?:\\.\\d{1,${scale}})?$`), {
     message: `${label} must be a decimal string with at most ${scale} decimal places`,
   });
 
+const positiveDecimal = (scale: number, label: string) =>
+  decimalString(scale, label).refine(
+    (value) => value !== "0" && !/^0+(?:\.0+)?$/.test(value),
+    { message: `${label} must be greater than zero` },
+  );
+
+export const quoteItemMaterialSchema = z.object({
+  inventoryItemId: z.string().trim().min(1),
+  quantity: positiveDecimal(3, "Material quantity"),
+  unit: unitOfMeasureSchema,
+});
+
 export const quoteItemSchema = z.object({
   description: z.string().trim().min(1).max(500),
-  quantity: decimalString(3, "Quantity").refine(
-    (value) => value !== "0" && !/^0+(?:\.0+)?$/.test(value),
-    {
-      message: "Quantity must be greater than zero",
-    },
-  ),
+  quantity: positiveDecimal(3, "Quantity"),
   unitPrice: decimalString(2, "Unit price"),
   specifications: z.unknown().optional(),
+  materials: z.array(quoteItemMaterialSchema).optional(),
 });
 
 export const createQuoteSchema = z.object({

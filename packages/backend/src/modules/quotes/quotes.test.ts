@@ -1,7 +1,7 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { errorHandler } from "../../middleware/errors.js";
+import { AppError, errorHandler } from "../../middleware/errors.js";
 
 const auth = vi.hoisted(() => ({
   isAuthenticated: true,
@@ -117,6 +117,203 @@ describe("Quotes HTTP contract", () => {
       },
       "user_1",
     );
+  });
+
+  it("passes a per-item material list to the service on create", async () => {
+    const quote = {
+      clientId: "client_1",
+      items: [
+        {
+          description: "Hem",
+          quantity: "2",
+          unitPrice: "10",
+          materials: [
+            { inventoryItemId: "item_1", quantity: "1.5", unit: "METER" },
+          ],
+        },
+      ],
+    };
+
+    const response = await request(testApp()).post("/quotes").send(quote);
+
+    expect(response.status).toBe(201);
+    expect(vi.mocked(createQuote)).toHaveBeenCalledWith(quote, "user_1");
+    expect(response.body.items[0].materials).toEqual([
+      { inventoryItemId: "item_1", quantity: "1.5", unit: "METER" },
+    ]);
+  });
+
+  it("rejects a material with a non-positive quantity", async () => {
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "0", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Validation failed");
+    expect(createQuote).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material whose unit is outside the unit vocabulary", async () => {
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "BOXES" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Validation failed");
+    expect(createQuote).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material without an inventory item id", async () => {
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [{ quantity: "1", unit: "METER" }],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Validation failed");
+    expect(createQuote).not.toHaveBeenCalled();
+  });
+
+  it("rejects a material that does not exist or is deactivated with 400", async () => {
+    vi.mocked(createQuote).mockRejectedValueOnce(
+      new AppError(400, "Material not found or deactivated"),
+    );
+
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_missing", quantity: "1", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Material not found or deactivated");
+  });
+
+  it("rejects a material whose unit differs from the inventory item unit with 400", async () => {
+    vi.mocked(createQuote).mockRejectedValueOnce(
+      new AppError(400, "Material unit does not match the inventory item unit"),
+    );
+
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "ROLL" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Material unit does not match the inventory item unit",
+    );
+  });
+
+  it("rejects duplicate materials within the same quote item with 400", async () => {
+    vi.mocked(createQuote).mockRejectedValueOnce(
+      new AppError(400, "Duplicate material within the same quote item"),
+    );
+
+    const response = await request(testApp())
+      .post("/quotes")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "METER" },
+              { inventoryItemId: "item_1", quantity: "2", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Duplicate material within the same quote item",
+    );
+  });
+
+  it("rejects duplicate materials within the same quote item on update with 400", async () => {
+    vi.mocked(updateQuote).mockRejectedValueOnce(
+      new AppError(400, "Duplicate material within the same quote item"),
+    );
+
+    const response = await request(testApp())
+      .put("/quotes/quote_1")
+      .send({
+        clientId: "client_1",
+        items: [
+          {
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            materials: [
+              { inventoryItemId: "item_1", quantity: "1", unit: "METER" },
+              { inventoryItemId: "item_1", quantity: "2", unit: "METER" },
+            ],
+          },
+        ],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Duplicate material within the same quote item",
+    );
+    expect(updateQuote).toHaveBeenCalled();
   });
 
   it("rejects a quote without items or with invalid decimal values", async () => {
