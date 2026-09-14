@@ -112,6 +112,18 @@ _Avoid_: minimum stock, depletion limit
 A record of a change in a material's on-hand quantity caused by a receipt, issue, sale, return, or adjustment.
 _Avoid_: stock update, transaction
 
+**Material List**:
+The set of materials planned for an order item or an order, each identified by a material and a quantity.
+_Avoid_: recipe, bill of materials, specification
+
+**Material Issue**:
+The stock movement that takes materials out of inventory when an order enters production, reducing the material's on-hand quantity.
+_Avoid_: consumption, withdrawal
+
+**Material Return**:
+The stock movement that puts materials back into inventory, either because an order was cancelled or because leftover material was returned by hand.
+_Avoid_: refund, reversal
+
 **Supplier**:
 A person or business that may be associated with supplying a material. A supplier is not an operational ERP actor and is not required for every material.
 _Avoid_: customer, vendor
