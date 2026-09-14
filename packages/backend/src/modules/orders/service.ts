@@ -1,5 +1,5 @@
 import { prisma } from "../../db/prisma.js";
-import { Prisma } from "../../generated/prisma/client.js";
+import { type $Enums, Prisma } from "../../generated/prisma/client.js";
 import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { type ActiveStage, deriveJobStatus } from "../production/service.js";
@@ -377,39 +377,118 @@ async function issueMaterialsForStart(
 
   for (const { orderItemId, material } of entries) {
     const inventoryItem = inventoryById.get(material.inventoryItemId);
-    const running = runningQuantity.get(material.inventoryItemId);
-    if (!inventoryItem || running === undefined) {
+    if (!inventoryItem) {
       throw new AppError(409, "Material not found or deactivated");
     }
-    const updated = running.sub(material.quantity);
-    runningQuantity.set(material.inventoryItemId, updated);
-
-    const movement = await tx.stockMovement.create({
-      data: {
+    await applyStockMovement(
+      tx as typeof prisma,
+      {
         itemId: material.inventoryItemId,
         orderItemId,
         type: "ISSUE",
         quantity: material.quantity,
         unit: inventoryItem.unit,
-        reference: null,
         reason: "production",
         actorId,
       },
-    });
+      inventoryById,
+      runningQuantity,
+    );
+  }
+}
 
-    await tx.inventoryItem.update({
-      where: { id: material.inventoryItemId },
-      data: { quantity: updated },
-    });
+async function applyStockMovement(
+  tx: typeof prisma,
+  entry: {
+    itemId: string;
+    orderItemId: string | null;
+    type: "ISSUE" | "RETURN";
+    quantity: Prisma.Decimal;
+    unit: $Enums.UnitOfMeasure;
+    reason: string;
+    actorId: string;
+  },
+  inventoryById: ReadonlyMap<string, { id: string; quantity: Prisma.Decimal }>,
+  runningQuantity: Map<string, Prisma.Decimal>,
+) {
+  const inventoryItem = inventoryById.get(entry.itemId);
+  if (!inventoryItem) {
+    throw new AppError(409, "Material not found or deactivated");
+  }
+  const running = runningQuantity.get(entry.itemId) ?? inventoryItem.quantity;
+  const updated =
+    entry.type === "ISSUE"
+      ? running.sub(entry.quantity)
+      : running.add(entry.quantity);
+  runningQuantity.set(entry.itemId, updated);
 
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "stock-movement.created",
-      entityType: "StockMovement",
-      entityId: movement.id,
-      before: serialize({ itemId: material.inventoryItemId, quantity: running }),
-      after: serialize({ itemId: material.inventoryItemId, quantity: updated }),
-    });
+  const movement = await tx.stockMovement.create({
+    data: {
+      itemId: entry.itemId,
+      orderItemId: entry.orderItemId,
+      type: entry.type,
+      quantity: entry.quantity,
+      unit: entry.unit,
+      reference: null,
+      reason: entry.reason,
+      actorId: entry.actorId,
+    },
+  });
+
+  await tx.inventoryItem.update({
+    where: { id: entry.itemId },
+    data: { quantity: updated },
+  });
+
+  await createAuditLog(tx, {
+    actorId: entry.actorId,
+    action: "stock-movement.created",
+    entityType: "StockMovement",
+    entityId: movement.id,
+    before: serialize({ itemId: entry.itemId, quantity: running }),
+    after: serialize({ itemId: entry.itemId, quantity: updated }),
+  });
+}
+
+async function returnMaterialsForCancel(
+  tx: typeof prisma,
+  items: Array<{ id: string }>,
+  actorId: string,
+) {
+  const orderItemIds = items.map((item) => item.id);
+  if (orderItemIds.length === 0) return;
+
+  const issuedMovements = await tx.stockMovement.findMany({
+    where: { orderItemId: { in: orderItemIds }, type: "ISSUE" },
+  });
+  if (issuedMovements.length === 0) return;
+
+  const inventoryIds = [
+    ...new Set(issuedMovements.map((movement) => movement.itemId)),
+  ];
+  const inventoryItems = await tx.inventoryItem.findMany({
+    where: { id: { in: inventoryIds } },
+  });
+  const inventoryById = new Map(
+    inventoryItems.map((inventoryItem) => [inventoryItem.id, inventoryItem]),
+  );
+  const runningQuantity = new Map<string, Prisma.Decimal>();
+
+  for (const movement of issuedMovements) {
+    await applyStockMovement(
+      tx as typeof prisma,
+      {
+        itemId: movement.itemId,
+        orderItemId: movement.orderItemId,
+        type: "RETURN",
+        quantity: movement.quantity,
+        unit: movement.unit,
+        reason: "cancellation",
+        actorId,
+      },
+      inventoryById,
+      runningQuantity,
+    );
   }
 }
 
@@ -473,6 +552,11 @@ async function transitionOrder(
             );
           }
           toStatus = "CANCELLED";
+          await returnMaterialsForCancel(
+            tx as typeof prisma,
+            before.items,
+            actorId,
+          );
         }
 
         const after = await tx.customerOrder.update({

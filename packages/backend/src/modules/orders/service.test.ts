@@ -18,6 +18,7 @@ const {
   jobDeleteMany,
   orderItemDeleteMany,
   movementCreate,
+  movementFindMany,
   audit,
 } = vi.hoisted(() => ({
   transaction: vi.fn(),
@@ -35,6 +36,7 @@ const {
   jobDeleteMany: vi.fn(),
   orderItemDeleteMany: vi.fn(),
   movementCreate: vi.fn(),
+  movementFindMany: vi.fn(),
   audit: vi.fn(),
 }));
 
@@ -54,14 +56,13 @@ vi.mock("../../db/prisma.js", () => ({
     },
     productionJob: { createMany: jobCreateMany, deleteMany: jobDeleteMany },
     orderItem: { deleteMany: orderItemDeleteMany },
-    stockMovement: { create: movementCreate },
+    stockMovement: { create: movementCreate, findMany: movementFindMany },
   },
 }));
 vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
-const { createOrder, updateOrder, startOrderProduction } = await import(
-  "./service.js"
-);
+const { createOrder, updateOrder, startOrderProduction, cancelOrder } =
+  await import("./service.js");
 import type { CreateOrderInput } from "./schema.js";
 
 const inventoryItem = {
@@ -182,7 +183,7 @@ const tx = {
   },
   productionJob: { createMany: jobCreateMany, deleteMany: jobDeleteMany },
   orderItem: { deleteMany: orderItemDeleteMany },
-  stockMovement: { create: movementCreate },
+  stockMovement: { create: movementCreate, findMany: movementFindMany },
 };
 
 beforeEach(() => {
@@ -208,6 +209,7 @@ beforeEach(() => {
   jobDeleteMany.mockResolvedValue(undefined);
   orderItemDeleteMany.mockResolvedValue(undefined);
   movementCreate.mockResolvedValue({ id: "movement_1" });
+  movementFindMany.mockResolvedValue([]);
   inventoryItemUpdate.mockResolvedValue(inventoryItem);
   audit.mockResolvedValue(undefined);
 });
@@ -498,5 +500,235 @@ describe("orders service production start material issue", () => {
     expect(inventoryItemFindMany).not.toHaveBeenCalled();
     expect(movementCreate).not.toHaveBeenCalled();
     expect(inventoryItemUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("orders service cancellation material returns", () => {
+  const issuedMovement = {
+    id: "movement_1",
+    itemId: "inventory_1",
+    orderItemId: "item_1",
+    type: "ISSUE",
+    quantity: new Prisma.Decimal("2.500"),
+    unit: "METER",
+    reference: null,
+    reason: "production",
+    actorId: "user_1",
+    createdAt: new Date("2026-09-02T00:00:00.000Z"),
+  };
+
+  it("mirrors each production ISSUE with a RETURN and restores the on-hand quantity", async () => {
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      status: "IN_PRODUCTION",
+    });
+    movementFindMany.mockResolvedValue([issuedMovement]);
+    inventoryItemFindMany.mockResolvedValue([
+      { ...inventoryItem, quantity: new Prisma.Decimal("7.500") },
+    ]);
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "CANCELLED",
+    });
+
+    await expect(cancelOrder("order_1", "user_2")).resolves.toMatchObject({
+      id: "order_1",
+      status: "CANCELLED",
+    });
+
+    expect(movementFindMany).toHaveBeenCalledWith({
+      where: { orderItemId: { in: ["item_1"] }, type: "ISSUE" },
+    });
+    expect(movementCreate).toHaveBeenCalledWith({
+      data: {
+        itemId: "inventory_1",
+        orderItemId: "item_1",
+        type: "RETURN",
+        quantity: new Prisma.Decimal("2.500"),
+        unit: "METER",
+        reference: null,
+        reason: "cancellation",
+        actorId: "user_2",
+      },
+    });
+    expect(inventoryItemUpdate).toHaveBeenCalledWith({
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("10") },
+    });
+    expect(orderUpdate).toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        actorId: "user_2",
+        action: "stock-movement.created",
+        entityType: "StockMovement",
+        before: expect.objectContaining({ quantity: "7.5" }),
+        after: expect.objectContaining({ quantity: "10" }),
+      }),
+    );
+  });
+
+  it("returns every issued movement across multiple order items", async () => {
+    const secondIssuedMovement = {
+      ...issuedMovement,
+      id: "movement_2",
+      itemId: "inventory_2",
+      orderItemId: "item_2",
+    };
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      status: "IN_PRODUCTION",
+      items: [
+        { ...orderItem, id: "item_1" },
+        { ...orderItem, id: "item_2" },
+      ],
+    });
+    movementFindMany.mockResolvedValue([issuedMovement, secondIssuedMovement]);
+    inventoryItemFindMany.mockResolvedValue([
+      { ...inventoryItem, id: "inventory_1", quantity: new Prisma.Decimal("7.500") },
+      { ...inventoryItem, id: "inventory_2", quantity: new Prisma.Decimal("3.000") },
+    ]);
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "CANCELLED",
+    });
+
+    await expect(cancelOrder("order_1", "user_2")).resolves.toMatchObject({
+      id: "order_1",
+      status: "CANCELLED",
+    });
+
+    expect(movementFindMany).toHaveBeenCalledWith({
+      where: { orderItemId: { in: ["item_1", "item_2"] }, type: "ISSUE" },
+    });
+    expect(movementCreate).toHaveBeenNthCalledWith(1, {
+      data: {
+        itemId: "inventory_1",
+        orderItemId: "item_1",
+        type: "RETURN",
+        quantity: new Prisma.Decimal("2.500"),
+        unit: "METER",
+        reference: null,
+        reason: "cancellation",
+        actorId: "user_2",
+      },
+    });
+    expect(movementCreate).toHaveBeenNthCalledWith(2, {
+      data: {
+        itemId: "inventory_2",
+        orderItemId: "item_2",
+        type: "RETURN",
+        quantity: new Prisma.Decimal("2.500"),
+        unit: "METER",
+        reference: null,
+        reason: "cancellation",
+        actorId: "user_2",
+      },
+    });
+    expect(inventoryItemUpdate).toHaveBeenNthCalledWith(1, {
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("10") },
+    });
+    expect(inventoryItemUpdate).toHaveBeenNthCalledWith(2, {
+      where: { id: "inventory_2" },
+      data: { quantity: new Prisma.Decimal("5.5") },
+    });
+  });
+
+  it("accumulates returns when multiple ISSUE movements target the same inventory item", async () => {
+    const secondIssuedMovement = {
+      ...issuedMovement,
+      id: "movement_2",
+      orderItemId: "item_2",
+    };
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      status: "IN_PRODUCTION",
+      items: [
+        { ...orderItem, id: "item_1" },
+        { ...orderItem, id: "item_2" },
+      ],
+    });
+    movementFindMany.mockResolvedValue([issuedMovement, secondIssuedMovement]);
+    inventoryItemFindMany.mockResolvedValue([
+      { ...inventoryItem, quantity: new Prisma.Decimal("4.000") },
+    ]);
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "CANCELLED",
+    });
+
+    await expect(cancelOrder("order_1", "user_2")).resolves.toMatchObject({
+      id: "order_1",
+      status: "CANCELLED",
+    });
+
+    expect(movementCreate).toHaveBeenCalledTimes(2);
+    expect(inventoryItemUpdate).toHaveBeenNthCalledWith(1, {
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("6.5") },
+    });
+    expect(inventoryItemUpdate).toHaveBeenNthCalledWith(2, {
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("9") },
+    });
+  });
+
+  it("still returns stock for an inventory item deactivated after issue", async () => {
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      status: "IN_PRODUCTION",
+    });
+    movementFindMany.mockResolvedValue([issuedMovement]);
+    inventoryItemFindMany.mockResolvedValue([
+      {
+        ...inventoryItem,
+        quantity: new Prisma.Decimal("7.500"),
+        deletedAt: new Date("2026-09-05T00:00:00.000Z"),
+      },
+    ]);
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "CANCELLED",
+    });
+
+    await expect(cancelOrder("order_1", "user_2")).resolves.toMatchObject({
+      id: "order_1",
+      status: "CANCELLED",
+    });
+
+    expect(inventoryItemFindMany).toHaveBeenCalledWith({
+      where: { id: { in: ["inventory_1"] } },
+    });
+    expect(movementCreate).toHaveBeenCalledTimes(1);
+    expect(inventoryItemUpdate).toHaveBeenCalledWith({
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("10") },
+    });
+  });
+
+  it("leaves inventory untouched when the order has no issued materials", async () => {
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      status: "IN_PRODUCTION",
+    });
+    movementFindMany.mockResolvedValue([]);
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "CANCELLED",
+    });
+
+    await expect(cancelOrder("order_1", "user_2")).resolves.toMatchObject({
+      id: "order_1",
+      status: "CANCELLED",
+    });
+
+    expect(inventoryItemFindMany).not.toHaveBeenCalled();
+    expect(movementCreate).not.toHaveBeenCalled();
+    expect(inventoryItemUpdate).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ action: "stock-movement.created" }),
+    );
   });
 });
