@@ -322,6 +322,7 @@ export async function listStockMovements(
   const [data, total] = await Promise.all([
     prisma.stockMovement.findMany({
       where,
+      include: { orderItem: true },
       orderBy: { createdAt: order },
       skip: (page - 1) * limit,
       take: limit,

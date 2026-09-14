@@ -6,6 +6,7 @@ const {
   transaction,
   clientFindFirst,
   inventoryItemFindMany,
+  inventoryItemUpdate,
   stageFindMany,
   orderCreate,
   orderFindUnique,
@@ -16,11 +17,13 @@ const {
   jobCreateMany,
   jobDeleteMany,
   orderItemDeleteMany,
+  movementCreate,
   audit,
 } = vi.hoisted(() => ({
   transaction: vi.fn(),
   clientFindFirst: vi.fn(),
   inventoryItemFindMany: vi.fn(),
+  inventoryItemUpdate: vi.fn(),
   stageFindMany: vi.fn(),
   orderCreate: vi.fn(),
   orderFindUnique: vi.fn(),
@@ -31,6 +34,7 @@ const {
   jobCreateMany: vi.fn(),
   jobDeleteMany: vi.fn(),
   orderItemDeleteMany: vi.fn(),
+  movementCreate: vi.fn(),
   audit: vi.fn(),
 }));
 
@@ -38,7 +42,7 @@ vi.mock("../../db/prisma.js", () => ({
   prisma: {
     $transaction: transaction,
     client: { findFirst: clientFindFirst },
-    inventoryItem: { findMany: inventoryItemFindMany },
+    inventoryItem: { findMany: inventoryItemFindMany, update: inventoryItemUpdate },
     productionStage: { findMany: stageFindMany },
     customerOrder: {
       create: orderCreate,
@@ -50,11 +54,14 @@ vi.mock("../../db/prisma.js", () => ({
     },
     productionJob: { createMany: jobCreateMany, deleteMany: jobDeleteMany },
     orderItem: { deleteMany: orderItemDeleteMany },
+    stockMovement: { create: movementCreate },
   },
 }));
 vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
-const { createOrder, updateOrder } = await import("./service.js");
+const { createOrder, updateOrder, startOrderProduction } = await import(
+  "./service.js"
+);
 import type { CreateOrderInput } from "./schema.js";
 
 const inventoryItem = {
@@ -163,7 +170,7 @@ const baseInput: CreateOrderInput = {
 
 const tx = {
   client: { findFirst: clientFindFirst },
-  inventoryItem: { findMany: inventoryItemFindMany },
+  inventoryItem: { findMany: inventoryItemFindMany, update: inventoryItemUpdate },
   productionStage: { findMany: stageFindMany },
   customerOrder: {
     create: orderCreate,
@@ -175,6 +182,7 @@ const tx = {
   },
   productionJob: { createMany: jobCreateMany, deleteMany: jobDeleteMany },
   orderItem: { deleteMany: orderItemDeleteMany },
+  stockMovement: { create: movementCreate },
 };
 
 beforeEach(() => {
@@ -190,10 +198,17 @@ beforeEach(() => {
   orderFindUniqueOrThrow.mockResolvedValue(order);
   orderFindMany.mockResolvedValue([order]);
   orderCount.mockResolvedValue(1);
-  orderUpdate.mockResolvedValue({ ...order, items: [orderItem] });
+  orderUpdate.mockResolvedValue({
+    ...order,
+    status: "IN_PRODUCTION",
+    lockedAt: new Date("2026-09-01T00:00:00.000Z"),
+    items: [orderItem],
+  });
   jobCreateMany.mockResolvedValue(undefined);
   jobDeleteMany.mockResolvedValue(undefined);
   orderItemDeleteMany.mockResolvedValue(undefined);
+  movementCreate.mockResolvedValue({ id: "movement_1" });
+  inventoryItemUpdate.mockResolvedValue(inventoryItem);
   audit.mockResolvedValue(undefined);
 });
 
@@ -356,5 +371,132 @@ describe("orders service material lists", () => {
       new AppError(409, "Orders with production activity cannot be updated"),
     );
     expect(orderUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("orders service production start material issue", () => {
+  it("issues one movement per order-item material and decrements stock", async () => {
+    await expect(
+      startOrderProduction("order_1", "user_1"),
+    ).resolves.toMatchObject({
+      id: "order_1",
+      status: "IN_PRODUCTION",
+    });
+
+    expect(movementCreate).toHaveBeenCalledWith({
+      data: {
+        itemId: "inventory_1",
+        orderItemId: "item_1",
+        type: "ISSUE",
+        quantity: new Prisma.Decimal("2.500"),
+        unit: "METER",
+        reference: null,
+        reason: "production",
+        actorId: "user_1",
+      },
+    });
+    expect(inventoryItemUpdate).toHaveBeenCalledWith({
+      where: { id: "inventory_1" },
+      data: { quantity: new Prisma.Decimal("7.5") },
+    });
+    expect(orderUpdate).toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ action: "order.started", actorId: "user_1" }),
+    );
+    expect(audit).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        actorId: "user_1",
+        action: "stock-movement.created",
+        entityType: "StockMovement",
+        before: expect.objectContaining({ quantity: "10" }),
+        after: expect.objectContaining({ quantity: "7.5" }),
+      }),
+    );
+  });
+
+  it("issues every material across multiple order items", async () => {
+    const secondItem = {
+      ...orderItem,
+      id: "item_2",
+      materials: [
+        { ...material, id: "material_2", orderItemId: "item_2" },
+      ],
+    };
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      items: [{ ...orderItem, materials: [material] }, secondItem],
+    });
+
+    await expect(
+      startOrderProduction("order_1", "user_1"),
+    ).resolves.toMatchObject({ id: "order_1", status: "IN_PRODUCTION" });
+
+    expect(movementCreate).toHaveBeenCalledTimes(2);
+    expect(inventoryItemUpdate).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails with 409 when a material lacks stock and leaves nothing behind", async () => {
+    inventoryItemFindMany.mockResolvedValue([
+      { ...inventoryItem, quantity: new Prisma.Decimal("1.000") },
+    ]);
+
+    await expect(startOrderProduction("order_1", "user_1")).rejects.toEqual(
+      new AppError(409, "Insufficient stock to start production"),
+    );
+    expect(movementCreate).not.toHaveBeenCalled();
+    expect(inventoryItemUpdate).not.toHaveBeenCalled();
+    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("rejects starting when the combined demand exceeds available stock", async () => {
+    const secondItem = {
+      ...orderItem,
+      id: "item_2",
+      materials: [
+        { ...material, id: "material_2", orderItemId: "item_2" },
+      ],
+    };
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      items: [{ ...orderItem, materials: [material] }, secondItem],
+    });
+    inventoryItemFindMany.mockResolvedValue([
+      { ...inventoryItem, quantity: new Prisma.Decimal("4.000") },
+    ]);
+
+    await expect(startOrderProduction("order_1", "user_1")).rejects.toEqual(
+      new AppError(409, "Insufficient stock to start production"),
+    );
+    expect(movementCreate).not.toHaveBeenCalled();
+    expect(orderUpdate).not.toHaveBeenCalled();
+  });
+
+  it("fails with 409 when a material is missing or deactivated", async () => {
+    inventoryItemFindMany.mockResolvedValue([]);
+
+    await expect(startOrderProduction("order_1", "user_1")).rejects.toEqual(
+      new AppError(409, "Material not found or deactivated"),
+    );
+    expect(movementCreate).not.toHaveBeenCalled();
+    expect(inventoryItemUpdate).not.toHaveBeenCalled();
+    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("starts production without movements when the order has no materials", async () => {
+    orderFindUnique.mockResolvedValue({
+      ...order,
+      items: [{ ...orderItem, materials: [] }],
+    });
+
+    await expect(
+      startOrderProduction("order_1", "user_1"),
+    ).resolves.toMatchObject({ id: "order_1", status: "IN_PRODUCTION" });
+    expect(inventoryItemFindMany).not.toHaveBeenCalled();
+    expect(movementCreate).not.toHaveBeenCalled();
+    expect(inventoryItemUpdate).not.toHaveBeenCalled();
   });
 });

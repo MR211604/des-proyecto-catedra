@@ -76,6 +76,7 @@ const item = {
 const movement = {
   id: "movement_1",
   itemId: "item_1",
+  orderItemId: null,
   type: "RECEIPT",
   quantity: new Prisma.Decimal("2.500"),
   unit: "METER",
@@ -83,6 +84,22 @@ const movement = {
   reason: null,
   actorId: "user_1",
   createdAt: new Date("2026-09-02T00:00:00.000Z"),
+};
+
+const issuedMovement = {
+  ...movement,
+  orderItemId: "order_item_1",
+  type: "ISSUE",
+  reason: "production",
+  orderItem: {
+    id: "order_item_1",
+    orderId: "order_1",
+    description: "Hem",
+    quantity: new Prisma.Decimal("2.000"),
+    unitPrice: new Prisma.Decimal("10.00"),
+    total: new Prisma.Decimal("20.00"),
+    specifications: null,
+  },
 };
 
 const tx = {
@@ -404,7 +421,7 @@ describe("inventory service persistence boundary", () => {
 
   it("lists movements most recent first with a type filter", async () => {
     itemFindUnique.mockResolvedValue(item);
-    movementFindMany.mockResolvedValue([movement]);
+    movementFindMany.mockResolvedValue([issuedMovement]);
     movementCount.mockResolvedValue(1);
 
     await expect(
@@ -415,12 +432,20 @@ describe("inventory service persistence boundary", () => {
         order: "desc",
       }),
     ).resolves.toMatchObject({
-      data: [{ id: "movement_1", quantity: "2.5" }],
+      data: [
+        {
+          id: "movement_1",
+          quantity: "2.5",
+          orderItemId: "order_item_1",
+          orderItem: { id: "order_item_1", orderId: "order_1" },
+        },
+      ],
       meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
     });
 
     expect(movementFindMany).toHaveBeenCalledWith({
       where: { itemId: "item_1", type: "ISSUE" },
+      include: { orderItem: true },
       orderBy: { createdAt: "desc" },
       skip: 0,
       take: 10,

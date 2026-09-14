@@ -323,6 +323,96 @@ export async function deleteOrder(id: string, actorId: string) {
   );
 }
 
+async function issueMaterialsForStart(
+  tx: typeof prisma,
+  items: Array<{
+    id: string;
+    materials: Array<{
+      inventoryItemId: string;
+      quantity: Prisma.Decimal;
+    }>;
+  }>,
+  actorId: string,
+) {
+  const entries = items.flatMap((item) =>
+    item.materials.map((material) => ({ orderItemId: item.id, material })),
+  );
+  if (entries.length === 0) return;
+
+  const inventoryIds = [
+    ...new Set(entries.map(({ material }) => material.inventoryItemId)),
+  ];
+  const inventoryItems = await tx.inventoryItem.findMany({
+    where: { id: { in: inventoryIds }, deletedAt: null },
+  });
+  const inventoryById = new Map(
+    inventoryItems.map((inventoryItem) => [inventoryItem.id, inventoryItem]),
+  );
+
+  const requiredByItem = new Map<string, Prisma.Decimal>();
+  for (const { material } of entries) {
+    const current = requiredByItem.get(material.inventoryItemId);
+    requiredByItem.set(
+      material.inventoryItemId,
+      (current ?? new Prisma.Decimal(0)).add(material.quantity),
+    );
+  }
+
+  for (const [inventoryItemId, required] of requiredByItem) {
+    const inventoryItem = inventoryById.get(inventoryItemId);
+    if (!inventoryItem) {
+      throw new AppError(409, "Material not found or deactivated");
+    }
+    if (inventoryItem.quantity.lessThan(required)) {
+      throw new AppError(409, "Insufficient stock to start production");
+    }
+  }
+
+  const runningQuantity = new Map(
+    inventoryItems.map((inventoryItem) => [
+      inventoryItem.id,
+      inventoryItem.quantity,
+    ]),
+  );
+
+  for (const { orderItemId, material } of entries) {
+    const inventoryItem = inventoryById.get(material.inventoryItemId);
+    const running = runningQuantity.get(material.inventoryItemId);
+    if (!inventoryItem || running === undefined) {
+      throw new AppError(409, "Material not found or deactivated");
+    }
+    const updated = running.sub(material.quantity);
+    runningQuantity.set(material.inventoryItemId, updated);
+
+    const movement = await tx.stockMovement.create({
+      data: {
+        itemId: material.inventoryItemId,
+        orderItemId,
+        type: "ISSUE",
+        quantity: material.quantity,
+        unit: inventoryItem.unit,
+        reference: null,
+        reason: "production",
+        actorId,
+      },
+    });
+
+    await tx.inventoryItem.update({
+      where: { id: material.inventoryItemId },
+      data: { quantity: updated },
+    });
+
+    await createAuditLog(tx as typeof prisma, {
+      actorId,
+      action: "stock-movement.created",
+      entityType: "StockMovement",
+      entityId: movement.id,
+      before: serialize({ itemId: material.inventoryItemId, quantity: running }),
+      after: serialize({ itemId: material.inventoryItemId, quantity: updated }),
+    });
+  }
+}
+
 async function transitionOrder(
   id: string,
   actorId: string,
@@ -346,6 +436,11 @@ async function transitionOrder(
             );
           }
           toStatus = "IN_PRODUCTION";
+          await issueMaterialsForStart(
+            tx as typeof prisma,
+            before.items,
+            actorId,
+          );
         } else if (operation === "ready") {
           if (before.status !== "IN_PRODUCTION") {
             throw new AppError(

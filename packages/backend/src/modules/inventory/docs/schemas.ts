@@ -30,9 +30,21 @@ export const inventoryItemSchema = z.object({
   deletedAt: z.iso.datetime().nullable().meta({ example: null }),
 });
 
+export const stockMovementOrderItemSchema = z.object({
+  id: z.string().meta({ example: "clx123abc456def" }),
+  orderId: z.string().meta({ example: "clx123abc456def" }),
+  description: z.string().meta({ example: "Hem" }),
+  quantity: z.string().meta({ example: "2.000" }),
+  unitPrice: z.string().meta({ example: "10.00" }),
+  total: z.string().meta({ example: "20.00" }),
+  specifications: z.unknown().nullable(),
+});
+
 export const stockMovementSchema = z.object({
   id: z.string().meta({ example: "clx123abc456def" }),
   itemId: z.string().meta({ example: "clx123abc456def" }),
+  orderItemId: z.string().nullable().meta({ example: "clx123abc456def" }),
+  orderItem: stockMovementOrderItemSchema.nullable(),
   type: z
     .enum(["RECEIPT", "ISSUE", "SALE", "ADJUSTMENT", "RETURN"])
     .meta({ example: "RECEIPT" }),

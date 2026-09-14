@@ -267,4 +267,15 @@ describe("Orders HTTP contract", () => {
       expect(operation).toHaveBeenCalledWith("order_1", "user_1");
     },
   );
+
+  it("surfaces a 409 when starting production fails on material availability", async () => {
+    vi.mocked(service.startOrderProduction).mockRejectedValueOnce(
+      new AppError(409, "Insufficient stock to start production"),
+    );
+
+    const response = await request(testApp()).post("/orders/order_1/start");
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toBe("Insufficient stock to start production");
+  });
 });
