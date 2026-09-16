@@ -14,7 +14,6 @@ const {
   movementCreate,
   movementFindMany,
   movementCount,
-  audit,
 } = vi.hoisted(() => ({
   transaction: vi.fn(),
   supplierFindFirst: vi.fn(),
@@ -27,7 +26,6 @@ const {
   movementCreate: vi.fn(),
   movementFindMany: vi.fn(),
   movementCount: vi.fn(),
-  audit: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
@@ -49,7 +47,6 @@ vi.mock("../../db/prisma.js", () => ({
     },
   },
 }));
-vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
 const {
   createInventoryItem,
@@ -82,7 +79,6 @@ const movement = {
   unit: "METER",
   reference: "PO-100",
   reason: null,
-  actorId: "user_1",
   createdAt: new Date("2026-09-02T00:00:00.000Z"),
 };
 
@@ -126,23 +122,19 @@ beforeEach(() => {
     async (_args: unknown, ..._rest: unknown[]) => item,
   );
   movementCreate.mockResolvedValue(movement);
-  audit.mockResolvedValue(undefined);
 });
 
 describe("inventory service persistence boundary", () => {
   it("parses item decimals and serializes exact string values", async () => {
     await expect(
-      createInventoryItem(
-        {
-          name: "Tela de algodón",
-          sku: "TEL-001",
-          unit: "METER",
-          quantity: "10.000",
-          reorderPoint: "5.000",
-          supplierId: "supplier_1",
-        },
-        "user_1",
-      ),
+      createInventoryItem({
+        name: "Tela de algodón",
+        sku: "TEL-001",
+        unit: "METER",
+        quantity: "10.000",
+        reorderPoint: "5.000",
+        supplierId: "supplier_1",
+      }),
     ).resolves.toMatchObject({
       id: "item_1",
       quantity: "10",
@@ -153,32 +145,19 @@ describe("inventory service persistence boundary", () => {
     expect(createCall.data.quantity).toEqual(new Prisma.Decimal("10.000"));
     expect(createCall.data.reorderPoint).toEqual(new Prisma.Decimal("5.000"));
     expect(createCall.data.sku).toBe("TEL-001");
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        actorId: "user_1",
-        action: "inventory-item.created",
-        entityType: "InventoryItem",
-        entityId: "item_1",
-        after: expect.objectContaining({ quantity: "10" }),
-      }),
-    );
   });
 
   it("rejects a create when the supplier does not exist or is deactivated", async () => {
     supplierFindFirst.mockResolvedValue(null);
 
     await expect(
-      createInventoryItem(
-        {
-          name: "Tela de algodón",
-          unit: "METER",
-          quantity: "10.000",
-          reorderPoint: "5.000",
-          supplierId: "supplier_missing",
-        },
-        "user_1",
-      ),
+      createInventoryItem({
+        name: "Tela de algodón",
+        unit: "METER",
+        quantity: "10.000",
+        reorderPoint: "5.000",
+        supplierId: "supplier_missing",
+      }),
     ).rejects.toEqual(new AppError(400, "Supplier not found or deactivated"));
     expect(itemCreate).not.toHaveBeenCalled();
   });
@@ -187,15 +166,12 @@ describe("inventory service persistence boundary", () => {
     supplierFindFirst.mockResolvedValue(null);
 
     await expect(
-      createInventoryItem(
-        {
-          name: "Tela de algodón",
-          unit: "METER",
-          quantity: "10.000",
-          reorderPoint: "5.000",
-        },
-        "user_1",
-      ),
+      createInventoryItem({
+        name: "Tela de algodón",
+        unit: "METER",
+        quantity: "10.000",
+        reorderPoint: "5.000",
+      }),
     ).resolves.toMatchObject({ id: "item_1" });
 
     const createCall = itemCreate.mock.calls[0]?.[0];
@@ -212,76 +188,52 @@ describe("inventory service persistence boundary", () => {
     );
 
     await expect(
-      createInventoryItem(
-        {
-          name: "Tela de algodón",
-          sku: "TEL-001",
-          unit: "METER",
-          quantity: "10.000",
-          reorderPoint: "5.000",
-        },
-        "user_1",
-      ),
+      createInventoryItem({
+        name: "Tela de algodón",
+        sku: "TEL-001",
+        unit: "METER",
+        quantity: "10.000",
+        reorderPoint: "5.000",
+      }),
     ).rejects.toEqual(new AppError(409, "Item with this SKU already exists"));
   });
 
   it("updates an item without touching its current quantity", async () => {
     await expect(
-      updateInventoryItem(
-        "item_1",
-        { name: "Tela premium", reorderPoint: "4.000", sku: "TEL-002" },
-        "user_1",
-      ),
+      updateInventoryItem("item_1", {
+        name: "Tela premium",
+        reorderPoint: "4.000",
+        sku: "TEL-002",
+      }),
     ).resolves.toMatchObject({ id: "item_1" });
 
     const updateCall = itemUpdate.mock.calls[0]?.[0];
     expect(updateCall.data.quantity).toBeUndefined();
     expect(updateCall.data.reorderPoint).toEqual(new Prisma.Decimal("4.000"));
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        action: "inventory-item.updated",
-        before: expect.objectContaining({ quantity: "10" }),
-        after: expect.objectContaining({ quantity: "10" }),
-      }),
-    );
   });
 
   it("re-validates the supplier when an update changes it", async () => {
     supplierFindFirst.mockResolvedValue(null);
 
     await expect(
-      updateInventoryItem(
-        "item_1",
-        { supplierId: "supplier_missing" },
-        "user_1",
-      ),
+      updateInventoryItem("item_1", { supplierId: "supplier_missing" }),
     ).rejects.toEqual(new AppError(400, "Supplier not found or deactivated"));
     expect(itemUpdate).not.toHaveBeenCalled();
   });
 
   it("soft-deletes an item and audits the deactivation", async () => {
-    await expect(
-      deleteInventoryItem("item_1", "user_1"),
-    ).resolves.toMatchObject({
+    await expect(deleteInventoryItem("item_1")).resolves.toMatchObject({
       id: "item_1",
     });
 
     const updateCall = itemUpdate.mock.calls[0]?.[0];
     expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        action: "inventory-item.deleted",
-        after: expect.objectContaining({ id: "item_1" }),
-      }),
-    );
   });
 
   it("rejects deactivating an already deactivated item", async () => {
     itemFindUnique.mockResolvedValue({ ...item, deletedAt: new Date() });
 
-    await expect(deleteInventoryItem("item_1", "user_1")).rejects.toEqual(
+    await expect(deleteInventoryItem("item_1")).rejects.toEqual(
       new AppError(409, "Item is already deleted"),
     );
     expect(itemUpdate).not.toHaveBeenCalled();
@@ -290,26 +242,16 @@ describe("inventory service persistence boundary", () => {
   it("restores a deactivated item and audits the reactivation", async () => {
     itemFindUnique.mockResolvedValue({ ...item, deletedAt: new Date() });
 
-    await expect(
-      restoreInventoryItem("item_1", "user_1"),
-    ).resolves.toMatchObject({
+    await expect(restoreInventoryItem("item_1")).resolves.toMatchObject({
       id: "item_1",
     });
 
     const updateCall = itemUpdate.mock.calls[0]?.[0];
     expect(updateCall.data.deletedAt).toBeNull();
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        action: "inventory-item.restored",
-        before: expect.objectContaining({ deletedAt: expect.any(String) }),
-        after: expect.objectContaining({ deletedAt: null }),
-      }),
-    );
   });
 
   it("rejects restoring an item that is not deactivated", async () => {
-    await expect(restoreInventoryItem("item_1", "user_1")).rejects.toEqual(
+    await expect(restoreInventoryItem("item_1")).rejects.toEqual(
       new AppError(409, "Item is not deleted"),
     );
     expect(itemUpdate).not.toHaveBeenCalled();
@@ -343,20 +285,8 @@ describe("inventory service persistence boundary", () => {
           type,
           quantity: new Prisma.Decimal(quantity),
           unit: "METER",
-          actorId: "user_1",
         }),
       });
-      expect(audit).toHaveBeenCalledWith(
-        tx,
-        expect.objectContaining({
-          actorId: "user_1",
-          action: "stock-movement.created",
-          entityType: "StockMovement",
-          entityId: "movement_1",
-          before: expect.objectContaining({ quantity: "10" }),
-          after: expect.objectContaining({ quantity: expectedQuantity }),
-        }),
-      );
     },
   );
 
@@ -365,7 +295,11 @@ describe("inventory service persistence boundary", () => {
       await expect(
         createStockMovement(
           "item_1",
-          { type, quantity: "12.000", unit: "METER" },
+          {
+            type,
+            quantity: "12.000",
+            unit: "METER",
+          },
           "user_1",
         ),
       ).rejects.toEqual(new AppError(409, "Stock cannot go below zero"));
@@ -377,7 +311,11 @@ describe("inventory service persistence boundary", () => {
     await expect(
       createStockMovement(
         "item_1",
-        { type: "ADJUSTMENT", quantity: "-15.000", unit: "METER" },
+        {
+          type: "ADJUSTMENT",
+          quantity: "-15.000",
+          unit: "METER",
+        },
         "user_1",
       ),
     ).resolves.toMatchObject({ id: "movement_1" });
@@ -388,7 +326,7 @@ describe("inventory service persistence boundary", () => {
 
   it("does not re-validate the supplier when an update keeps it unchanged", async () => {
     await expect(
-      updateInventoryItem("item_1", { supplierId: "supplier_1" }, "user_1"),
+      updateInventoryItem("item_1", { supplierId: "supplier_1" }),
     ).resolves.toMatchObject({ id: "item_1" });
     expect(supplierFindFirst).not.toHaveBeenCalled();
   });

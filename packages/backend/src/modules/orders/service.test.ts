@@ -19,7 +19,6 @@ const {
   orderItemDeleteMany,
   movementCreate,
   movementFindMany,
-  audit,
 } = vi.hoisted(() => ({
   transaction: vi.fn(),
   clientFindFirst: vi.fn(),
@@ -37,14 +36,16 @@ const {
   orderItemDeleteMany: vi.fn(),
   movementCreate: vi.fn(),
   movementFindMany: vi.fn(),
-  audit: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
   prisma: {
     $transaction: transaction,
     client: { findFirst: clientFindFirst },
-    inventoryItem: { findMany: inventoryItemFindMany, update: inventoryItemUpdate },
+    inventoryItem: {
+      findMany: inventoryItemFindMany,
+      update: inventoryItemUpdate,
+    },
     productionStage: { findMany: stageFindMany },
     customerOrder: {
       create: orderCreate,
@@ -59,10 +60,10 @@ vi.mock("../../db/prisma.js", () => ({
     stockMovement: { create: movementCreate, findMany: movementFindMany },
   },
 }));
-vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
 const { createOrder, updateOrder, startOrderProduction, cancelOrder } =
   await import("./service.js");
+
 import type { CreateOrderInput } from "./schema.js";
 
 const inventoryItem = {
@@ -171,7 +172,10 @@ const baseInput: CreateOrderInput = {
 
 const tx = {
   client: { findFirst: clientFindFirst },
-  inventoryItem: { findMany: inventoryItemFindMany, update: inventoryItemUpdate },
+  inventoryItem: {
+    findMany: inventoryItemFindMany,
+    update: inventoryItemUpdate,
+  },
   productionStage: { findMany: stageFindMany },
   customerOrder: {
     create: orderCreate,
@@ -211,12 +215,11 @@ beforeEach(() => {
   movementCreate.mockResolvedValue({ id: "movement_1" });
   movementFindMany.mockResolvedValue([]);
   inventoryItemUpdate.mockResolvedValue(inventoryItem);
-  audit.mockResolvedValue(undefined);
 });
 
 describe("orders service material lists", () => {
   it("persists each item's material list on creation", async () => {
-    await expect(createOrder(baseInput, "user_1")).resolves.toMatchObject({
+    await expect(createOrder(baseInput)).resolves.toMatchObject({
       id: "order_1",
       items: [
         {
@@ -259,7 +262,7 @@ describe("orders service material lists", () => {
       jobs: [{ stageId: "stage_1", description: "Hem", orderItemIndex: 0 }],
     };
 
-    await expect(createOrder(input, "user_1")).resolves.toMatchObject({
+    await expect(createOrder(input)).resolves.toMatchObject({
       id: "order_1",
     });
 
@@ -271,7 +274,7 @@ describe("orders service material lists", () => {
   it("rejects a material whose inventory item is missing or deactivated", async () => {
     inventoryItemFindMany.mockResolvedValue([]);
 
-    await expect(createOrder(baseInput, "user_1")).rejects.toEqual(
+    await expect(createOrder(baseInput)).rejects.toEqual(
       new AppError(400, "Material not found or deactivated"),
     );
     expect(orderCreate).not.toHaveBeenCalled();
@@ -282,7 +285,7 @@ describe("orders service material lists", () => {
       { id: "inventory_1", unit: "ROLL" },
     ]);
 
-    await expect(createOrder(baseInput, "user_1")).rejects.toEqual(
+    await expect(createOrder(baseInput)).rejects.toEqual(
       new AppError(400, "Material unit does not match the inventory item unit"),
     );
     expect(orderCreate).not.toHaveBeenCalled();
@@ -304,7 +307,7 @@ describe("orders service material lists", () => {
       ],
     };
 
-    await expect(createOrder(input, "user_1")).rejects.toEqual(
+    await expect(createOrder(input)).rejects.toEqual(
       new AppError(400, "Duplicate material within the same order item"),
     );
     expect(orderCreate).not.toHaveBeenCalled();
@@ -315,7 +318,7 @@ describe("orders service material lists", () => {
       { id: "inventory_1", unit: "METER" },
     ]);
 
-    await expect(createOrder(baseInput, "user_1")).resolves.toMatchObject({
+    await expect(createOrder(baseInput)).resolves.toMatchObject({
       id: "order_1",
     });
     expect(inventoryItemFindMany).toHaveBeenCalledTimes(1);
@@ -340,9 +343,9 @@ describe("orders service material lists", () => {
       ],
     };
 
-    await expect(
-      updateOrder("order_1", input, "user_1"),
-    ).resolves.toMatchObject({ id: "order_1" });
+    await expect(updateOrder("order_1", input)).resolves.toMatchObject({
+      id: "order_1",
+    });
 
     expect(orderItemDeleteMany).toHaveBeenCalledWith({
       where: { orderId: "order_1" },
@@ -369,7 +372,7 @@ describe("orders service material lists", () => {
       jobs: [{ ...job, status: "IN_PROGRESS" }],
     });
 
-    await expect(updateOrder("order_1", baseInput, "user_1")).rejects.toEqual(
+    await expect(updateOrder("order_1", baseInput)).rejects.toEqual(
       new AppError(409, "Orders with production activity cannot be updated"),
     );
     expect(orderUpdate).not.toHaveBeenCalled();
@@ -402,29 +405,13 @@ describe("orders service production start material issue", () => {
       data: { quantity: new Prisma.Decimal("7.5") },
     });
     expect(orderUpdate).toHaveBeenCalled();
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({ action: "order.started", actorId: "user_1" }),
-    );
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        actorId: "user_1",
-        action: "stock-movement.created",
-        entityType: "StockMovement",
-        before: expect.objectContaining({ quantity: "10" }),
-        after: expect.objectContaining({ quantity: "7.5" }),
-      }),
-    );
   });
 
   it("issues every material across multiple order items", async () => {
     const secondItem = {
       ...orderItem,
       id: "item_2",
-      materials: [
-        { ...material, id: "material_2", orderItemId: "item_2" },
-      ],
+      materials: [{ ...material, id: "material_2", orderItemId: "item_2" }],
     };
     orderFindUnique.mockResolvedValue({
       ...order,
@@ -450,16 +437,13 @@ describe("orders service production start material issue", () => {
     expect(movementCreate).not.toHaveBeenCalled();
     expect(inventoryItemUpdate).not.toHaveBeenCalled();
     expect(orderUpdate).not.toHaveBeenCalled();
-    expect(audit).not.toHaveBeenCalled();
   });
 
   it("rejects starting when the combined demand exceeds available stock", async () => {
     const secondItem = {
       ...orderItem,
       id: "item_2",
-      materials: [
-        { ...material, id: "material_2", orderItemId: "item_2" },
-      ],
+      materials: [{ ...material, id: "material_2", orderItemId: "item_2" }],
     };
     orderFindUnique.mockResolvedValue({
       ...order,
@@ -485,7 +469,6 @@ describe("orders service production start material issue", () => {
     expect(movementCreate).not.toHaveBeenCalled();
     expect(inventoryItemUpdate).not.toHaveBeenCalled();
     expect(orderUpdate).not.toHaveBeenCalled();
-    expect(audit).not.toHaveBeenCalled();
   });
 
   it("starts production without movements when the order has no materials", async () => {
@@ -556,16 +539,6 @@ describe("orders service cancellation material returns", () => {
       data: { quantity: new Prisma.Decimal("10") },
     });
     expect(orderUpdate).toHaveBeenCalled();
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        actorId: "user_2",
-        action: "stock-movement.created",
-        entityType: "StockMovement",
-        before: expect.objectContaining({ quantity: "7.5" }),
-        after: expect.objectContaining({ quantity: "10" }),
-      }),
-    );
   });
 
   it("returns every issued movement across multiple order items", async () => {
@@ -585,8 +558,16 @@ describe("orders service cancellation material returns", () => {
     });
     movementFindMany.mockResolvedValue([issuedMovement, secondIssuedMovement]);
     inventoryItemFindMany.mockResolvedValue([
-      { ...inventoryItem, id: "inventory_1", quantity: new Prisma.Decimal("7.500") },
-      { ...inventoryItem, id: "inventory_2", quantity: new Prisma.Decimal("3.000") },
+      {
+        ...inventoryItem,
+        id: "inventory_1",
+        quantity: new Prisma.Decimal("7.500"),
+      },
+      {
+        ...inventoryItem,
+        id: "inventory_2",
+        quantity: new Prisma.Decimal("3.000"),
+      },
     ]);
     orderUpdate.mockResolvedValue({
       ...order,
@@ -726,9 +707,5 @@ describe("orders service cancellation material returns", () => {
     expect(inventoryItemFindMany).not.toHaveBeenCalled();
     expect(movementCreate).not.toHaveBeenCalled();
     expect(inventoryItemUpdate).not.toHaveBeenCalled();
-    expect(audit).not.toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({ action: "stock-movement.created" }),
-    );
   });
 });

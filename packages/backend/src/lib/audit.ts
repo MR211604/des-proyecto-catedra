@@ -13,6 +13,7 @@ interface AuditLogParams {
   after?: unknown;
 }
 
+// LEER: createAuditLog será usado únicamente para ocasiones especiales. Este era responsable de consultas lógicas lentas dentro de Supabase.
 export async function createAuditLog(
   tx: PrismaClient | TransactionClient,
   params: AuditLogParams,
@@ -23,8 +24,14 @@ export async function createAuditLog(
       action: params.action,
       entityType: params.entityType,
       entityId: params.entityId,
-      before: params.before !== undefined ? (params.before as Prisma.InputJsonValue) : undefined,
-      after: params.after !== undefined ? (params.after as Prisma.InputJsonValue) : undefined,
+      before:
+        params.before !== undefined
+          ? (params.before as Prisma.InputJsonValue)
+          : undefined,
+      after:
+        params.after !== undefined
+          ? (params.after as Prisma.InputJsonValue)
+          : undefined,
     },
   });
 }

@@ -9,7 +9,6 @@ const {
   quoteCreate,
   quoteFindUnique,
   quoteUpdate,
-  audit,
 } = vi.hoisted(() => ({
   transaction: vi.fn(),
   clientFindFirst: vi.fn(),
@@ -17,7 +16,6 @@ const {
   quoteCreate: vi.fn(),
   quoteFindUnique: vi.fn(),
   quoteUpdate: vi.fn(),
-  audit: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
@@ -27,9 +25,9 @@ vi.mock("../../db/prisma.js", () => ({
     quote: { findUnique: quoteFindUnique },
   },
 }));
-vi.mock("../../lib/audit.js", () => ({ createAuditLog: audit }));
 
 const { createQuote, getQuoteById, updateQuote } = await import("./service.js");
+
 import type { CreateQuoteInput } from "./schema.js";
 
 const inventoryItem = {
@@ -113,27 +111,21 @@ const tx = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  transaction.mockImplementation(async (callback: (client: typeof tx) => unknown) =>
-    callback(tx),
+  transaction.mockImplementation(
+    async (callback: (client: typeof tx) => unknown) => callback(tx),
   );
   clientFindFirst.mockResolvedValue({ id: "client_1" });
   inventoryItemFindMany.mockResolvedValue([inventoryItem]);
   quoteCreate.mockResolvedValue(quote);
-  audit.mockResolvedValue(undefined);
 });
 
 describe("quote service persistence boundary", () => {
   it("calculates money with Prisma Decimal and serializes exact values", async () => {
     await expect(
-      createQuote(
-        {
-          clientId: "client_1",
-          items: [
-            { description: "Hem", quantity: "2.500", unitPrice: "10.00" },
-          ],
-        },
-        "user_1",
-      ),
+      createQuote({
+        clientId: "client_1",
+        items: [{ description: "Hem", quantity: "2.500", unitPrice: "10.00" }],
+      }),
     ).resolves.toMatchObject({ subtotal: "25", total: "25" });
 
     const createCall = quoteCreate.mock.calls[0]?.[0];
@@ -142,14 +134,6 @@ describe("quote service persistence boundary", () => {
     );
     expect(createCall.data.items.create[0].total).toEqual(
       new Prisma.Decimal("25.00"),
-    );
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        actorId: "user_1",
-        action: "quote.created",
-        after: expect.objectContaining({ total: "25" }),
-      }),
     );
   });
 
@@ -174,15 +158,6 @@ describe("quote service persistence boundary", () => {
       data: { status: "EXPIRED" },
       include: expect.anything(),
     });
-    expect(audit).toHaveBeenCalledWith(
-      tx,
-      expect.objectContaining({
-        actorId: "system:quote-expiration",
-        action: "quote.expired",
-        before: expect.objectContaining({ status: "SENT" }),
-        after: expect.objectContaining({ status: "EXPIRED" }),
-      }),
-    );
   });
 });
 
@@ -200,7 +175,7 @@ describe("quotes service material lists", () => {
       ],
     });
 
-    await expect(createQuote(baseInput, "user_1")).resolves.toMatchObject({
+    await expect(createQuote(baseInput)).resolves.toMatchObject({
       id: "quote_1",
       items: [
         {
@@ -242,7 +217,7 @@ describe("quotes service material lists", () => {
       items: [{ description: "Hem", quantity: "2", unitPrice: "10" }],
     };
 
-    await expect(createQuote(input, "user_1")).resolves.toMatchObject({
+    await expect(createQuote(input)).resolves.toMatchObject({
       id: "quote_1",
     });
 
@@ -254,7 +229,7 @@ describe("quotes service material lists", () => {
   it("rejects a material whose inventory item is missing or deactivated", async () => {
     inventoryItemFindMany.mockResolvedValue([]);
 
-    await expect(createQuote(baseInput, "user_1")).rejects.toEqual(
+    await expect(createQuote(baseInput)).rejects.toEqual(
       new AppError(400, "Material not found or deactivated"),
     );
     expect(quoteCreate).not.toHaveBeenCalled();
@@ -265,7 +240,7 @@ describe("quotes service material lists", () => {
       { id: "inventory_1", unit: "ROLL" },
     ]);
 
-    await expect(createQuote(baseInput, "user_1")).rejects.toEqual(
+    await expect(createQuote(baseInput)).rejects.toEqual(
       new AppError(400, "Material unit does not match the inventory item unit"),
     );
     expect(quoteCreate).not.toHaveBeenCalled();
@@ -287,7 +262,7 @@ describe("quotes service material lists", () => {
       ],
     };
 
-    await expect(createQuote(input, "user_1")).rejects.toEqual(
+    await expect(createQuote(input)).rejects.toEqual(
       new AppError(400, "Duplicate material within the same quote item"),
     );
     expect(quoteCreate).not.toHaveBeenCalled();
@@ -298,7 +273,7 @@ describe("quotes service material lists", () => {
       { id: "inventory_1", unit: "METER" },
     ]);
 
-    await expect(createQuote(baseInput, "user_1")).resolves.toMatchObject({
+    await expect(createQuote(baseInput)).resolves.toMatchObject({
       id: "quote_1",
     });
     expect(inventoryItemFindMany).toHaveBeenCalledTimes(1);
@@ -327,9 +302,9 @@ describe("quotes service material lists", () => {
       ],
     };
 
-    await expect(
-      updateQuote("quote_1", input, "user_1"),
-    ).resolves.toMatchObject({ id: "quote_1" });
+    await expect(updateQuote("quote_1", input)).resolves.toMatchObject({
+      id: "quote_1",
+    });
 
     const updateCall = quoteUpdate.mock.calls[0]?.[0];
     expect(updateCall.data.items).toEqual({
@@ -354,7 +329,7 @@ describe("quotes service material lists", () => {
     quoteFindUnique.mockResolvedValue(quote);
     inventoryItemFindMany.mockResolvedValue([]);
 
-    await expect(updateQuote("quote_1", baseInput, "user_1")).rejects.toEqual(
+    await expect(updateQuote("quote_1", baseInput)).rejects.toEqual(
       new AppError(400, "Material not found or deactivated"),
     );
     expect(quoteUpdate).not.toHaveBeenCalled();
@@ -363,7 +338,7 @@ describe("quotes service material lists", () => {
   it("still rejects updating a quote that is no longer DRAFT", async () => {
     quoteFindUnique.mockResolvedValue({ ...quote, status: "SENT" });
 
-    await expect(updateQuote("quote_1", baseInput, "user_1")).rejects.toEqual(
+    await expect(updateQuote("quote_1", baseInput)).rejects.toEqual(
       new AppError(409, "Only draft quotes can be updated"),
     );
     expect(quoteUpdate).not.toHaveBeenCalled();

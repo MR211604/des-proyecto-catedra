@@ -141,7 +141,11 @@ describe("Suppliers HTTP contract", () => {
   });
 
   it.each([
-    ["get", "getSupplierById", () => request(testApp()).get("/suppliers/supplier_1")],
+    [
+      "get",
+      "getSupplierById",
+      () => request(testApp()).get("/suppliers/supplier_1"),
+    ],
     [
       "update",
       "updateSupplier",
@@ -150,30 +154,42 @@ describe("Suppliers HTTP contract", () => {
           .put("/suppliers/supplier_1")
           .send({ name: "Telas del Sur Ltda.", notes: "Preferred supplier" }),
     ],
-    ["delete", "deleteSupplier", () => request(testApp()).delete("/suppliers/supplier_1")],
+    [
+      "delete",
+      "deleteSupplier",
+      () => request(testApp()).delete("/suppliers/supplier_1"),
+    ],
     [
       "restore",
       "restoreSupplier",
       () => request(testApp()).patch("/suppliers/supplier_1/restore"),
     ],
-  ] as const)("supports the %s CRUD operation", async (_operation, serviceName, makeRequest) => {
-    const response = await makeRequest();
+  ] as const)(
+    "supports the %s CRUD operation",
+    async (_operation, serviceName, makeRequest) => {
+      const response = await makeRequest();
 
-    expect(response.status).toBe(200);
-    expect(
-      vi.mocked({ getSupplierById, updateSupplier, deleteSupplier, restoreSupplier }[
-        serviceName
-      ]),
-    ).toHaveBeenCalledWith(
-      ...(serviceName === "updateSupplier"
-        ? [
-            "supplier_1",
-            { name: "Telas del Sur Ltda.", notes: "Preferred supplier" },
-            "user_1",
-          ]
-        : ["supplier_1", ...(serviceName === "getSupplierById" ? [] : ["user_1"])]),
-    );
-  });
+      expect(response.status).toBe(200);
+      expect(
+        vi.mocked(
+          { getSupplierById, updateSupplier, deleteSupplier, restoreSupplier }[
+            serviceName
+          ],
+        ),
+      ).toHaveBeenCalledWith(
+        ...(serviceName === "updateSupplier"
+          ? [
+              "supplier_1",
+              { name: "Telas del Sur Ltda.", notes: "Preferred supplier" },
+              "user_1",
+            ]
+          : [
+              "supplier_1",
+              ...(serviceName === "getSupplierById" ? [] : ["user_1"]),
+            ]),
+      );
+    },
+  );
 
   it("rejects an update without any valid field", async () => {
     const response = await request(testApp())
@@ -206,31 +222,43 @@ describe("Suppliers HTTP contract", () => {
   });
 
   it.each([
-    ["update", updateSupplier, () =>
-      request(testApp()).put("/suppliers/supplier_1").send({ name: "X" })],
-    ["delete", deleteSupplier, () => request(testApp()).delete("/suppliers/supplier_1")],
+    [
+      "update",
+      updateSupplier,
+      () => request(testApp()).put("/suppliers/supplier_1").send({ name: "X" }),
+    ],
+    [
+      "delete",
+      deleteSupplier,
+      () => request(testApp()).delete("/suppliers/supplier_1"),
+    ],
     [
       "restore",
       restoreSupplier,
       () => request(testApp()).patch("/suppliers/supplier_1/restore"),
     ],
-  ] as const)("returns 404 when the %s target does not exist", async (_operation, operation, makeRequest) => {
-    vi.mocked(operation).mockRejectedValueOnce(
-      new AppError(404, "Supplier not found"),
-    );
+  ] as const)(
+    "returns 404 when the %s target does not exist",
+    async (_operation, operation, makeRequest) => {
+      vi.mocked(operation).mockRejectedValueOnce(
+        new AppError(404, "Supplier not found"),
+      );
 
-    const response = await makeRequest();
+      const response = await makeRequest();
 
-    expect(response.status).toBe(404);
-    expect(response.body.error).toBe("Supplier not found");
-  });
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe("Supplier not found");
+    },
+  );
 
   it("returns 409 when restoring a supplier that is not deactivated", async () => {
     vi.mocked(restoreSupplier).mockRejectedValueOnce(
       new AppError(409, "Supplier is not deleted"),
     );
 
-    const response = await request(testApp()).patch("/suppliers/supplier_1/restore");
+    const response = await request(testApp()).patch(
+      "/suppliers/supplier_1/restore",
+    );
 
     expect(response.status).toBe(409);
     expect(response.body.error).toBe("Supplier is not deleted");

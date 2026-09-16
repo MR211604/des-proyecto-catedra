@@ -371,27 +371,38 @@ describe("Quotes HTTP contract", () => {
             items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
           }),
     ],
-    ["delete", "deleteQuote", () => request(testApp()).delete("/quotes/quote_1")],
-  ] as const)("supports the %s CRUD operation", async (_operation, serviceName, makeRequest) => {
-    const response = await makeRequest();
+    [
+      "delete",
+      "deleteQuote",
+      () => request(testApp()).delete("/quotes/quote_1"),
+    ],
+  ] as const)(
+    "supports the %s CRUD operation",
+    async (_operation, serviceName, makeRequest) => {
+      const response = await makeRequest();
 
-    expect(response.status).toBe(200);
-    expect(vi.mocked({ getQuoteById, updateQuote, deleteQuote }[serviceName])).toHaveBeenCalledWith(
-      ...(serviceName === "updateQuote"
-        ? [
-            "quote_1",
-            {
-              clientId: "client_1",
-              items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
-            },
-            "user_1",
-          ]
-        : ["quote_1", ...(serviceName === "deleteQuote" ? ["user_1"] : [])]),
-    );
-  });
+      expect(response.status).toBe(200);
+      expect(
+        vi.mocked({ getQuoteById, updateQuote, deleteQuote }[serviceName]),
+      ).toHaveBeenCalledWith(
+        ...(serviceName === "updateQuote"
+          ? [
+              "quote_1",
+              {
+                clientId: "client_1",
+                items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
+              },
+              "user_1",
+            ]
+          : ["quote_1", ...(serviceName === "deleteQuote" ? ["user_1"] : [])]),
+      );
+    },
+  );
 
   it("passes service errors through the HTTP error contract", async () => {
-    vi.mocked(getQuoteById).mockRejectedValueOnce(new Error("database unavailable"));
+    vi.mocked(getQuoteById).mockRejectedValueOnce(
+      new Error("database unavailable"),
+    );
 
     const response = await request(testApp()).get("/quotes/quote_1");
 
@@ -404,17 +415,20 @@ describe("Quotes HTTP contract", () => {
     ["accept", acceptQuote, "ACCEPTED"],
     ["reject", rejectQuote, "REJECTED"],
     ["convert", convertQuote, "CONFIRMED"],
-  ] as const)("supports the %s lifecycle action", async (action, operation, status) => {
-    const response = await request(testApp())
-      .post(`/quotes/quote_1/${action}`)
-      .send(action === "convert" ? { stageId: "stage_1" } : undefined);
+  ] as const)(
+    "supports the %s lifecycle action",
+    async (action, operation, status) => {
+      const response = await request(testApp())
+        .post(`/quotes/quote_1/${action}`)
+        .send(action === "convert" ? { stageId: "stage_1" } : undefined);
 
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe(status);
-    expect(operation).toHaveBeenCalledWith(
-      ...(action === "convert"
-        ? ["quote_1", "stage_1", "user_1"]
-        : ["quote_1", "user_1"]),
-    );
-  });
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(status);
+      expect(operation).toHaveBeenCalledWith(
+        ...(action === "convert"
+          ? ["quote_1", "stage_1", "user_1"]
+          : ["quote_1", "user_1"]),
+      );
+    },
+  );
 });

@@ -164,10 +164,6 @@ _Avoid_: collection method, sale type
 A summarized view of orders, payments, materials, or other workshop information used to understand its situation and support administrative decisions.
 _Avoid_: balance sheet, accounting, invoice
 
-**Audit**:
-A record of who performed an action on workshop information and what changed, preserving traceability for relevant operations.
-_Avoid_: customer history, production event
-
 **Deactivation**:
 The decision to stop showing a customer, supplier, or material as active without losing its historical reference.
 _Avoid_: permanent deletion, cancellation

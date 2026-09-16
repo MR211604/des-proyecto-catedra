@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { inventoryItemSchema } from "../../inventory/docs/schemas.js";
 import {
   bearerAuth,
   errorResponseSchema,
   registry,
   validationErrorResponseSchema,
 } from "../../../lib/openapi.js";
+import { inventoryItemSchema } from "../../inventory/docs/schemas.js";
 import {
   convertQuoteSchema,
   createQuoteSchema,
@@ -183,11 +183,11 @@ registry.registerPath({
   responses: { 200: { description: "Quote deleted" }, ...responses },
 });
 
-  for (const [action, summary] of [
+for (const [action, summary] of [
   ["send", "Send quote"],
   ["accept", "Accept quote"],
   ["reject", "Reject quote"],
-    ["convert", "Convert accepted quote to order"],
+  ["convert", "Convert accepted quote to order"],
 ] as const) {
   registry.registerPath({
     method: "post",
@@ -198,7 +198,12 @@ registry.registerPath({
     request: {
       params: z.object({ id: z.string() }),
       ...(action === "convert"
-        ? { body: { required: true, content: { "application/json": { schema: convertQuoteSchema } } } }
+        ? {
+            body: {
+              required: true,
+              content: { "application/json": { schema: convertQuoteSchema } },
+            },
+          }
         : {}),
     },
     responses: {

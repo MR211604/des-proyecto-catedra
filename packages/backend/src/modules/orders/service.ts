@@ -1,12 +1,10 @@
 import { prisma } from "../../db/prisma.js";
 import { type $Enums, Prisma } from "../../generated/prisma/client.js";
-import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { type ActiveStage, deriveJobStatus } from "../production/service.js";
 import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
 import type { CreateOrderInput, ListOrdersQuery } from "./schema.js";
 
-const ENTITY_TYPE = "CustomerOrder";
 const orderInclude = {
   client: true,
   quote: true,
@@ -132,7 +130,7 @@ async function createJobs(
   });
 }
 
-export async function createOrder(input: CreateOrderInput, actorId: string) {
+export async function createOrder(input: CreateOrderInput) {
   const data = orderData(input);
   return prisma.$transaction(
     async (tx) => {
@@ -167,13 +165,6 @@ export async function createOrder(input: CreateOrderInput, actorId: string) {
         include: orderInclude,
       });
 
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "order.created",
-        entityType: ENTITY_TYPE,
-        entityId: order.id,
-        after: serialize(completeOrder),
-      });
       return serialize(completeOrder);
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -228,11 +219,7 @@ export async function listOrders(params: ListOrdersQuery) {
   };
 }
 
-export async function updateOrder(
-  id: string,
-  input: CreateOrderInput,
-  actorId: string,
-) {
+export async function updateOrder(id: string, input: CreateOrderInput) {
   const data = orderData(input);
   return prisma.$transaction(
     async (tx) => {
@@ -284,21 +271,14 @@ export async function updateOrder(
         where: { id },
         include: orderInclude,
       });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "order.updated",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(before),
-        after: serialize(completeOrder),
-      });
+
       return serialize(completeOrder);
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
 
-export async function deleteOrder(id: string, actorId: string) {
+export async function deleteOrder(id: string) {
   return prisma.$transaction(
     async (tx) => {
       const order = await tx.customerOrder.findUnique({
@@ -310,13 +290,6 @@ export async function deleteOrder(id: string, actorId: string) {
         throw new AppError(409, "Only confirmed orders can be deleted");
       }
       await tx.customerOrder.delete({ where: { id } });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "order.deleted",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(order),
-      });
       return { id, deleted: true };
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -422,7 +395,7 @@ async function applyStockMovement(
       : running.add(entry.quantity);
   runningQuantity.set(entry.itemId, updated);
 
-  const movement = await tx.stockMovement.create({
+  await tx.stockMovement.create({
     data: {
       itemId: entry.itemId,
       orderItemId: entry.orderItemId,
@@ -438,15 +411,6 @@ async function applyStockMovement(
   await tx.inventoryItem.update({
     where: { id: entry.itemId },
     data: { quantity: updated },
-  });
-
-  await createAuditLog(tx, {
-    actorId: entry.actorId,
-    action: "stock-movement.created",
-    entityType: "StockMovement",
-    entityId: movement.id,
-    before: serialize({ itemId: entry.itemId, quantity: running }),
-    after: serialize({ itemId: entry.itemId, quantity: updated }),
   });
 }
 
@@ -567,14 +531,6 @@ async function transitionOrder(
             ...(operation === "deliver" ? { deliveredAt: new Date() } : {}),
           },
           include: orderInclude,
-        });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: `order.${operation === "start" ? "started" : operation === "deliver" ? "delivered" : operation}`,
-          entityType: ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(after),
         });
         return serialize(after);
       },

@@ -1,6 +1,5 @@
 import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
-import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { serialize, stateConflict } from "../utils.js";
 import { productionEvents } from "./events.js";
@@ -12,8 +11,6 @@ import type {
   UpdateStageInput,
 } from "./schema.js";
 
-const ENTITY_TYPE = "ProductionStage";
-const JOB_ENTITY_TYPE = "ProductionJob";
 export const DEFAULT_STAGES = ["Preparación", "Corte", "Confección", "Acabado"];
 
 function publishChange(
@@ -106,13 +103,7 @@ export async function createStage(input: CreateStageInput, actorId: string) {
             isActive: input.isActive ?? true,
           },
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "production.stage.created",
-          entityType: ENTITY_TYPE,
-          entityId: stage.id,
-          after: serialize(stage),
-        });
+
         return serialize(stage);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -201,17 +192,6 @@ export async function updateStage(
         const after = await tx.productionStage.findUniqueOrThrow({
           where: { id },
         });
-        const afterFlow = await tx.productionStage.findMany({
-          orderBy: { position: "asc" },
-        });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "production.stage.updated",
-          entityType: ENTITY_TYPE,
-          entityId: id,
-          before: serialize({ stage: before, flow: stages }),
-          after: serialize({ stage: after, flow: afterFlow }),
-        });
         return serialize(after);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -223,7 +203,7 @@ export async function updateStage(
   return stage;
 }
 
-export async function seedDefaultStages(actorId = "system:production-seed") {
+export async function seedDefaultStages() {
   return prisma
     .$transaction(
       async (tx) => {
@@ -235,15 +215,6 @@ export async function seedDefaultStages(actorId = "system:production-seed") {
             tx.productionStage.create({ data: { name, position: index + 1 } }),
           ),
         );
-        for (const stage of stages) {
-          await createAuditLog(tx as typeof prisma, {
-            actorId,
-            action: "production.stage.seeded",
-            entityType: ENTITY_TYPE,
-            entityId: stage.id,
-            after: serialize(stage),
-          });
-        }
         return stages;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -372,14 +343,7 @@ export async function moveJob(
             notes: input.notes ?? null,
           },
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "production.job.moved",
-          entityType: JOB_ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(after),
-        });
+
         return serialize(after);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -428,16 +392,6 @@ async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
           },
           include: jobInclude,
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: blocked
-            ? "production.job.blocked"
-            : "production.job.unblocked",
-          entityType: JOB_ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(after),
-        });
         return serialize(after);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -483,14 +437,6 @@ export async function updateJob(
           where: { id: before.id, updatedAt: before.updatedAt },
           data: input,
           include: jobInclude,
-        });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "production.job.updated",
-          entityType: JOB_ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(after),
         });
         return serialize(after);
       },

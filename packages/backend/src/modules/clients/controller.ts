@@ -38,8 +38,7 @@ export async function create(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const client = await service.createClient(request.body, userId as string);
+    const client = await service.createClient(request.body);
     response.status(201).json(client);
   } catch (error) {
     next(error);
@@ -52,12 +51,7 @@ export async function update(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const client = await service.updateClient(
-      request.params.id,
-      request.body,
-      userId as string,
-    );
+    const client = await service.updateClient(request.params.id, request.body);
     response.json(client);
   } catch (error) {
     next(error);
@@ -70,11 +64,7 @@ export async function remove(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const client = await service.deleteClient(
-      request.params.id,
-      userId as string,
-    );
+    const client = await service.deleteClient(request.params.id);
     response.json(client);
   } catch (error) {
     next(error);
@@ -87,11 +77,7 @@ export async function restore(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const client = await service.restoreClient(
-      request.params.id,
-      userId as string,
-    );
+    const client = await service.restoreClient(request.params.id);
     response.json(client);
   } catch (error) {
     next(error);

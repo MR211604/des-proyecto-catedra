@@ -6,7 +6,6 @@ vi.mock("./events.js", () => ({ productionEvents: { publish } }));
 vi.mock("../../db/prisma.js", () => ({
   prisma: { $transaction: transaction },
 }));
-vi.mock("../../lib/audit.js", () => ({ createAuditLog: vi.fn() }));
 
 const { createStage } = await import("./service.js");
 

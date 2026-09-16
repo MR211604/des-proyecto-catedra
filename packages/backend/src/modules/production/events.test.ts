@@ -1,13 +1,12 @@
 import { createServer } from "node:http";
-import { WebSocket } from "ws";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WebSocket } from "ws";
 
 const verifyToken = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/backend", () => ({ verifyToken }));
 
-const { attachProductionWebSocket, productionEvents } = await import(
-  "./events.js"
-);
+const { attachProductionWebSocket, productionEvents } =
+  await import("./events.js");
 
 describe("production WebSocket", () => {
   let server: ReturnType<typeof createServer>;

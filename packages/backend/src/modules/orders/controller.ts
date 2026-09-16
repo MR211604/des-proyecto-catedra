@@ -45,12 +45,7 @@ export async function create(
   try {
     response
       .status(201)
-      .json(
-        await service.createOrder(
-          request.body as CreateOrderInput,
-          actorId(request),
-        ),
-      );
+      .json(await service.createOrder(request.body as CreateOrderInput));
   } catch (error) {
     next(error);
   }
@@ -66,7 +61,6 @@ export async function update(
       await service.updateOrder(
         request.params.id,
         request.body as CreateOrderInput,
-        actorId(request),
       ),
     );
   } catch (error) {
@@ -80,9 +74,7 @@ export async function remove(
   next: NextFunction,
 ) {
   try {
-    response.json(
-      await service.deleteOrder(request.params.id, actorId(request)),
-    );
+    response.json(await service.deleteOrder(request.params.id));
   } catch (error) {
     next(error);
   }

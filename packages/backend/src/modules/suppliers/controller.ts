@@ -1,4 +1,3 @@
-import { getAuth } from "@clerk/express";
 import type { NextFunction, Request, Response } from "express";
 import type { ListSuppliersQuery } from "./schema.js";
 import * as service from "./service.js";
@@ -38,8 +37,7 @@ export async function create(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const supplier = await service.createSupplier(request.body, userId as string);
+    const supplier = await service.createSupplier(request.body);
     response.status(201).json(supplier);
   } catch (error) {
     next(error);
@@ -52,11 +50,9 @@ export async function update(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
     const supplier = await service.updateSupplier(
       request.params.id,
       request.body,
-      userId as string,
     );
     response.json(supplier);
   } catch (error) {
@@ -70,11 +66,7 @@ export async function remove(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const supplier = await service.deleteSupplier(
-      request.params.id,
-      userId as string,
-    );
+    const supplier = await service.deleteSupplier(request.params.id);
     response.json(supplier);
   } catch (error) {
     next(error);
@@ -87,11 +79,7 @@ export async function restore(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const supplier = await service.restoreSupplier(
-      request.params.id,
-      userId as string,
-    );
+    const supplier = await service.restoreSupplier(request.params.id);
     response.json(supplier);
   } catch (error) {
     next(error);

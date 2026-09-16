@@ -1,6 +1,5 @@
 import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
-import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { serialize, toPrismaDecimal } from "../utils.js";
 import type {
@@ -10,8 +9,6 @@ import type {
   ListStockMovementsQuery,
   UpdateInventoryItemInput,
 } from "./schema.js";
-
-const ENTITY_TYPE = "InventoryItem";
 
 async function validateSupplier(
   tx: typeof prisma,
@@ -97,10 +94,7 @@ export async function getInventoryItemById(id: string) {
   return serialize(item);
 }
 
-export async function createInventoryItem(
-  data: CreateInventoryItemInput,
-  actorId: string,
-) {
+export async function createInventoryItem(data: CreateInventoryItemInput) {
   return prisma
     .$transaction(async (tx) => {
       await validateSupplier(tx as typeof prisma, data.supplierId);
@@ -116,14 +110,6 @@ export async function createInventoryItem(
         },
       });
 
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "inventory-item.created",
-        entityType: ENTITY_TYPE,
-        entityId: item.id,
-        after: serialize(item),
-      });
-
       return serialize(item);
     })
     .catch(mapSkuConflict);
@@ -132,7 +118,6 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   id: string,
   data: UpdateInventoryItemInput,
-  actorId: string,
 ) {
   return prisma
     .$transaction(async (tx) => {
@@ -164,21 +149,12 @@ export async function updateInventoryItem(
         },
       });
 
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "inventory-item.updated",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(before),
-        after: serialize(after),
-      });
-
       return serialize(after);
     })
     .catch(mapSkuConflict);
 }
 
-export async function deleteInventoryItem(id: string, actorId: string) {
+export async function deleteInventoryItem(id: string) {
   return prisma.$transaction(async (tx) => {
     const item = await tx.inventoryItem.findUnique({ where: { id } });
 
@@ -195,20 +171,11 @@ export async function deleteInventoryItem(id: string, actorId: string) {
       data: { deletedAt: new Date() },
     });
 
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "inventory-item.deleted",
-      entityType: ENTITY_TYPE,
-      entityId: id,
-      before: serialize(item),
-      after: serialize(deleted),
-    });
-
     return serialize(deleted);
   });
 }
 
-export async function restoreInventoryItem(id: string, actorId: string) {
+export async function restoreInventoryItem(id: string) {
   return prisma.$transaction(async (tx) => {
     const item = await tx.inventoryItem.findUnique({ where: { id } });
 
@@ -223,15 +190,6 @@ export async function restoreInventoryItem(id: string, actorId: string) {
     const restored = await tx.inventoryItem.update({
       where: { id },
       data: { deletedAt: null },
-    });
-
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "inventory-item.restored",
-      entityType: ENTITY_TYPE,
-      entityId: id,
-      before: serialize(item),
-      after: serialize(restored),
     });
 
     return serialize(restored);
@@ -288,15 +246,6 @@ export async function createStockMovement(
       await tx.inventoryItem.update({
         where: { id: itemId },
         data: { quantity: updatedQuantity },
-      });
-
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "stock-movement.created",
-        entityType: "StockMovement",
-        entityId: movement.id,
-        before: serialize({ itemId: item.id, quantity: item.quantity }),
-        after: serialize({ itemId: item.id, quantity: updatedQuantity }),
       });
 
       return serialize(movement);

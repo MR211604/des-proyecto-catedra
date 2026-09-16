@@ -42,11 +42,7 @@ export async function create(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const item = await service.createInventoryItem(
-      request.body,
-      userId as string,
-    );
+    const item = await service.createInventoryItem(request.body);
     response.status(201).json(item);
   } catch (error) {
     next(error);
@@ -59,11 +55,9 @@ export async function update(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
     const item = await service.updateInventoryItem(
       request.params.id,
       request.body,
-      userId as string,
     );
     response.json(item);
   } catch (error) {
@@ -77,11 +71,7 @@ export async function remove(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const item = await service.deleteInventoryItem(
-      request.params.id,
-      userId as string,
-    );
+    const item = await service.deleteInventoryItem(request.params.id);
     response.json(item);
   } catch (error) {
     next(error);
@@ -94,11 +84,7 @@ export async function restore(
   next: NextFunction,
 ) {
   try {
-    const { userId } = getAuth(request);
-    const item = await service.restoreInventoryItem(
-      request.params.id,
-      userId as string,
-    );
+    const item = await service.restoreInventoryItem(request.params.id);
     response.json(item);
   } catch (error) {
     next(error);

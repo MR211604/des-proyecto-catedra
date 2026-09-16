@@ -1,19 +1,16 @@
 import { prisma } from "../../db/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
-import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import { deriveJobStatus } from "../production/service.js";
 import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
 
 import type { CreateQuoteInput, ListQuotesQuery } from "./schema.js";
 
-const ENTITY_TYPE = "Quote";
 const quoteInclude = {
   client: true,
   items: { include: { materials: { include: { inventoryItem: true } } } },
   order: { include: { items: true } },
 } as const;
-const READ_EXPIRATION_ACTOR = "system:quote-expiration";
 
 function materialCreateInput(
   materials: Array<{ inventoryItemId: string; quantity: Prisma.Decimal }>,
@@ -59,10 +56,7 @@ function quoteData(input: CreateQuoteInput) {
   };
 }
 
-async function validateMaterials(
-  tx: typeof prisma,
-  input: CreateQuoteInput,
-) {
+async function validateMaterials(tx: typeof prisma, input: CreateQuoteInput) {
   const entries = input.items.flatMap((item, itemIndex) =>
     (item.materials ?? []).map((material) => ({ itemIndex, material })),
   );
@@ -100,7 +94,7 @@ async function validateMaterials(
   }
 }
 
-export async function createQuote(input: CreateQuoteInput, actorId: string) {
+export async function createQuote(input: CreateQuoteInput) {
   const data = quoteData(input);
 
   return prisma.$transaction(
@@ -121,13 +115,6 @@ export async function createQuote(input: CreateQuoteInput, actorId: string) {
         },
         include: quoteInclude,
       });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "quote.created",
-        entityType: ENTITY_TYPE,
-        entityId: quote.id,
-        after: serialize(quote),
-      });
       return serialize(quote);
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -141,7 +128,7 @@ export async function getQuoteById(id: string) {
     include: quoteInclude,
   });
   if (!quote) throw new AppError(404, "Quote not found");
-  return serialize(await expireQuoteIfNeeded(id, READ_EXPIRATION_ACTOR, quote));
+  return serialize(await expireQuoteIfNeeded(id, quote));
 }
 
 export async function listQuotes(params: ListQuotesQuery) {
@@ -170,9 +157,7 @@ export async function listQuotes(params: ListQuotesQuery) {
     select: { id: true, status: true, validUntil: true },
   });
   await Promise.all(
-    expiredCandidates.map((quote) =>
-      expireQuoteIfNeeded(quote.id, READ_EXPIRATION_ACTOR, quote),
-    ),
+    expiredCandidates.map((quote) => expireQuoteIfNeeded(quote.id, quote)),
   );
   const [quotes, total] = await Promise.all([
     prisma.quote.findMany({
@@ -185,9 +170,7 @@ export async function listQuotes(params: ListQuotesQuery) {
     prisma.quote.count({ where }),
   ]);
   const currentQuotes = await Promise.all(
-    quotes.map((quote) =>
-      expireQuoteIfNeeded(quote.id, READ_EXPIRATION_ACTOR, quote),
-    ),
+    quotes.map((quote) => expireQuoteIfNeeded(quote.id, quote)),
   );
   return {
     data: serialize(currentQuotes),
@@ -197,7 +180,7 @@ export async function listQuotes(params: ListQuotesQuery) {
 
 async function expireQuoteIfNeeded<
   T extends { status: string; validUntil: Date | null },
->(id: string, actorId: string, quote: T) {
+>(id: string, quote: T) {
   if (
     quote.status !== "SENT" ||
     !quote.validUntil ||
@@ -225,14 +208,6 @@ async function expireQuoteIfNeeded<
           data: { status: "EXPIRED" },
           include: quoteInclude,
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "quote.expired",
-          entityType: ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(expired),
-        });
         return expired;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -242,10 +217,8 @@ async function expireQuoteIfNeeded<
 
 async function transitionQuote(
   id: string,
-  actorId: string,
   fromStatus: "DRAFT" | "SENT",
   toStatus: "SENT" | "ACCEPTED" | "REJECTED",
-  action: "sent" | "accepted" | "rejected",
 ) {
   return prisma
     .$transaction(
@@ -266,18 +239,10 @@ async function transitionQuote(
           before.validUntil &&
           before.validUntil <= new Date()
         ) {
-          const expired = await tx.quote.update({
+          await tx.quote.update({
             where: { id, status: "SENT" },
             data: { status: "EXPIRED" },
             include: quoteInclude,
-          });
-          await createAuditLog(tx as typeof prisma, {
-            actorId,
-            action: "quote.expired",
-            entityType: ENTITY_TYPE,
-            entityId: id,
-            before: serialize(before),
-            after: serialize(expired),
           });
           return { expired: true as const };
         }
@@ -299,14 +264,6 @@ async function transitionQuote(
           },
           include: quoteInclude,
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: `quote.${action}`,
-          entityType: ENTITY_TYPE,
-          entityId: id,
-          before: serialize(before),
-          after: serialize(after),
-        });
         return { expired: false as const, quote: serialize(after) };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -320,23 +277,19 @@ async function transitionQuote(
     .catch(stateConflict);
 }
 
-export function sendQuote(id: string, actorId: string) {
-  return transitionQuote(id, actorId, "DRAFT", "SENT", "sent");
+export function sendQuote(id: string) {
+  return transitionQuote(id, "DRAFT", "SENT");
 }
 
-export async function acceptQuote(id: string, actorId: string) {
-  return transitionQuote(id, actorId, "SENT", "ACCEPTED", "accepted");
+export async function acceptQuote(id: string) {
+  return transitionQuote(id, "SENT", "ACCEPTED");
 }
 
-export function rejectQuote(id: string, actorId: string) {
-  return transitionQuote(id, actorId, "SENT", "REJECTED", "rejected");
+export function rejectQuote(id: string) {
+  return transitionQuote(id, "SENT", "REJECTED");
 }
 
-export async function convertQuote(
-  id: string,
-  stageId: string,
-  actorId: string,
-) {
+export async function convertQuote(id: string, stageId: string) {
   return prisma
     .$transaction(
       async (tx) => {
@@ -405,14 +358,6 @@ export async function convertQuote(
             jobs: { include: { stage: true, events: true } },
           },
         });
-        await createAuditLog(tx as typeof prisma, {
-          actorId,
-          action: "quote.converted",
-          entityType: ENTITY_TYPE,
-          entityId: id,
-          before: serialize(quote),
-          after: serialize({ ...quote, order: completeOrder }),
-        });
         return serialize(completeOrder);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -434,11 +379,7 @@ export async function convertQuote(
     });
 }
 
-export async function updateQuote(
-  id: string,
-  input: CreateQuoteInput,
-  actorId: string,
-) {
+export async function updateQuote(id: string, input: CreateQuoteInput) {
   const data = quoteData(input);
   return prisma.$transaction(
     async (tx) => {
@@ -467,22 +408,13 @@ export async function updateQuote(
         },
         include: quoteInclude,
       });
-
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "quote.updated",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(before),
-        after: serialize(quote),
-      });
       return serialize(quote);
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
 
-export async function deleteQuote(id: string, actorId: string) {
+export async function deleteQuote(id: string) {
   return prisma.$transaction(
     async (tx) => {
       const quote = await tx.quote.findUnique({
@@ -493,13 +425,6 @@ export async function deleteQuote(id: string, actorId: string) {
       if (quote.status !== "DRAFT")
         throw new AppError(409, "Only draft quotes can be deleted");
       await tx.quote.delete({ where: { id } });
-      await createAuditLog(tx as typeof prisma, {
-        actorId,
-        action: "quote.deleted",
-        entityType: ENTITY_TYPE,
-        entityId: id,
-        before: serialize(quote),
-      });
       return { id, deleted: true };
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

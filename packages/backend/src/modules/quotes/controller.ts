@@ -49,12 +49,7 @@ export async function create(
   try {
     response
       .status(201)
-      .json(
-        await service.createQuote(
-          request.body as CreateQuoteInput,
-          actorId(request),
-        ),
-      );
+      .json(await service.createQuote(request.body as CreateQuoteInput));
   } catch (error) {
     next(error);
   }
@@ -70,7 +65,6 @@ export async function update(
       await service.updateQuote(
         request.params.id,
         request.body as CreateQuoteInput,
-        actorId(request),
       ),
     );
   } catch (error) {
@@ -84,9 +78,7 @@ export async function remove(
   next: NextFunction,
 ) {
   try {
-    response.json(
-      await service.deleteQuote(request.params.id, actorId(request)),
-    );
+    response.json(await service.deleteQuote(request.params.id));
   } catch (error) {
     next(error);
   }
@@ -137,7 +129,7 @@ export function convert(
   try {
     const { stageId } = request.body as ConvertQuoteInput;
     return service
-      .convertQuote(request.params.id, stageId, actorId(request))
+      .convertQuote(request.params.id, stageId)
       .then((result) => response.json(result))
       .catch(next);
   } catch (error) {

@@ -1,13 +1,10 @@
 import { prisma } from "../../db/prisma.js";
-import { createAuditLog } from "../../lib/audit.js";
 import { AppError } from "../../middleware/errors.js";
 import type {
   CreateSupplierInput,
   ListSuppliersQuery,
   UpdateSupplierInput,
 } from "./schema.js";
-
-const ENTITY_TYPE = "Supplier";
 
 // ------------ OPERACIONES CRUD ------------
 export async function listSuppliers(params: ListSuppliersQuery) {
@@ -58,27 +55,15 @@ export async function getSupplierById(id: string) {
   return supplier;
 }
 
-export async function createSupplier(data: CreateSupplierInput, actorId: string) {
+export async function createSupplier(data: CreateSupplierInput) {
   return prisma.$transaction(async (tx) => {
     const supplier = await tx.supplier.create({ data });
-
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "supplier.created",
-      entityType: ENTITY_TYPE,
-      entityId: supplier.id,
-      after: supplier,
-    });
 
     return supplier;
   });
 }
 
-export async function updateSupplier(
-  id: string,
-  data: UpdateSupplierInput,
-  actorId: string,
-) {
+export async function updateSupplier(id: string, data: UpdateSupplierInput) {
   return prisma.$transaction(async (tx) => {
     const before = await tx.supplier.findUnique({ where: { id } });
 
@@ -87,21 +72,11 @@ export async function updateSupplier(
     }
 
     const after = await tx.supplier.update({ where: { id }, data });
-
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "supplier.updated",
-      entityType: ENTITY_TYPE,
-      entityId: id,
-      before,
-      after,
-    });
-
     return after;
   });
 }
 
-export async function deleteSupplier(id: string, actorId: string) {
+export async function deleteSupplier(id: string) {
   return prisma.$transaction(async (tx) => {
     const supplier = await tx.supplier.findUnique({ where: { id } });
 
@@ -117,21 +92,11 @@ export async function deleteSupplier(id: string, actorId: string) {
       where: { id },
       data: { deletedAt: new Date() },
     });
-
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "supplier.deleted",
-      entityType: ENTITY_TYPE,
-      entityId: id,
-      before: supplier,
-      after: deleted,
-    });
-
     return deleted;
   });
 }
 
-export async function restoreSupplier(id: string, actorId: string) {
+export async function restoreSupplier(id: string) {
   return prisma.$transaction(async (tx) => {
     const supplier = await tx.supplier.findUnique({ where: { id } });
 
@@ -147,16 +112,6 @@ export async function restoreSupplier(id: string, actorId: string) {
       where: { id },
       data: { deletedAt: null },
     });
-
-    await createAuditLog(tx as typeof prisma, {
-      actorId,
-      action: "supplier.restored",
-      entityType: ENTITY_TYPE,
-      entityId: id,
-      before: supplier,
-      after: restored,
-    });
-
     return restored;
   });
 }
