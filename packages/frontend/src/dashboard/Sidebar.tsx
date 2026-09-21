@@ -1,5 +1,5 @@
-import { Icon, type IconName } from "./Icon";
 import { NavLink } from "react-router-dom";
+import { Icon, type IconName } from "./Icon";
 
 const navigation: { label: string; icon: IconName; to: string }[] = [
   { label: "Dashboard", icon: "chart", to: "/dashboard" },
