@@ -62,7 +62,7 @@ describe("Orders HTTP contract", () => {
     const response = await request(testApp()).post("/orders").send(validOrder);
 
     expect(response.status).toBe(201);
-    expect(service.createOrder).toHaveBeenCalledWith(validOrder, "user_1");
+    expect(service.createOrder).toHaveBeenCalledWith(validOrder);
   });
 
   it("requires at least one item and one production job", async () => {
@@ -94,7 +94,7 @@ describe("Orders HTTP contract", () => {
     const response = await request(testApp()).post("/orders").send(order);
 
     expect(response.status).toBe(201);
-    expect(service.createOrder).toHaveBeenCalledWith(order, "user_1");
+    expect(service.createOrder).toHaveBeenCalledWith(order);
   });
 
   it("rejects a material with a non-positive quantity", async () => {

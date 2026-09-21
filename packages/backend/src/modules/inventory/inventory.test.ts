@@ -87,7 +87,7 @@ describe("Inventory HTTP contract", () => {
     expect(listInventoryItems).toHaveBeenCalledOnce();
   });
 
-  it("creates a material with the authenticated user as audit actor", async () => {
+  it("creates a material", async () => {
     const response = await request(testApp()).post("/inventory/items").send({
       name: "Tela de algodón",
       sku: "TEL-001",
@@ -107,7 +107,6 @@ describe("Inventory HTTP contract", () => {
         reorderPoint: "5.000",
         supplierId: "supplier_1",
       },
-      "user_1",
     );
     expect(response.body.id).toBe("item_1");
   });
@@ -213,11 +212,9 @@ describe("Inventory HTTP contract", () => {
           ? [
               "item_1",
               { name: "Tela de algodón premium", reorderPoint: "4.000" },
-              "user_1",
             ]
           : [
               "item_1",
-              ...(serviceName === "getInventoryItemById" ? [] : ["user_1"]),
             ]),
       );
     },

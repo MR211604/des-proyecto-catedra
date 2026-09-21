@@ -137,7 +137,7 @@ describe("quote service persistence boundary", () => {
     );
   });
 
-  it("expires an overdue sent quote on read and audits the transition", async () => {
+  it("expires an overdue sent quote on read", async () => {
     const overdue = {
       ...quote,
       status: "SENT",

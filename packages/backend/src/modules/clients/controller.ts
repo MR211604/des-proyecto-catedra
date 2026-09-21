@@ -1,4 +1,3 @@
-import { getAuth } from "@clerk/express";
 import type { NextFunction, Request, Response } from "express";
 import type { ListClientsQuery } from "./schema.js";
 import * as service from "./service.js";

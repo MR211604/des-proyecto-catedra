@@ -115,7 +115,6 @@ describe("Quotes HTTP contract", () => {
         clientId: "client_1",
         items: [{ description: "Hem", quantity: "2.5", unitPrice: "10.00" }],
       },
-      "user_1",
     );
   });
 
@@ -137,7 +136,7 @@ describe("Quotes HTTP contract", () => {
     const response = await request(testApp()).post("/quotes").send(quote);
 
     expect(response.status).toBe(201);
-    expect(vi.mocked(createQuote)).toHaveBeenCalledWith(quote, "user_1");
+    expect(vi.mocked(createQuote)).toHaveBeenCalledWith(quote);
     expect(response.body.items[0].materials).toEqual([
       { inventoryItemId: "item_1", quantity: "1.5", unit: "METER" },
     ]);
@@ -392,9 +391,8 @@ describe("Quotes HTTP contract", () => {
                 clientId: "client_1",
                 items: [{ description: "Hem", quantity: "1", unitPrice: "10" }],
               },
-              "user_1",
             ]
-          : ["quote_1", ...(serviceName === "deleteQuote" ? ["user_1"] : [])]),
+          : ["quote_1"]),
       );
     },
   );
@@ -426,7 +424,7 @@ describe("Quotes HTTP contract", () => {
       expect(response.body.status).toBe(status);
       expect(operation).toHaveBeenCalledWith(
         ...(action === "convert"
-          ? ["quote_1", "stage_1", "user_1"]
+          ? ["quote_1", "stage_1"]
           : ["quote_1", "user_1"]),
       );
     },

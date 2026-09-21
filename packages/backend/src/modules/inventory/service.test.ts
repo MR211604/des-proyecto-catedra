@@ -221,7 +221,7 @@ describe("inventory service persistence boundary", () => {
     expect(itemUpdate).not.toHaveBeenCalled();
   });
 
-  it("soft-deletes an item and audits the deactivation", async () => {
+  it("soft-deletes an item", async () => {
     await expect(deleteInventoryItem("item_1")).resolves.toMatchObject({
       id: "item_1",
     });
@@ -239,7 +239,7 @@ describe("inventory service persistence boundary", () => {
     expect(itemUpdate).not.toHaveBeenCalled();
   });
 
-  it("restores a deactivated item and audits the reactivation", async () => {
+  it("restores a deactivated item", async () => {
     itemFindUnique.mockResolvedValue({ ...item, deletedAt: new Date() });
 
     await expect(restoreInventoryItem("item_1")).resolves.toMatchObject({

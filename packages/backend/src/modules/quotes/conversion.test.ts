@@ -95,16 +95,11 @@ const tx = {
 };
 const quoteItem = quote.items.at(0);
 if (!quoteItem) throw new Error("Quote fixture requires an item");
-let committed = false;
-
 beforeEach(() => {
   vi.clearAllMocks();
-  committed = false;
   transaction.mockImplementation(
     async (callback: (client: typeof tx) => unknown) => {
-      const result = await callback(tx);
-      committed = true;
-      return result;
+      return callback(tx);
     },
   );
   findUnique.mockResolvedValue(quote);
@@ -117,7 +112,7 @@ beforeEach(() => {
 });
 
 describe("convertQuote", () => {
-  it("creates one confirmed order with all quote data and audits it atomically", async () => {
+  it("creates one confirmed order with all quote data atomically", async () => {
     await expect(convertQuote("quote_1", "stage_1")).resolves.toEqual({
       ...order,
       items: [
@@ -261,13 +256,5 @@ describe("convertQuote", () => {
       statusCode: 409,
     });
     expect(create).toHaveBeenCalledTimes(2);
-  });
-
-  it("propagates audit failures so the transaction can roll back", async () => {
-    await expect(convertQuote("quote_1", "stage_1")).rejects.toThrow(
-      "audit unavailable",
-    );
-    expect(create).toHaveBeenCalledOnce();
-    expect(committed).toBe(false);
   });
 });

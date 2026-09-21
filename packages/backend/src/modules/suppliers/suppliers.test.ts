@@ -77,7 +77,7 @@ describe("Suppliers HTTP contract", () => {
     expect(listSuppliers).toHaveBeenCalledOnce();
   });
 
-  it("creates a supplier with the authenticated user as audit actor", async () => {
+  it("creates a supplier", async () => {
     const response = await request(testApp()).post("/suppliers").send({
       name: "Telas del Sur",
       phone: "+56 9 1234 5678",
@@ -93,7 +93,6 @@ describe("Suppliers HTTP contract", () => {
         email: "ventas@telasdelsur.cl",
         notes: "Fabric supplier",
       },
-      "user_1",
     );
     expect(response.body.id).toBe("supplier_1");
   });
@@ -181,12 +180,8 @@ describe("Suppliers HTTP contract", () => {
           ? [
               "supplier_1",
               { name: "Telas del Sur Ltda.", notes: "Preferred supplier" },
-              "user_1",
             ]
-          : [
-              "supplier_1",
-              ...(serviceName === "getSupplierById" ? [] : ["user_1"]),
-            ]),
+          : ["supplier_1"]),
       );
     },
   );
