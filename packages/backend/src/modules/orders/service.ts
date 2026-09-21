@@ -182,12 +182,21 @@ export async function getOrderById(id: string) {
 
 export async function listOrders(params: ListOrdersQuery) {
   const { page, limit, status, clientId, search, sortBy, order } = params;
+  const orderCode = search?.match(/^(?:ORD-?)?(\d+)$/i)?.[1];
+  const quoteCode = search?.match(/^COT-?(\d+)$/i)?.[1];
+  const orderNumber = orderCode ? Number(orderCode) : undefined;
+  const quoteNumber = quoteCode ? Number(quoteCode) : undefined;
   const searchConditions = search
     ? [
-        ...(/^\d+$/.test(search) ? [{ number: Number(search) }] : []),
+        ...(orderNumber === undefined ? [] : [{ number: orderNumber }]),
         { notes: { contains: search, mode: "insensitive" as const } },
         {
           client: { name: { contains: search, mode: "insensitive" as const } },
+        },
+        {
+          ...(quoteNumber === undefined
+            ? { quote: { number: -1 } }
+            : { quote: { number: quoteNumber } }),
         },
         {
           items: {

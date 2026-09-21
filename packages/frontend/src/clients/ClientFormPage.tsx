@@ -1,5 +1,6 @@
+import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, Info, Ruler, UserRound } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../lib/api.ts";
@@ -49,7 +50,7 @@ function formFromClient(client: Client): FormState {
     preferences: client.notes ?? "",
     measurementNotes: client.measurements?.notes ?? "",
     measurements: Object.fromEntries(
-      measurementFields.map(([key]) => [key, values[key]?.toString() ?? ""]),
+      measurementFields.map(([key]) => [key, values[key] ?? ""]),
     ) as FormState["measurements"],
   };
 }
@@ -78,23 +79,6 @@ function buildInput(form: FormState): ClientInput {
     };
   }
   return input;
-}
-
-function validate(form: FormState) {
-  const errors: Partial<Record<keyof FormState, string>> = {};
-  if (!form.name.trim()) errors.name = "El nombre es obligatorio.";
-  if (!form.phone.trim()) errors.phone = "El teléfono es obligatorio.";
-  if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-    errors.email = "Ingresa un correo electrónico válido.";
-  }
-  for (const [key, label] of measurementFields) {
-    const value = form.measurements[key].trim();
-    if (value && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
-      errors.measurements = `${label} debe ser un número no negativo.`;
-      break;
-    }
-  }
-  return errors;
 }
 
 function Field({
@@ -136,45 +120,34 @@ export function ClientFormPage() {
   const navigate = useNavigate();
   const clientQuery = useClient(id);
   const { create, update } = useClientMutations();
-  const [form, setForm] = useState(emptyForm);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof FormState, string>>
-  >({});
+  const form = useForm({
+    defaultValues: emptyForm,
+    onSubmit: async ({ value }) => {
+      const input = buildInput(value);
+      const mutation =
+        isEditing && id
+          ? update.mutateAsync({ id, input })
+          : create.mutateAsync(input);
+      await mutation
+        .then((result) => {
+          toast.success(
+            isEditing ? "Cliente actualizado." : "Cliente registrado.",
+          );
+          navigate(`/clientes?detail=${result.id}`);
+        })
+        .catch((error: unknown) =>
+          toast.error(
+            error instanceof ApiError
+              ? error.message
+              : "No se pudo guardar el cliente.",
+          ),
+        );
+    },
+  });
 
   useEffect(() => {
-    if (clientQuery.data) setForm(formFromClient(clientQuery.data));
-  }, [clientQuery.data]);
-
-  function updateField(field: keyof FormState, value: string) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextErrors = validate(form);
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
-    const input = buildInput(form);
-    const mutation =
-      isEditing && id
-        ? update.mutateAsync({ id, input })
-        : create.mutateAsync(input);
-    void mutation
-      .then((result) => {
-        toast.success(
-          isEditing ? "Cliente actualizado." : "Cliente registrado.",
-        );
-        navigate(`/clientes?detail=${result.id}`);
-      })
-      .catch((error: unknown) =>
-        toast.error(
-          error instanceof ApiError
-            ? error.message
-            : "No se pudo guardar el cliente.",
-        ),
-      );
-  }
+    if (clientQuery.data) form.reset(formFromClient(clientQuery.data));
+  }, [clientQuery.data, form]);
 
   if (isEditing && clientQuery.isPending) {
     return (
@@ -224,7 +197,11 @@ export function ClientFormPage() {
         </button>
         <form
           className="rounded-xl bg-white px-6 py-8 shadow-[0_10px_35px_-25px_#70466a] sm:px-9"
-          onSubmit={submit}
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void form.handleSubmit();
+          }}
         >
           <header className="border-b border-[#eee2eb] pb-7">
             <h1 className="m-0 text-3xl font-bold tracking-[-1px] text-[#171318] sm:text-4xl">
@@ -241,27 +218,59 @@ export function ClientFormPage() {
               <UserRound size={23} /> Información personal
             </h2>
             <div className="grid gap-6 sm:grid-cols-2">
-              <Field
-                error={errors.name}
-                label="Nombre completo"
-                onChange={(value) => updateField("name", value)}
-                required
-                value={form.name}
-              />
-              <Field
-                error={errors.phone}
-                label="Teléfono"
-                onChange={(value) => updateField("phone", value)}
-                required
-                value={form.phone}
-              />
-              <Field
-                error={errors.email}
-                label="Correo electrónico"
-                onChange={(value) => updateField("email", value)}
-                type="email"
-                value={form.email}
-              />
+              <form.Field
+                name="name"
+                validators={{
+                  onSubmit: ({ value }) =>
+                    value.trim() ? undefined : "El nombre es obligatorio.",
+                }}
+              >
+                {(field) => (
+                  <Field
+                    error={field.state.meta.errors[0] as string}
+                    label="Nombre completo"
+                    onChange={field.handleChange}
+                    required
+                    value={field.state.value}
+                  />
+                )}
+              </form.Field>
+              <form.Field
+                name="phone"
+                validators={{
+                  onSubmit: ({ value }) =>
+                    value.trim() ? undefined : "El teléfono es obligatorio.",
+                }}
+              >
+                {(field) => (
+                  <Field
+                    error={field.state.meta.errors[0] as string}
+                    label="Teléfono"
+                    onChange={field.handleChange}
+                    required
+                    value={field.state.value}
+                  />
+                )}
+              </form.Field>
+              <form.Field
+                name="email"
+                validators={{
+                  onSubmit: ({ value }) =>
+                    value.trim() && !/^\S+@\S+\.\S+$/.test(value.trim())
+                      ? "Ingresa un correo electrónico válido."
+                      : undefined,
+                }}
+              >
+                {(field) => (
+                  <Field
+                    error={field.state.meta.errors[0] as string}
+                    label="Correo electrónico"
+                    onChange={field.handleChange}
+                    type="email"
+                    value={field.state.value}
+                  />
+                )}
+              </form.Field>
             </div>
           </section>
 
@@ -269,16 +278,18 @@ export function ClientFormPage() {
             <h2 className="mb-7 flex items-center gap-3 text-2xl font-bold text-[#865c7f]">
               <Info size={23} /> Información adicional
             </h2>
-            <label className="grid max-w-[560px] gap-2 text-sm font-semibold text-[#211b21]">
-              Preferencias
-              <textarea
-                className="min-h-28 border border-[#9b9aa2] bg-white p-3 text-base font-normal text-[#4d4350] outline-none focus:border-[#8b5e83]"
-                onChange={(event) =>
-                  updateField("preferences", event.target.value)
-                }
-                value={form.preferences}
-              />
-            </label>
+            <div className="grid max-w-140 gap-2 text-sm font-semibold text-[#211b21]">
+              <span>Preferencias</span>
+              <form.Field name="preferences">
+                {(field) => (
+                  <textarea
+                    className="min-h-28 border border-[#9b9aa2] bg-white p-3 text-base font-normal text-[#4d4350] outline-none focus:border-[#8b5e83]"
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    value={field.state.value}
+                  />
+                )}
+              </form.Field>
+            </div>
           </section>
 
           <section className="py-8">
@@ -295,35 +306,58 @@ export function ClientFormPage() {
             <div className="rounded-lg bg-[#fbf0fa] p-4 sm:p-7">
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {measurementFields.map(([key, label]) => (
-                  <Field
+                  <form.Field
                     key={key}
-                    label={`${label} (cm)`}
-                    onChange={(value) =>
-                      setForm((current) => ({
-                        ...current,
-                        measurements: { ...current.measurements, [key]: value },
-                      }))
-                    }
-                    type="number"
-                    value={form.measurements[key]}
-                  />
+                    name={`measurements.${key}`}
+                    validators={{
+                      onSubmit: ({ value }) =>
+                        value.trim() &&
+                        (!Number.isFinite(Number(value)) || Number(value) < 0)
+                          ? `${label} debe ser un número no negativo.`
+                          : undefined,
+                    }}
+                  >
+                    {(field) => (
+                      <Field
+                        label={`${label} (cm)`}
+                        onChange={field.handleChange}
+                        type="number"
+                        value={field.state.value}
+                      />
+                    )}
+                  </form.Field>
                 ))}
               </div>
-              {errors.measurements ? (
-                <p className="mt-3 text-xs text-[#b34b5d]">
-                  {errors.measurements}
-                </p>
-              ) : null}
-              <label className="mt-6 grid max-w-[560px] gap-2 text-sm font-semibold text-[#211b21]">
-                Observaciones de medición
-                <textarea
-                  className="min-h-24 border border-[#9b9aa2] bg-white p-3 text-base font-normal text-[#4d4350] outline-none focus:border-[#8b5e83]"
-                  onChange={(event) =>
-                    updateField("measurementNotes", event.target.value)
-                  }
-                  value={form.measurementNotes}
-                />
-              </label>
+              <form.Subscribe
+                selector={(state) =>
+                  measurementFields
+                    .map(
+                      ([key]) =>
+                        state.fieldMeta[`measurements.${key}`]?.errors[0],
+                    )
+                    .find(Boolean)
+                }
+              >
+                {(error) =>
+                  error ? (
+                    <p className="mt-3 text-xs text-[#b34b5d]">{error}</p>
+                  ) : null
+                }
+              </form.Subscribe>
+              <div className="mt-6 grid max-w-140 gap-2 text-sm font-semibold text-[#211b21]">
+                <span>Observaciones de medición</span>
+                <form.Field name="measurementNotes">
+                  {(field) => (
+                    <textarea
+                      className="min-h-24 border border-[#9b9aa2] bg-white p-3 text-base font-normal text-[#4d4350] outline-none focus:border-[#8b5e83]"
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
+                      value={field.state.value}
+                    />
+                  )}
+                </form.Field>
+              </div>
             </div>
           </section>
 
@@ -337,7 +371,9 @@ export function ClientFormPage() {
             </button>
             <button
               className="rounded-lg border-0 bg-[#8b5e83] px-5 py-3 text-base font-bold text-white disabled:opacity-50 hover:bg-[#70466a] cursor-pointer"
-              disabled={create.isPending || update.isPending}
+              disabled={
+                create.isPending || update.isPending || form.state.isSubmitting
+              }
               type="submit"
             >
               {isEditing ? "Guardar cambios" : "Guardar cliente"}
