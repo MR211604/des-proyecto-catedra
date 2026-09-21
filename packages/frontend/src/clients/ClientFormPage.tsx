@@ -216,7 +216,7 @@ export function ClientFormPage() {
     <main className="min-h-[calc(100vh-72px)] bg-[#f8f5f7] px-6 py-8 sm:px-10">
       <div className="mx-auto max-w-[900px]">
         <button
-          className="mb-8 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-lg text-[#3d343d]"
+          className="mb-8 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-lg text-[#3d343d] cursor-pointer"
           onClick={() => navigate("/clientes")}
           type="button"
         >
@@ -329,14 +329,14 @@ export function ClientFormPage() {
 
           <footer className="flex justify-end gap-3 border-t border-[#eee2eb] pt-7">
             <button
-              className="border-0 bg-transparent px-4 py-3 text-base text-[#211b21]"
+              className="border-0 bg-transparent px-4 py-3 text-base text-[#211b21] cursor-pointer"
               onClick={() => navigate("/clientes")}
               type="button"
             >
               Cancelar
             </button>
             <button
-              className="rounded-lg border-0 bg-[#8b5e83] px-5 py-3 text-base font-bold text-white disabled:opacity-50"
+              className="rounded-lg border-0 bg-[#8b5e83] px-5 py-3 text-base font-bold text-white disabled:opacity-50 hover:bg-[#70466a] cursor-pointer"
               disabled={create.isPending || update.isPending}
               type="submit"
             >

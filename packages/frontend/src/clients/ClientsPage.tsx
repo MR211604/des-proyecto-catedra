@@ -4,18 +4,25 @@ import {
   ChevronRight,
   Eye,
   Pencil,
+  RotateCcw,
   Search,
   Trash2,
   UserRoundPlus,
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
-import { useNavigate } from "react-router-dom";
-import { useClients } from "./api.ts";
+import { ApiError } from "../lib/api.ts";
+import { useClientMutations, useClients } from "./api.ts";
 import { ClientDetailDrawer } from "./ClientDetailDrawer.tsx";
 import { formatClientDate } from "./formatters.ts";
 import type { Client, ClientSort, ClientTab, SortOrder } from "./types.ts";
@@ -90,12 +97,74 @@ export function ClientsPage() {
     sortBy,
     order,
   });
+  const { deactivate, restore } = useClientMutations();
   const clients = query.data?.data ?? [];
   const meta = query.data?.meta;
 
   useEffect(() => {
     if (query.error) toast.error("No se pudieron cargar los clientes.");
   }, [query.error]);
+
+  const changeClientStatus = useCallback(
+    (clientId: string, inactive: boolean, clientName: string) => {
+      const runMutation = () => {
+        const mutation = inactive ? restore : deactivate;
+        void mutation
+          .mutateAsync(clientId)
+          .then(() =>
+            toast.success(
+              inactive ? "Cliente activado." : "Cliente desactivado.",
+            ),
+          )
+          .catch((error: unknown) =>
+            toast.error(
+              error instanceof ApiError
+                ? error.message
+                : inactive
+                  ? "No se pudo activar el cliente."
+                  : "No se pudo desactivar el cliente.",
+            ),
+          );
+      };
+
+      if (inactive) {
+        runMutation();
+        return;
+      }
+
+      toast.custom(
+        (confirmation) => (
+          <div className="pointer-events-auto w-[min(360px,calc(100vw-2rem))] rounded-xl border border-[#e5cddd] bg-[#fffafd] p-4 text-[#302630] shadow-[0_18px_40px_-20px_#4d3049]">
+            <p className="m-0 text-sm font-bold">¿Desactivar cliente?</p>
+            <p className="mt-1 mb-3 text-xs text-[#806f7d]">
+              {clientName} dejará de aparecer entre los clientes activos.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded-md px-3 py-1.5 text-xs font-bold text-[#806f7d] hover:bg-[#f6edf5] cursor-pointer"
+                onClick={() => toast.remove(confirmation.id)}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="rounded-md bg-[#8b5e83] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#70466a] cursor-pointer"
+                onClick={() => {
+                  toast.remove(confirmation.id);
+                  runMutation();
+                }}
+                type="button"
+              >
+                Desactivar
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: 8000, position: "top-center" },
+      );
+    },
+    [deactivate, restore],
+  );
 
   const columns = useMemo<
     ColumnDef<typeof appTableFeatures, Client, unknown>[]
@@ -125,7 +194,7 @@ export function ClientsPage() {
       },
       {
         accessorKey: "createdAt",
-        header: "Alta",
+        header: "Registro",
         cell: ({ getValue }) => formatClientDate(getValue<string>()),
       },
       {
@@ -173,14 +242,41 @@ export function ClientsPage() {
                 <Pencil size={17} />
               </button>
             )}
-            <DisabledAction label="Desactivar cliente">
-              <Trash2 size={17} />
-            </DisabledAction>
+            <button
+              aria-label={
+                row.original.deletedAt
+                  ? "Activar cliente"
+                  : "Desactivar cliente"
+              }
+              className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={deactivate.isPending || restore.isPending}
+              onClick={() =>
+                changeClientStatus(
+                  row.original.id,
+                  Boolean(row.original.deletedAt),
+                  row.original.name,
+                )
+              }
+              type="button"
+            >
+              {row.original.deletedAt ? (
+                <RotateCcw size={17} />
+              ) : (
+                <Trash2 size={17} />
+              )}
+            </button>
           </div>
         ),
       },
     ],
-    [navigate, searchParams, setSearchParams],
+    [
+      deactivate.isPending,
+      navigate,
+      restore.isPending,
+      searchParams,
+      setSearchParams,
+      changeClientStatus,
+    ],
   );
 
   function updateParams(updates: Record<string, string | undefined>) {

@@ -13,6 +13,7 @@ type ApiClient = {
   post: <T>(path: string, body: unknown) => Promise<T>;
   put: <T>(path: string, body: unknown) => Promise<T>;
   patch: <T>(path: string, body?: unknown) => Promise<T>;
+  delete: <T>(path: string) => Promise<T>;
 };
 
 export function createApiClient(
@@ -31,13 +32,16 @@ export function createApiClient(
     async patch<T>(path: string, body?: unknown) {
       return request<T>(getToken, path, "PATCH", body);
     },
+    async delete<T>(path: string) {
+      return request<T>(getToken, path, "DELETE");
+    },
   };
 }
 
 async function request<T>(
   getToken: () => Promise<string | null>,
   path: string,
-  method: "GET" | "PATCH" | "POST" | "PUT",
+  method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT",
   body?: unknown,
 ) {
   const token = await getToken();

@@ -102,6 +102,10 @@ export function useClientMutations() {
       client.patch<Client>(`/api/v1/clients/${id}/restore`),
     onSuccess: (_data, id) => refresh(id),
   });
+  const deactivate = useMutation({
+    mutationFn: (id: string) => client.delete<Client>(`/api/v1/clients/${id}`),
+    onSuccess: (_data, id) => refresh(id),
+  });
 
-  return { create, update, restore };
+  return { create, update, restore, deactivate };
 }

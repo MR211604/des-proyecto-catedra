@@ -109,7 +109,7 @@ export function ClientDetailDrawer({
           </div>
           <button
             aria-label="Cerrar detalle del cliente"
-            className="rounded-md p-2 text-[#766774] hover:bg-[#f6edf5]"
+            className="rounded-md p-2 text-[#766774] hover:bg-[#f6edf5] cursor-pointer"
             onClick={onClose}
             ref={closeButton}
             type="button"
@@ -162,7 +162,7 @@ export function ClientDetailDrawer({
                   </button>
                 ) : (
                   <button
-                    className="inline-flex items-center gap-2 rounded-md border border-[#8b5e83] px-3 py-2 text-xs font-bold text-[#70466a]"
+                    className="inline-flex items-center gap-2 rounded-md border border-[#8b5e83] px-3 py-2 text-xs font-bold text-[#70466a] hover:bg-[#f6edf5] cursor-pointer"
                     onClick={() => navigate(`/clientes/${client.id}/editar`)}
                     type="button"
                   >
