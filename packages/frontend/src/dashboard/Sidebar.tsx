@@ -1,14 +1,15 @@
 import { Icon, type IconName } from "./Icon";
+import { NavLink } from "react-router-dom";
 
-const navigation: { label: string; icon: IconName; active?: boolean }[] = [
-  { label: "Dashboard", icon: "chart", active: true },
-  { label: "Clientes", icon: "clients" },
-  { label: "Pedidos", icon: "orders" },
-  { label: "Producción", icon: "production" },
-  { label: "Inventario", icon: "inventory" },
-  { label: "Ventas", icon: "cash" },
-  { label: "Reportes", icon: "reports" },
-  { label: "Configuración", icon: "settings" },
+const navigation: { label: string; icon: IconName; to: string }[] = [
+  { label: "Dashboard", icon: "chart", to: "/dashboard" },
+  { label: "Clientes", icon: "clients", to: "/clientes" },
+  { label: "Pedidos", icon: "orders", to: "/pedidos" },
+  { label: "Producción", icon: "production", to: "/produccion" },
+  { label: "Inventario", icon: "inventory", to: "/inventario" },
+  { label: "Ventas", icon: "cash", to: "/ventas" },
+  { label: "Reportes", icon: "reports", to: "/reportes" },
+  { label: "Configuración", icon: "settings", to: "/configuracion" },
 ];
 
 export function Sidebar() {
@@ -32,14 +33,16 @@ export function Sidebar() {
         className="mt-[35px] grid gap-1.5 max-[820px]:mt-[18px] max-[820px]:flex max-[820px]:gap-1 max-[820px]:overflow-x-auto"
       >
         {navigation.map((item) => (
-          <button
-            className={`relative flex min-h-[54px] cursor-pointer items-center gap-4 border-0 bg-transparent px-[15px] text-left text-[#332c34] hover:bg-[#fff7fc66] max-[820px]:min-h-[42px] max-[820px]:shrink-0 max-[820px]:gap-2 max-[820px]:px-3 max-[820px]:whitespace-nowrap ${item.active ? "font-bold text-[#70466a] before:absolute before:bottom-0 before:left-0 before:top-0 before:w-1 before:rounded-r bg-transparent before:bg-[#8b5e83] max-[820px]:before:bottom-0 max-[820px]:before:left-0 max-[820px]:before:right-0 max-[820px]:before:top-auto max-[820px]:before:h-[3px] max-[820px]:before:w-auto" : ""}`}
+          <NavLink
+            className={({ isActive }) =>
+              `relative flex min-h-[54px] items-center gap-4 border-0 bg-transparent px-[15px] text-left text-[#332c34] hover:bg-[#fff7fc66] max-[820px]:min-h-[42px] max-[820px]:shrink-0 max-[820px]:gap-2 max-[820px]:px-3 max-[820px]:whitespace-nowrap ${isActive ? "font-bold text-[#70466a] before:absolute before:bottom-0 before:left-0 before:top-0 before:w-1 before:rounded-r before:bg-[#8b5e83] max-[820px]:before:bottom-0 max-[820px]:before:left-0 max-[820px]:before:right-0 max-[820px]:before:top-auto max-[820px]:before:h-[3px] max-[820px]:before:w-auto" : ""}`
+            }
             key={item.label}
-            type="button"
+            to={item.to}
           >
             <Icon name={item.icon} size={24} />
             <span>{item.label}</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
       <button

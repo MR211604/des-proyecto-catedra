@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/react";
 import { SignInForm } from "./auth/SignInForm.tsx";
 import { WorkshopPanel } from "./auth/WorkshopPanel.tsx";
-import { Dashboard } from "./dashboard/Dashboard.tsx";
+import { AppRoutes } from "./routes/AppRoutes.tsx";
 
 function LoadingState() {
   return (
@@ -25,7 +25,7 @@ function SignInHome() {
 function App() {
   const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <LoadingState />;
-  return isSignedIn ? <Dashboard /> : <SignInHome />;
+  return isSignedIn ? <AppRoutes /> : <SignInHome />;
 }
 
 export default App;
