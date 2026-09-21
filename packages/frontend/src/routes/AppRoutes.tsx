@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Dashboard } from "../dashboard/Dashboard.tsx";
 import { Sidebar } from "../dashboard/Sidebar.tsx";
 import { TopBar } from "../dashboard/TopBar.tsx";
+import { ClientFormPage } from "../clients/ClientFormPage.tsx";
 import { ClientsPage } from "../clients/ClientsPage.tsx";
 
 function AuthenticatedLayout() {
@@ -23,6 +24,8 @@ export function AppRoutes() {
         <Route index element={<Navigate replace to="/dashboard" />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clientes" element={<ClientsPage />} />
+        <Route path="clientes/nuevo" element={<ClientFormPage />} />
+        <Route path="clientes/:id/editar" element={<ClientFormPage />} />
         <Route path="*" element={<Navigate replace to="/dashboard" />} />
       </Route>
     </Routes>

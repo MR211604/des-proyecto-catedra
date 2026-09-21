@@ -14,7 +14,10 @@ import { useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
+import { useNavigate } from "react-router-dom";
 import { useClients } from "./api.ts";
+import { ClientDetailDrawer } from "./ClientDetailDrawer.tsx";
+import { formatClientDate } from "./formatters.ts";
 import type { Client, ClientSort, ClientTab, SortOrder } from "./types.ts";
 
 const tabs: { label: string; value: ClientTab }[] = [
@@ -22,14 +25,6 @@ const tabs: { label: string; value: ClientTab }[] = [
   { label: "Activos", value: "active" },
   { label: "Inactivos", value: "inactive" },
 ];
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 function initials(name: string) {
   return name
@@ -60,6 +55,7 @@ function DisabledAction({
 }
 
 export function ClientsPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(
     searchParams.get("search") ?? "",
@@ -74,6 +70,7 @@ export function ClientsPage() {
   const sortBy: ClientSort = rawSort === "createdAt" ? rawSort : "name";
   const rawOrder = searchParams.get("order");
   const order: SortOrder = rawOrder === "desc" ? rawOrder : "asc";
+  const detailId = searchParams.get("detail");
 
   useEffect(() => {
     const currentSearch = searchParams.get("search") ?? "";
@@ -129,7 +126,7 @@ export function ClientsPage() {
       {
         accessorKey: "createdAt",
         header: "Alta",
-        cell: ({ getValue }) => formatDate(getValue<string>()),
+        cell: ({ getValue }) => formatClientDate(getValue<string>()),
       },
       {
         accessorKey: "deletedAt",
@@ -148,14 +145,34 @@ export function ClientsPage() {
       {
         id: "actions",
         header: "Acciones",
-        cell: () => (
+        cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <DisabledAction label="Ver cliente">
+            <button
+              aria-label="Ver cliente"
+              className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("detail", row.original.id);
+                setSearchParams(next, { replace: true });
+              }}
+              type="button"
+            >
               <Eye size={17} />
-            </DisabledAction>
-            <DisabledAction label="Editar cliente">
-              <Pencil size={17} />
-            </DisabledAction>
+            </button>
+            {row.original.deletedAt ? (
+              <DisabledAction label="Editar cliente">
+                <Pencil size={17} />
+              </DisabledAction>
+            ) : (
+              <button
+                aria-label="Editar cliente"
+                className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+                onClick={() => navigate(`/clientes/${row.original.id}/editar`)}
+                type="button"
+              >
+                <Pencil size={17} />
+              </button>
+            )}
             <DisabledAction label="Desactivar cliente">
               <Trash2 size={17} />
             </DisabledAction>
@@ -163,7 +180,7 @@ export function ClientsPage() {
         ),
       },
     ],
-    [],
+    [navigate, searchParams, setSearchParams],
   );
 
   function updateParams(updates: Record<string, string | undefined>) {
@@ -192,139 +209,153 @@ export function ClientsPage() {
   const showTo = meta ? Math.min(meta.page * meta.limit, meta.total) : 0;
 
   return (
-    <main className="mx-auto max-w-[1440px] px-10 py-[38px] pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7">
-      <div className="mb-7 flex items-start justify-between gap-4 max-[620px]:flex-col">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
-            Relación del taller
-          </p>
-          <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
-            Clientes
-          </h1>
-          <p className="mt-2 mb-0 text-sm text-[#786d77]">
-            Consulta y organiza las personas que confían sus prendas al taller.
-          </p>
-        </div>
-        <button
-          className="flex min-h-12 items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white shadow-[0_8px_18px_-12px_#70466a] opacity-60"
-          disabled
-          type="button"
-        >
-          <UserRoundPlus size={18} />
-          <span>Nuevo cliente</span>
-        </button>
-      </div>
-      <section className="rounded-2xl border border-[#eadde7] bg-[#fffafd] shadow-[0_18px_45px_-35px_#70466a]">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eee2eb] px-5 py-5">
-          <div
-            className="flex gap-2 rounded-xl bg-[#f8f0f7] p-1"
-            role="tablist"
-            aria-label="Estado de clientes"
+    <>
+      <main className="mx-auto max-w-[1440px] px-10 py-[38px] pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7">
+        <div className="mb-7 flex items-start justify-between gap-4 max-[620px]:flex-col">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
+              Relación del taller
+            </p>
+            <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
+              Clientes
+            </h1>
+            <p className="mt-2 mb-0 text-sm text-[#786d77]">
+              Consulta y organiza las personas que confían sus prendas al
+              taller.
+            </p>
+          </div>
+          <button
+            className="flex min-h-12 items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white shadow-[0_8px_18px_-12px_#70466a] hover:bg-[#70466a]"
+            onClick={() => navigate("/clientes/nuevo")}
+            type="button"
           >
-            {tabs.map((item) => (
+            <UserRoundPlus size={18} />
+            <span>Nuevo cliente</span>
+          </button>
+        </div>
+        <section className="rounded-2xl border border-[#eadde7] bg-[#fffafd] shadow-[0_18px_45px_-35px_#70466a]">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eee2eb] px-5 py-5">
+            <div
+              className="flex gap-2 rounded-xl bg-[#f8f0f7] p-1"
+              role="tablist"
+              aria-label="Estado de clientes"
+            >
+              {tabs.map((item) => (
+                <button
+                  aria-selected={tab === item.value}
+                  className={`rounded-lg border-0 px-4 py-2 text-sm font-bold transition ${tab === item.value ? "bg-white text-[#70466a] shadow-sm" : "bg-transparent text-[#8a7886]"}`}
+                  key={item.value}
+                  onClick={() => changeTab(item.value)}
+                  role="tab"
+                  type="button"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <label className="flex h-11 min-w-[260px] items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
+              <Search size={18} />
+              <span className="sr-only">Buscar clientes</span>
+              <input
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#302630] outline-none placeholder:text-[#ab9ca8]"
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Buscar por nombre, correo..."
+                value={searchInput}
+              />
+            </label>
+          </div>
+          <div className="flex items-center justify-between gap-3 border-b border-[#eee2eb] px-5 py-3 text-xs text-[#806f7d] max-[620px]:items-start max-[620px]:flex-col">
+            <span>
+              {meta
+                ? `${meta.total} ${meta.total === 1 ? "cliente encontrado" : "clientes encontrados"}`
+                : "Consultando clientes..."}
+            </span>
+            <div className="flex gap-2">
               <button
-                aria-selected={tab === item.value}
-                className={`rounded-lg border-0 px-4 py-2 text-sm font-bold transition ${tab === item.value ? "bg-white text-[#70466a] shadow-sm" : "bg-transparent text-[#8a7886]"}`}
-                key={item.value}
-                onClick={() => changeTab(item.value)}
-                role="tab"
+                className="rounded-md border border-[#dfcedc] bg-white px-3 py-1.5 font-bold hover:border-[#8b5e83]"
+                onClick={() => changeSort("name")}
                 type="button"
               >
-                {item.label}
+                Nombre {sortBy === "name" ? (order === "asc" ? "↑" : "↓") : ""}
               </button>
-            ))}
-          </div>
-          <label className="flex h-11 min-w-[260px] items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
-            <Search size={18} />
-            <span className="sr-only">Buscar clientes</span>
-            <input
-              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#302630] outline-none placeholder:text-[#ab9ca8]"
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Buscar por nombre, correo..."
-              value={searchInput}
-            />
-          </label>
-        </div>
-        <div className="flex items-center justify-between gap-3 border-b border-[#eee2eb] px-5 py-3 text-xs text-[#806f7d] max-[620px]:items-start max-[620px]:flex-col">
-          <span>
-            {meta
-              ? `${meta.total} ${meta.total === 1 ? "cliente encontrado" : "clientes encontrados"}`
-              : "Consultando clientes..."}
-          </span>
-          <div className="flex gap-2">
-            <button
-              className="rounded-md border border-[#dfcedc] bg-white px-3 py-1.5 font-bold hover:border-[#8b5e83]"
-              onClick={() => changeSort("name")}
-              type="button"
-            >
-              Nombre {sortBy === "name" ? (order === "asc" ? "↑" : "↓") : ""}
-            </button>
-            <button
-              className="rounded-md border border-[#dfcedc] bg-white px-3 py-1.5 font-bold hover:border-[#8b5e83]"
-              onClick={() => changeSort("createdAt")}
-              type="button"
-            >
-              Alta {sortBy === "createdAt" ? (order === "asc" ? "↑" : "↓") : ""}
-            </button>
-          </div>
-        </div>
-        {query.isPending ? (
-          <div className="grid min-h-80 place-items-center p-8 text-sm text-[#806f7d]">
-            Cargando clientes...
-          </div>
-        ) : query.isError ? (
-          <div className="grid min-h-80 place-items-center gap-3 p-8 text-center">
-            <p className="m-0 text-sm font-semibold text-[#5d4c59]">
-              No pudimos cargar los clientes.
-            </p>
-            <button
-              className="rounded-lg bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white"
-              onClick={() => void query.refetch()}
-              type="button"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="grid min-h-80 place-items-center p-8 text-center">
-            <div>
-              <p className="m-0 text-base font-bold text-[#302630]">
-                No hay clientes para mostrar
-              </p>
-              <p className="mt-2 mb-0 text-sm text-[#806f7d]">
-                Prueba con otra búsqueda o cambia el estado seleccionado.
-              </p>
+              <button
+                className="rounded-md border border-[#dfcedc] bg-white px-3 py-1.5 font-bold hover:border-[#8b5e83]"
+                onClick={() => changeSort("createdAt")}
+                type="button"
+              >
+                Alta{" "}
+                {sortBy === "createdAt" ? (order === "asc" ? "↑" : "↓") : ""}
+              </button>
             </div>
           </div>
-        ) : (
-          <DataTable columns={columns} data={clients} />
-        )}
-        <footer className="flex items-center justify-between border-t border-[#eee2eb] px-5 py-4 text-sm text-[#5f525d]">
-          <span>
-            {meta ? `Mostrando ${showFrom}-${showTo} de ${meta.total}` : ""}
-          </span>
-          <div className="flex gap-1">
-            <button
-              aria-label="Página anterior"
-              className="rounded-md p-2 hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-35"
-              disabled={page <= 1}
-              onClick={() => updateParams({ page: String(page - 1) })}
-              type="button"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              aria-label="Página siguiente"
-              className="rounded-md p-2 hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-35"
-              disabled={!meta || page >= meta.totalPages}
-              onClick={() => updateParams({ page: String(page + 1) })}
-              type="button"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </footer>
-      </section>
-    </main>
+          {query.isPending ? (
+            <div className="grid min-h-80 place-items-center p-8 text-sm text-[#806f7d]">
+              Cargando clientes...
+            </div>
+          ) : query.isError ? (
+            <div className="grid min-h-80 place-items-center gap-3 p-8 text-center">
+              <p className="m-0 text-sm font-semibold text-[#5d4c59]">
+                No pudimos cargar los clientes.
+              </p>
+              <button
+                className="rounded-lg bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white"
+                onClick={() => void query.refetch()}
+                type="button"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : clients.length === 0 ? (
+            <div className="grid min-h-80 place-items-center p-8 text-center">
+              <div>
+                <p className="m-0 text-base font-bold text-[#302630]">
+                  No hay clientes para mostrar
+                </p>
+                <p className="mt-2 mb-0 text-sm text-[#806f7d]">
+                  Prueba con otra búsqueda o cambia el estado seleccionado.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={clients} />
+          )}
+          <footer className="flex items-center justify-between border-t border-[#eee2eb] px-5 py-4 text-sm text-[#5f525d]">
+            <span>
+              {meta ? `Mostrando ${showFrom}-${showTo} de ${meta.total}` : ""}
+            </span>
+            <div className="flex gap-1">
+              <button
+                aria-label="Página anterior"
+                className="rounded-md p-2 hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-35"
+                disabled={page <= 1}
+                onClick={() => updateParams({ page: String(page - 1) })}
+                type="button"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                aria-label="Página siguiente"
+                className="rounded-md p-2 hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-35"
+                disabled={!meta || page >= meta.totalPages}
+                onClick={() => updateParams({ page: String(page + 1) })}
+                type="button"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </footer>
+        </section>
+      </main>
+      {detailId ? (
+        <ClientDetailDrawer
+          clientId={detailId}
+          onClose={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("detail");
+            setSearchParams(next, { replace: true });
+          }}
+        />
+      ) : null}
+    </>
   );
 }

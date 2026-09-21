@@ -1,10 +1,13 @@
 import { useAuth } from "@clerk/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApiClient } from "../lib/api.ts";
 import type {
-  ClientTab,
-  ClientsResponse,
+  Client,
+  ClientInput,
   ClientSort,
+  ClientsResponse,
+  ClientTab,
+  OrdersResponse,
   SortOrder,
 } from "./types.ts";
 
@@ -46,4 +49,59 @@ export function useClients(params: ClientListParams) {
           }
         : response,
   });
+}
+
+export function useClient(id: string | undefined) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["client", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<Client>(`/api/v1/clients/${id}`),
+  });
+}
+
+export function useClientOrders(id: string | undefined) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["client-orders", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<OrdersResponse>(
+        `/api/v1/orders?clientId=${encodeURIComponent(id ?? "")}&limit=100&sortBy=createdAt&order=desc`,
+      ),
+  });
+}
+
+export function useClientMutations() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const client = createApiClient(getToken);
+
+  const refresh = async (id?: string) => {
+    await queryClient.invalidateQueries({ queryKey: ["clients"] });
+    if (id) {
+      await queryClient.invalidateQueries({ queryKey: ["client", id] });
+    }
+  };
+
+  const create = useMutation({
+    mutationFn: (input: ClientInput) =>
+      client.post<Client>("/api/v1/clients", input),
+    onSuccess: () => refresh(),
+  });
+  const update = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: ClientInput }) =>
+      client.put<Client>(`/api/v1/clients/${id}`, input),
+    onSuccess: (_data, variables) => refresh(variables.id),
+  });
+  const restore = useMutation({
+    mutationFn: (id: string) =>
+      client.patch<Client>(`/api/v1/clients/${id}/restore`),
+    onSuccess: (_data, id) => refresh(id),
+  });
+
+  return { create, update, restore };
 }

@@ -56,7 +56,12 @@ export async function listClients(params: ListClientsQuery) {
 }
 
 export async function getClientById(id: string) {
-  const client = await prisma.client.findUnique({ where: { id } });
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: {
+      measurements: true,
+    },
+  });
 
   if (!client) {
     throw new AppError(404, "Client not found");
@@ -88,6 +93,9 @@ export async function updateClient(id: string, data: UpdateClientInput) {
 
     if (!before) {
       throw new AppError(404, "Client not found");
+    }
+    if (before.deletedAt !== null) {
+      throw new AppError(409, "Inactive clients can only be restored");
     }
 
     const { measurements, ...clientData } = data;

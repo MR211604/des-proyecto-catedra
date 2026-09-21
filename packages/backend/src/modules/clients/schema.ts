@@ -5,15 +5,35 @@ enum ClientMeasurementUnit {
   m = "m",
 }
 
-export const clientMeasurementSchema = z.object({
-  unit: z.enum([ClientMeasurementUnit.cm, ClientMeasurementUnit.m]),
-  values: z.record(z.string(), z.unknown()),
-  notes: z.string().max(1000).optional(),
-});
+const measurementValue = z.number().finite().nonnegative();
+
+const measurementValuesSchema = z
+  .object({
+    chest: measurementValue.optional(),
+    waist: measurementValue.optional(),
+    hips: measurementValue.optional(),
+    sleeveLength: measurementValue.optional(),
+    garmentLength: measurementValue.optional(),
+    shoulders: measurementValue.optional(),
+  })
+  .strict();
+
+export const clientMeasurementSchema = z
+  .object({
+    unit: z.enum([ClientMeasurementUnit.cm, ClientMeasurementUnit.m]),
+    values: measurementValuesSchema,
+    notes: z.string().max(1000).optional(),
+  })
+  .refine(
+    (measurement) =>
+      Object.values(measurement.values).some((value) => value !== undefined) ||
+      Boolean(measurement.notes?.trim()),
+    { message: "At least one measurement value or observation is required" },
+  );
 
 export const createClientSchema = z.object({
   name: z.string().trim().min(1).max(150),
-  phone: z.string().max(30).optional(),
+  phone: z.string().trim().min(1).max(30),
   email: z.email().optional(),
   notes: z.string().max(1000).optional(),
   measurements: clientMeasurementSchema.optional(),
