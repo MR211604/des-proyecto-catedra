@@ -183,12 +183,41 @@ function Field({
 export function OrderFormPage() {
   const { id } = useParams();
   const isEditing = Boolean(id);
-  const navigate = useNavigate();
   const orderQuery = useOrder(id);
   const options = useOrderFormOptions();
+
+  if (isEditing && orderQuery.isPending)
+    return (
+      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
+        Cargando pedido...
+      </div>
+    );
+  if (isEditing && (orderQuery.isError || !orderQuery.data))
+    return (
+      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
+        No se pudo cargar el pedido.
+      </div>
+    );
+
+  return (
+    <OrderFormEditor id={id} options={options} order={orderQuery.data} />
+  );
+}
+
+function OrderFormEditor({
+  id,
+  options,
+  order,
+}: {
+  id: string | undefined;
+  options: ReturnType<typeof useOrderFormOptions>;
+  order: OrderDetail | undefined;
+}) {
+  const isEditing = Boolean(id);
+  const navigate = useNavigate();
   const { create, update } = useOrderFormMutations();
   const form = useForm({
-    defaultValues: emptyForm,
+    defaultValues: order ? formFromOrder(order) : emptyForm,
     onSubmit: async ({ value }) => {
       const inventory = options.inventory.data ?? [];
       const mutation =
@@ -214,28 +243,11 @@ export function OrderFormPage() {
   });
 
   useEffect(() => {
-    if (orderQuery.data) form.reset(formFromOrder(orderQuery.data));
-  }, [form.reset, orderQuery.data]);
-
-  useEffect(() => {
     const firstStage = options.stages.data?.[0];
     if (!isEditing && firstStage && !form.getFieldValue("jobs")[0]?.stageId) {
       form.setFieldValue("jobs", [emptyJob(firstStage.id)]);
     }
   }, [form, isEditing, options.stages.data]);
-
-  if (isEditing && orderQuery.isPending)
-    return (
-      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
-        Cargando pedido...
-      </div>
-    );
-  if (isEditing && (orderQuery.isError || !orderQuery.data))
-    return (
-      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
-        No se pudo cargar el pedido.
-      </div>
-    );
 
   const saving = create.isPending || update.isPending;
   const optionsLoading =

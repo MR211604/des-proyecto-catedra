@@ -1,8 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, Info, Ruler, UserRound } from "lucide-react";
-import { useEffect } from "react";
-import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import { ApiError } from "../lib/api.ts";
 import { useClient, useClientMutations } from "./api.ts";
 import type { Client, ClientInput, MeasurementValues } from "./types.ts";
@@ -117,11 +116,65 @@ function Field({
 export function ClientFormPage() {
   const { id } = useParams();
   const isEditing = Boolean(id);
-  const navigate = useNavigate();
   const clientQuery = useClient(id);
+
+  if (isEditing && clientQuery.isPending) {
+    return (
+      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
+        Cargando cliente...
+      </div>
+    );
+  }
+  if (isEditing && (clientQuery.isError || !clientQuery.data)) {
+    return (
+      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
+        No se pudo cargar el cliente.
+      </div>
+    );
+  }
+  if (isEditing && clientQuery.data?.deletedAt) {
+    return <InactiveClientState id={id} />;
+  }
+
+  return <ClientFormEditor client={clientQuery.data} id={id} />;
+}
+
+function InactiveClientState({ id }: { id: string | undefined }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="grid min-h-[70vh] place-items-center px-6 text-center">
+      <div>
+        <p className="m-0 text-lg font-bold text-[#302630]">
+          Este cliente está inactivo.
+        </p>
+        <p className="mt-2 text-sm text-[#806f7d]">
+          Solo puedes restaurarlo desde su ficha.
+        </p>
+        <button
+          className="mt-5 rounded-lg border-0 bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white"
+          onClick={() => navigate(`/clientes?detail=${id}`)}
+          type="button"
+        >
+          Ver ficha del cliente
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClientFormEditor({
+  client,
+  id,
+}: {
+  client: Client | undefined;
+  id: string | undefined;
+}) {
+  const isEditing = Boolean(id);
+  const navigate = useNavigate();
   const { create, update } = useClientMutations();
   const form = useForm({
-    defaultValues: emptyForm,
+    defaultValues: client ? formFromClient(client) : emptyForm,
     onSubmit: async ({ value }) => {
       const input = buildInput(value);
       const mutation =
@@ -144,46 +197,6 @@ export function ClientFormPage() {
         );
     },
   });
-
-  useEffect(() => {
-    if (clientQuery.data) form.reset(formFromClient(clientQuery.data));
-  }, [clientQuery.data, form]);
-
-  if (isEditing && clientQuery.isPending) {
-    return (
-      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
-        Cargando cliente...
-      </div>
-    );
-  }
-  if (isEditing && (clientQuery.isError || !clientQuery.data)) {
-    return (
-      <div className="grid min-h-[70vh] place-items-center text-sm text-[#806f7d]">
-        No se pudo cargar el cliente.
-      </div>
-    );
-  }
-  if (isEditing && clientQuery.data?.deletedAt) {
-    return (
-      <div className="grid min-h-[70vh] place-items-center px-6 text-center">
-        <div>
-          <p className="m-0 text-lg font-bold text-[#302630]">
-            Este cliente está inactivo.
-          </p>
-          <p className="mt-2 text-sm text-[#806f7d]">
-            Solo puedes restaurarlo desde su ficha.
-          </p>
-          <button
-            className="mt-5 rounded-lg border-0 bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white"
-            onClick={() => navigate(`/clientes?detail=${id}`)}
-            type="button"
-          >
-            Ver ficha del cliente
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-[calc(100vh-72px)] bg-[#f8f5f7] px-6 py-8 sm:px-10">
