@@ -13,15 +13,17 @@ function formatDate(value: string | null) {
 
 function JobCard({
   job,
+  isMoving,
   onDragStart,
 }: {
   job: ProductionJob;
+  isMoving: boolean;
   onDragStart: (jobId: string) => void;
 }) {
   const dueDate = job.dueDate ?? job.order.dueDate;
   return (
     <article
-      className={`group rounded-lg border bg-white p-5 shadow-[0_4px_14px_rgba(74,46,71,0.06)] transition-shadow hover:shadow-[0_6px_18px_rgba(74,46,71,0.12)] ${job.status === "BLOCKED" ? "border-[#bd7878] bg-[#fffafa]" : "border-[#dfd2dc]"}`}
+      className={`group rounded-lg border bg-white p-5 shadow-[0_4px_14px_rgba(74,46,71,0.06)] transition-[opacity,box-shadow] hover:shadow-[0_6px_18px_rgba(74,46,71,0.12)] ${job.status === "BLOCKED" ? "border-[#bd7878] bg-[#fffafa]" : "border-[#dfd2dc]"} ${isMoving ? "opacity-45" : "opacity-100"}`}
       draggable={job.status !== "BLOCKED"}
       onDragStart={() => onDragStart(job.id)}
     >
@@ -51,7 +53,11 @@ function JobCard({
           ) : (
             <CalendarDays size={16} strokeWidth={1.8} />
           )}
-          <span>{job.status === "BLOCKED" ? "Trabajo bloqueado" : formatDate(dueDate)}</span>
+          <span>
+            {job.status === "BLOCKED"
+              ? "Trabajo bloqueado"
+              : formatDate(dueDate)}
+          </span>
         </div>
       </div>
     </article>
@@ -61,16 +67,19 @@ function JobCard({
 function StageColumn({
   stage,
   search,
+  movingJobId,
   onDrop,
   onDragStart,
 }: {
   stage: ProductionStage;
   search: string;
+  movingJobId: string | undefined;
   onDrop: (stageId: string) => void;
   onDragStart: (jobId: string) => void;
 }) {
   const jobs = stage.jobs.filter((job) => {
-    const haystack = `${job.description} ${job.orderItem?.description ?? ""} ${job.order.client.name} ${job.order.number}`.toLowerCase();
+    const haystack =
+      `${job.description} ${job.orderItem?.description ?? ""} ${job.order.client.name} ${job.order.number}`.toLowerCase();
     return haystack.includes(search.toLowerCase());
   });
 
@@ -92,7 +101,12 @@ function StageColumn({
       </header>
       <div className="grid content-start gap-4 p-5">
         {jobs.map((job) => (
-          <JobCard key={job.id} job={job} onDragStart={onDragStart} />
+          <JobCard
+            isMoving={movingJobId === job.id}
+            key={job.id}
+            job={job}
+            onDragStart={onDragStart}
+          />
         ))}
         {jobs.length === 0 && (
           <p className="py-8 text-center text-sm text-[#927f8e]">
@@ -120,7 +134,7 @@ export function ProductionPage() {
     <main className="mx-auto max-w-[1600px] px-8 py-8 max-[820px]:px-4 max-[820px]:py-6">
       <div className="mb-6 flex items-center justify-between gap-5 max-[620px]:items-stretch max-[620px]:flex-col">
         <div>
-          <p className="mb-1 text-sm font-semibold uppercase tracking-[0.14em] text-[#93628a]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
             Operación del taller
           </p>
           <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
@@ -138,7 +152,9 @@ export function ProductionPage() {
           />
         </label>
       </div>
-      {board.isPending && <p className="text-[#766975]">Cargando producción...</p>}
+      {board.isPending && (
+        <p className="text-[#766975]">Cargando producción...</p>
+      )}
       {board.isError && (
         <p className="rounded-lg bg-[#fff1f1] p-4 text-[#a32626]">
           No se pudo cargar el tablero de producción.
@@ -151,6 +167,7 @@ export function ProductionPage() {
               key={stage.id}
               onDragStart={setDraggedJobId}
               onDrop={moveJob}
+              movingJobId={mutations.move.isPending ? mutations.move.variables?.jobId : undefined}
               search={search}
               stage={stage}
             />
@@ -159,7 +176,8 @@ export function ProductionPage() {
       )}
       {mutations.move.isError && (
         <p className="mt-4 text-sm text-[#a32626]">
-          No se pudo mover el trabajo. El tablero se actualizará con el estado actual.
+          No se pudo mover el trabajo. El tablero se actualizará con el estado
+          actual.
         </p>
       )}
     </main>

@@ -271,18 +271,20 @@ export function OrdersPage() {
   const showTo = meta ? Math.min(meta.page * meta.limit, meta.total) : 0;
   return (
     <main className="mx-auto max-w-360 px-10 py-9.5 pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7">
-      <div className="mb-7">
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
-          Relación del taller
-        </p>
-        <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
-          Pedidos
-        </h1>
-        <p className="mt-2 mb-0 text-sm text-[#786d77]">
-          Consulta y organiza los pedidos del taller.
-        </p>
+      <div className="mb-7 flex items-start justify-between gap-4 max-[620px]:flex-col">
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
+            Relación del taller
+          </p>
+          <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
+            Pedidos
+          </h1>
+          <p className="mt-2 mb-0 text-sm text-[#786d77]">
+            Consulta y organiza los pedidos del taller.
+          </p>
+        </div>
         <button
-          className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white shadow-[0_8px_18px_-12px_#70466a] hover:bg-[#70466a]"
+          className="flex min-h-12 items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white shadow-[0_8px_18px_-12px_#70466a] hover:bg-[#70466a] cursor-pointer"
           onClick={() => navigate("/pedidos/nuevo")}
           type="button"
         >

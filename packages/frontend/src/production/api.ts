@@ -52,13 +52,41 @@ export function useProductionMutations() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const client = createApiClient(getToken);
-  const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: ["production-board"] });
 
   const move = useMutation({
     mutationFn: ({ jobId, stageId }: { jobId: string; stageId: string }) =>
       client.post(`/api/v1/production/jobs/${jobId}/move`, { stageId }),
-    onSuccess: refresh,
+    onMutate: async ({ jobId, stageId }) => {
+      await queryClient.cancelQueries({ queryKey: ["production-board"] });
+      const previousBoard = queryClient.getQueryData<ProductionStage[]>([
+        "production-board",
+      ]);
+
+      if (previousBoard) {
+        queryClient.setQueryData<ProductionStage[]>(
+          ["production-board"],
+          previousBoard.map((stage) => ({
+            ...stage,
+            jobs: stage.jobs.filter((job) => job.id !== jobId),
+          })).map((stage) => {
+            const job = previousBoard
+              .flatMap((candidate) => candidate.jobs)
+              .find((candidate) => candidate.id === jobId);
+            if (stage.id !== stageId || !job) return stage;
+            return { ...stage, jobs: [...stage.jobs, job] };
+          }),
+        );
+      }
+
+      return { previousBoard };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(["production-board"], context.previousBoard);
+      }
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["production-board"] }),
   });
 
   return { move };
