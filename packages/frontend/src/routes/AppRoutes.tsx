@@ -6,6 +6,7 @@ import { ClientFormPage } from "../clients/ClientFormPage.tsx";
 import { ClientsPage } from "../clients/ClientsPage.tsx";
 import { OrdersPage } from "../orders/OrdersPage.tsx";
 import { OrderFormPage } from "../orders/OrderFormPage.tsx";
+import { ProductionPage } from "../production/ProductionPage.tsx";
 
 function AuthenticatedLayout() {
   return (
@@ -31,6 +32,7 @@ export function AppRoutes() {
         <Route path="pedidos" element={<OrdersPage />} />
         <Route path="pedidos/nuevo" element={<OrderFormPage />} />
         <Route path="pedidos/:id/editar" element={<OrderFormPage />} />
+        <Route path="produccion" element={<ProductionPage />} />
         <Route path="*" element={<Navigate replace to="/dashboard" />} />
       </Route>
     </Routes>

@@ -89,6 +89,7 @@ describe("production read service", () => {
       orderId: "order_1",
       status: "TODO",
       assignedTo: "user_1",
+      order: { status: { in: ["IN_PRODUCTION", "READY"] } },
     });
   });
 

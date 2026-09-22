@@ -237,6 +237,7 @@ export async function getProductionBoard(filters: ProductionBoardQuery) {
           ...(filters.orderId ? { orderId: filters.orderId } : {}),
           ...(filters.status ? { status: filters.status } : {}),
           ...(filters.assignedTo ? { assignedTo: filters.assignedTo } : {}),
+          order: { status: { in: ["IN_PRODUCTION", "READY"] } },
         },
         orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
         include: readJobInclude,
