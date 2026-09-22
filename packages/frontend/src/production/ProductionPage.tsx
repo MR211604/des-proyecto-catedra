@@ -85,7 +85,7 @@ function StageColumn({
 
   return (
     <section
-      className="flex min-h-[calc(100vh-180px)] min-w-[290px] flex-1 flex-col rounded-xl border border-[#dfd2dc] bg-[#fffafd]"
+      className="flex min-h-[calc(100vh-180px)] min-w-72.5 flex-1 flex-col rounded-xl border border-[#dfd2dc] bg-[#fffafd]"
       onDragOver={(event) => event.preventDefault()}
       onDrop={() => onDrop(stage.id)}
       aria-label={`Trabajos en ${stage.name}`}
@@ -167,7 +167,11 @@ export function ProductionPage() {
               key={stage.id}
               onDragStart={setDraggedJobId}
               onDrop={moveJob}
-              movingJobId={mutations.move.isPending ? mutations.move.variables?.jobId : undefined}
+              movingJobId={
+                mutations.move.isPending
+                  ? mutations.move.variables?.jobId
+                  : undefined
+              }
               search={search}
               stage={stage}
             />

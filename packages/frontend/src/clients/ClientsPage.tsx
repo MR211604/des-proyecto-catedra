@@ -18,6 +18,7 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Confirmation } from "../components/Confirmation.tsx";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
@@ -134,31 +135,16 @@ export function ClientsPage() {
 
       toast.custom(
         (confirmation) => (
-          <div className="pointer-events-auto w-[min(360px,calc(100vw-2rem))] rounded-xl border border-[#e5cddd] bg-[#fffafd] p-4 text-[#302630] shadow-[0_18px_40px_-20px_#4d3049]">
-            <p className="m-0 text-sm font-bold">¿Desactivar cliente?</p>
-            <p className="mt-1 mb-3 text-xs text-[#806f7d]">
-              {clientName} dejará de aparecer entre los clientes activos.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                className="rounded-md px-3 py-1.5 text-xs font-bold text-[#806f7d] hover:bg-[#f6edf5] cursor-pointer"
-                onClick={() => toast.remove(confirmation.id)}
-                type="button"
-              >
-                Cancelar
-              </button>
-              <button
-                className="rounded-md bg-[#8b5e83] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#70466a] cursor-pointer"
-                onClick={() => {
-                  toast.remove(confirmation.id);
-                  runMutation();
-                }}
-                type="button"
-              >
-                Desactivar
-              </button>
-            </div>
-          </div>
+          <Confirmation
+            title={"¿Desactivar cliente?"}
+            text={`${clientName} dejará de aparecer entre los clientes activos.`}
+            confirm="Desactivar"
+            onClose={() => toast.remove(confirmation.id)}
+            onConfirm={() => {
+              toast.remove(confirmation.id);
+              runMutation();
+            }}
+          />
         ),
         { duration: 8000, position: "top-center" },
       );
@@ -349,7 +335,7 @@ export function ClientsPage() {
                 </button>
               ))}
             </div>
-            <label className="flex h-11 min-w-[260px] items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
+            <label className="flex h-11 min-w-65 items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
               <Search size={18} />
               <span className="sr-only">Buscar clientes</span>
               <input

@@ -24,11 +24,10 @@ export function useProductionBoard() {
       const token = await getToken();
       if (!token || disposed) return;
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = import.meta.env.DEV ? "localhost:3000" : window.location.host;
-      socket = new WebSocket(
-        `${protocol}//${host}`,
-        `clerk.${token}`,
-      );
+      const host = import.meta.env.DEV
+        ? "localhost:3000"
+        : window.location.host;
+      socket = new WebSocket(`${protocol}//${host}`, `clerk.${token}`);
       socket.onmessage = () => {
         void queryClient.invalidateQueries({ queryKey: ["production-board"] });
       };
@@ -56,6 +55,7 @@ export function useProductionMutations() {
   const move = useMutation({
     mutationFn: ({ jobId, stageId }: { jobId: string; stageId: string }) =>
       client.post(`/api/v1/production/jobs/${jobId}/move`, { stageId }),
+
     onMutate: async ({ jobId, stageId }) => {
       await queryClient.cancelQueries({ queryKey: ["production-board"] });
       const previousBoard = queryClient.getQueryData<ProductionStage[]>([
@@ -65,21 +65,24 @@ export function useProductionMutations() {
       if (previousBoard) {
         queryClient.setQueryData<ProductionStage[]>(
           ["production-board"],
-          previousBoard.map((stage) => ({
-            ...stage,
-            jobs: stage.jobs.filter((job) => job.id !== jobId),
-          })).map((stage) => {
-            const job = previousBoard
-              .flatMap((candidate) => candidate.jobs)
-              .find((candidate) => candidate.id === jobId);
-            if (stage.id !== stageId || !job) return stage;
-            return { ...stage, jobs: [...stage.jobs, job] };
-          }),
+          previousBoard
+            .map((stage) => ({
+              ...stage,
+              jobs: stage.jobs.filter((job) => job.id !== jobId),
+            }))
+            .map((stage) => {
+              const job = previousBoard
+                .flatMap((candidate) => candidate.jobs)
+                .find((candidate) => candidate.id === jobId);
+              if (stage.id !== stageId || !job) return stage;
+              return { ...stage, jobs: [...stage.jobs, job] };
+            }),
         );
       }
 
       return { previousBoard };
     },
+
     onError: (_error, _variables, context) => {
       if (context?.previousBoard) {
         queryClient.setQueryData(["production-board"], context.previousBoard);

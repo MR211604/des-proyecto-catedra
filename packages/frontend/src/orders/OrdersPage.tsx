@@ -11,75 +11,15 @@ import {
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Confirmation } from "../components/Confirmation.tsx";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
 import { ApiError } from "../lib/api.ts";
 import { useOrderMutations, useOrders } from "./api.ts";
+import { statusClasses, statusLabels, tabs } from "./constants.ts";
 import { formatOrderDate, formatOrderTotal } from "./formatters.ts";
 import type { Order, OrderSort, OrderStatus, SortOrder } from "./types.ts";
-
-const tabs: { label: string; value: OrderStatus | undefined }[] = [
-  { label: "Todos", value: undefined },
-  { label: "Confirmados", value: "CONFIRMED" },
-  { label: "En producción", value: "IN_PRODUCTION" },
-  { label: "Listos", value: "READY" },
-  { label: "Entregados", value: "DELIVERED" },
-  { label: "Cancelados", value: "CANCELLED" },
-];
-
-const statusLabels: Record<OrderStatus, string> = {
-  CONFIRMED: "Confirmado",
-  IN_PRODUCTION: "En producción",
-  READY: "Listo",
-  DELIVERED: "Entregado",
-  CANCELLED: "Cancelado",
-};
-
-const statusClasses: Record<OrderStatus, string> = {
-  CONFIRMED: "bg-[#f2e6f1] text-[#805276]",
-  IN_PRODUCTION: "bg-[#fff0d9] text-[#9a641b]",
-  READY: "bg-[#e7f4ec] text-[#3c7655]",
-  DELIVERED: "bg-[#e8eef8] text-[#4d6388]",
-  CANCELLED: "bg-[#eee8ed] text-[#625660]",
-};
-
-function Confirmation({
-  title,
-  text,
-  confirm,
-  onClose,
-  onConfirm,
-}: {
-  title: string;
-  text: string;
-  confirm: string;
-  onClose: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="pointer-events-auto w-[min(360px,calc(100vw-2rem))] rounded-xl border border-[#e5cddd] bg-[#fffafd] p-4 text-[#302630] shadow-[0_18px_40px_-20px_#4d3049]">
-      <p className="m-0 text-sm font-bold">{title}</p>
-      <p className="mt-1 mb-3 text-xs text-[#806f7d]">{text}</p>
-      <div className="flex justify-end gap-2">
-        <button
-          className="rounded-md px-3 py-1.5 text-xs font-bold text-[#806f7d] hover:bg-[#f6edf5]"
-          onClick={onClose}
-          type="button"
-        >
-          Cancelar
-        </button>
-        <button
-          className="rounded-md bg-[#8b5e83] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#70466a]"
-          onClick={onConfirm}
-          type="button"
-        >
-          {confirm}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -140,7 +80,7 @@ export function OrdersPage() {
       (confirmation) => (
         <Confirmation
           title={isStart ? "¿Empezar producción?" : "¿Cancelar pedido?"}
-          text={`Pedido ORD-${number}`}
+          text={`Pedido ORD-${number} será ${isStart ? "empezado" : "cancelado"}.`}
           confirm={isStart ? "Empezar" : "Cancelar pedido"}
           onClose={() => toast.remove(confirmation.id)}
           onConfirm={() => {
