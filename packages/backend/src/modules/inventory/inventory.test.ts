@@ -98,16 +98,14 @@ describe("Inventory HTTP contract", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(vi.mocked(createInventoryItem)).toHaveBeenCalledWith(
-      {
-        name: "Tela de algodón",
-        sku: "TEL-001",
-        unit: "METER",
-        quantity: "10.000",
-        reorderPoint: "5.000",
-        supplierId: "supplier_1",
-      },
-    );
+    expect(vi.mocked(createInventoryItem)).toHaveBeenCalledWith({
+      name: "Tela de algodón",
+      sku: "TEL-001",
+      unit: "METER",
+      quantity: "10.000",
+      reorderPoint: "5.000",
+      supplierId: "supplier_1",
+    });
     expect(response.body.id).toBe("item_1");
   });
 
@@ -158,9 +156,25 @@ describe("Inventory HTTP contract", () => {
     });
   });
 
+  it("supports exact active, inactive and all status filters", async () => {
+    const response = await request(testApp()).get(
+      "/inventory/items?status=inactive&sortBy=sku",
+    );
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(listInventoryItems)).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      status: "inactive",
+      sortBy: "sku",
+      order: "asc",
+      includeDeleted: false,
+    });
+  });
+
   it("rejects invalid list filters before calling the service", async () => {
     const response = await request(testApp()).get(
-      "/inventory/items?page=0&limit=101&sortBy=stock&unit=BOX",
+      "/inventory/items?page=0&limit=101&sortBy=stock&unit=BOX&status=disabled",
     );
 
     expect(response.status).toBe(400);
@@ -213,9 +227,7 @@ describe("Inventory HTTP contract", () => {
               "item_1",
               { name: "Tela de algodón premium", reorderPoint: "4.000" },
             ]
-          : [
-              "item_1",
-            ]),
+          : ["item_1"]),
       );
     },
   );

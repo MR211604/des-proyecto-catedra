@@ -43,14 +43,22 @@ export async function listInventoryItems(params: ListInventoryItemsQuery) {
     search,
     supplierId,
     unit,
+    status,
     sortBy,
     order,
     includeDeleted,
   } = params;
   const skip = (page - 1) * limit;
 
+  const deletedAtFilter =
+    status === "all" || (status === undefined && includeDeleted)
+      ? {}
+      : status === "inactive"
+        ? { deletedAt: { not: null } }
+        : { deletedAt: null };
+
   const where = {
-    ...(includeDeleted ? {} : { deletedAt: null }),
+    ...deletedAtFilter,
     ...(supplierId ? { supplierId } : {}),
     ...(unit ? { unit } : {}),
     ...(search

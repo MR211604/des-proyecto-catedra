@@ -50,6 +50,7 @@ vi.mock("../../db/prisma.js", () => ({
 
 const {
   createInventoryItem,
+  listInventoryItems,
   updateInventoryItem,
   deleteInventoryItem,
   restoreInventoryItem,
@@ -117,6 +118,8 @@ beforeEach(() => {
   supplierFindFirst.mockResolvedValue({ id: "supplier_1" });
   itemFindFirst.mockResolvedValue(item);
   itemFindUnique.mockResolvedValue(item);
+  itemFindMany.mockResolvedValue([item]);
+  itemCount.mockResolvedValue(1);
   itemCreate.mockResolvedValue(item);
   itemUpdate.mockImplementation(
     async (_args: unknown, ..._rest: unknown[]) => item,
@@ -125,6 +128,36 @@ beforeEach(() => {
 });
 
 describe("inventory service persistence boundary", () => {
+  it("applies exact status filters while preserving includeDeleted compatibility", async () => {
+    const baseQuery = {
+      page: 1,
+      limit: 20,
+      sortBy: "name" as const,
+      order: "asc" as const,
+      includeDeleted: false,
+    };
+
+    await listInventoryItems({ ...baseQuery, status: "active" });
+    expect(itemFindMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { deletedAt: null } }),
+    );
+
+    await listInventoryItems({ ...baseQuery, status: "inactive" });
+    expect(itemFindMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { deletedAt: { not: null } } }),
+    );
+
+    await listInventoryItems({ ...baseQuery, status: "all" });
+    expect(itemFindMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+
+    await listInventoryItems({ ...baseQuery, includeDeleted: true });
+    expect(itemFindMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+  });
+
   it("parses item decimals and serializes exact string values", async () => {
     await expect(
       createInventoryItem({
