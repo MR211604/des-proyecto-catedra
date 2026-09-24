@@ -134,7 +134,7 @@ export function SupplierDetailPage() {
     );
   }
 
-  if (supplierQuery.isError || !supplier) {
+  if (!supplier) {
     return (
       <div className="grid min-h-[70vh] place-items-center px-6 text-center">
         <div>
@@ -279,7 +279,11 @@ export function SupplierDetailPage() {
             </div>
           </div>
         </div>
-        {items.length === 0 ? (
+        {supplierQuery.isFetching ? (
+          <div className="grid min-h-56 place-items-center p-8 text-sm text-[#806f7d]">
+            Cargando materiales...
+          </div>
+        ) : items.length === 0 ? (
           <div className="grid min-h-56 place-items-center p-8 text-center">
             <p className="m-0 text-sm text-[#806f7d]">
               {debouncedSearch

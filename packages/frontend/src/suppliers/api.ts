@@ -74,6 +74,7 @@ export function useSupplier(
       createApiClient(getToken).get<SupplierDetail>(
         `/api/v1/suppliers/${id}${query ? `?${query}` : ""}`,
       ),
+    placeholderData: (previousData) => previousData,
   });
 }
 
