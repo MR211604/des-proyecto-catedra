@@ -4,6 +4,7 @@ import { validateBody, validateQuery } from "../../middleware/validate.js";
 import * as controller from "./controller.js";
 import {
   createStageSchema,
+  jobTransitionSchema,
   moveJobSchema,
   productionBoardQuerySchema,
   updateJobSchema,
@@ -46,5 +47,13 @@ productionRouter.post(
   validateBody(moveJobSchema),
   controller.move,
 );
-productionRouter.post("/jobs/:id/block", controller.block);
-productionRouter.post("/jobs/:id/unblock", controller.unblock);
+productionRouter.post(
+  "/jobs/:id/block",
+  validateBody(jobTransitionSchema),
+  controller.block,
+);
+productionRouter.post(
+  "/jobs/:id/unblock",
+  validateBody(jobTransitionSchema),
+  controller.unblock,
+);

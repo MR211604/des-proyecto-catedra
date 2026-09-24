@@ -364,7 +364,12 @@ export async function moveJob(
   return job;
 }
 
-async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
+async function setJobBlocked(
+  id: string,
+  actorId: string,
+  blocked: boolean,
+  notes?: string | null,
+) {
   const job = (await prisma
     .$transaction(
       async (tx) => {
@@ -393,6 +398,15 @@ async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
           },
           include: jobInclude,
         });
+        await tx.productionEvent.create({
+          data: {
+            jobId: id,
+            type: blocked ? "BLOCKED" : "UNBLOCKED",
+            toStageId: before.stageId,
+            actorId,
+            notes: notes ?? null,
+          },
+        });
         return serialize(after);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -416,12 +430,12 @@ async function setJobBlocked(id: string, actorId: string, blocked: boolean) {
   return job;
 }
 
-export function blockJob(id: string, actorId: string) {
-  return setJobBlocked(id, actorId, true);
+export function blockJob(id: string, actorId: string, notes?: string | null) {
+  return setJobBlocked(id, actorId, true, notes);
 }
 
-export function unblockJob(id: string, actorId: string) {
-  return setJobBlocked(id, actorId, false);
+export function unblockJob(id: string, actorId: string, notes?: string | null) {
+  return setJobBlocked(id, actorId, false, notes);
 }
 
 export async function updateJob(

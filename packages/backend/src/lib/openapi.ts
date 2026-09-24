@@ -77,6 +77,10 @@ export function generateOpenAPIDocument(): ReturnType<
         name: "sales",
         description: "Sales and payment registration operations",
       },
+      {
+        name: "reports",
+        description: "Owner-only workshop statistics and reports",
+      },
     ],
     servers: [
       {

@@ -2,6 +2,7 @@ import { getAuth } from "@clerk/express";
 import type { NextFunction, Request, Response } from "express";
 import type {
   CreateStageInput,
+  JobTransitionInput,
   MoveJobInput,
   ProductionBoardQuery,
   UpdateJobInput,
@@ -126,7 +127,12 @@ export function block(
   response: Response,
   next: NextFunction,
 ) {
-  return runJobAction(request, response, next, service.blockJob);
+  const notes = (request.body as JobTransitionInput).notes;
+  return runJobAction(request, response, next, (id, actor) =>
+    notes === undefined
+      ? service.blockJob(id, actor)
+      : service.blockJob(id, actor, notes),
+  );
 }
 
 export function unblock(
@@ -134,7 +140,12 @@ export function unblock(
   response: Response,
   next: NextFunction,
 ) {
-  return runJobAction(request, response, next, service.unblockJob);
+  const notes = (request.body as JobTransitionInput).notes;
+  return runJobAction(request, response, next, (id, actor) =>
+    notes === undefined
+      ? service.unblockJob(id, actor)
+      : service.unblockJob(id, actor, notes),
+  );
 }
 
 export async function updateJob(

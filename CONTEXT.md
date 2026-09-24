@@ -79,8 +79,16 @@ The operational situation of a production job: to do, in progress, blocked, or c
 _Avoid_: order status, stage
 
 **Production Event**:
-A record of a production job changing stage, identifying where it came from, where it went, and who recorded the change.
+A record of an operational transition in a production job, including a stage change, a block, or an unblock. It identifies the relevant stage context, when the transition occurred, and who recorded it; stage changes also identify where the job came from and where it went.
 _Avoid_: comment, status, task
+
+**Overdue Order**:
+An order whose estimated delivery date has passed while its status is neither delivered nor cancelled. It is a planning condition, not a separate order status.
+_Avoid_: late payment, blocked job, cancelled order
+
+**Customer Activity**:
+The existence of at least one order created for a customer during a defined period. It is distinct from a customer's active or deactivated record state.
+_Avoid_: login, measurement update, active customer
 
 **Production Board**:
 A live view of production jobs grouped by their current production stage, used by the workshop to see operational progress and interruptions without changing the order's commercial status.
@@ -169,8 +177,16 @@ _Avoid_: collection method, sale type
 ## Control And Inquiry
 
 **Report**:
-A summarized view of orders, payments, materials, or other workshop information used to understand its situation and support administrative decisions.
+A grouped or detailed view of orders, payments, materials, or other workshop information used to understand its situation and support administrative decisions. A report is distinct from a statistical indicator: it explains information through grouped records or detailed entries, rather than only presenting aggregate measures.
 _Avoid_: balance sheet, accounting, invoice
+
+**Statistical Indicator**:
+An aggregate measure of the workshop's situation, such as a count, amount, rate, or average calculated from orders, production, sales, payments, inventory, customers, or quotes for a defined period.
+_Avoid_: report, accounting metric, balance sheet
+
+**Quote Conversion**:
+The situation in which an accepted quote results in a customer order linked to that quote. A quote is converted once, and conversion is distinct from merely accepting or rejecting the quote.
+_Avoid_: sale, payment, approval
 
 **Deactivation**:
 The decision to stop showing a customer, supplier, or material as active without losing its historical reference.

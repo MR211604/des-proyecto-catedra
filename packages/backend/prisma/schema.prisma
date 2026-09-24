@@ -35,6 +35,12 @@ enum ProductionJobStatus {
   COMPLETED
 }
 
+enum ProductionEventType {
+  STAGE_MOVED
+  BLOCKED
+  UNBLOCKED
+}
+
 enum UnitOfMeasure {
   METER
   UNIT
@@ -218,7 +224,8 @@ model ProductionJob {
 model ProductionEvent {
   id        String        @id @default(cuid())
   jobId     String
-  job       ProductionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job       ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  type      ProductionEventType @default(STAGE_MOVED)
   fromStageId String?
   fromStage   ProductionStage? @relation("fromStage", fields: [fromStageId], references: [id])
   toStageId   String

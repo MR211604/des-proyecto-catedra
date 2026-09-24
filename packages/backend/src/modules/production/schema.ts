@@ -37,6 +37,14 @@ export const updateJobSchema = z
 export type MoveJobInput = z.infer<typeof moveJobSchema>;
 export type UpdateJobInput = z.infer<typeof updateJobSchema>;
 
+export const jobTransitionSchema = z
+  .object({
+    notes: z.string().trim().max(1000).nullable().optional(),
+  })
+  .default({});
+
+export type JobTransitionInput = z.infer<typeof jobTransitionSchema>;
+
 export const productionBoardQuerySchema = z.object({
   orderId: z.string().trim().min(1).optional(),
   status: z.enum(["TODO", "IN_PROGRESS", "BLOCKED", "COMPLETED"]).optional(),

@@ -7,6 +7,7 @@ import {
 } from "../../../lib/openapi.js";
 import {
   createStageSchema,
+  jobTransitionSchema,
   moveJobSchema,
   productionBoardQuerySchema,
   updateJobSchema,
@@ -75,6 +76,7 @@ const boardJob = z.object({
 const event = z.object({
   id: z.string(),
   jobId: z.string(),
+  type: z.enum(["STAGE_MOVED", "BLOCKED", "UNBLOCKED"]),
   fromStageId: z.string().nullable(),
   toStageId: z.string(),
   actorId: z.string(),
@@ -196,7 +198,7 @@ for (const operation of [
     method: "post" as const,
     path: "/api/v1/production/jobs/{id}/block",
     summary: "Block a production job",
-    schema: undefined,
+    schema: jobTransitionSchema,
     action: "block",
     responseDescription: "Production job blocked",
   },
@@ -204,7 +206,7 @@ for (const operation of [
     method: "post" as const,
     path: "/api/v1/production/jobs/{id}/unblock",
     summary: "Unblock a production job",
-    schema: undefined,
+    schema: jobTransitionSchema,
     action: "unblock",
     responseDescription: "Production job unblocked",
   },
