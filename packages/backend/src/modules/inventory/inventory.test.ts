@@ -183,6 +183,25 @@ describe("Inventory HTTP contract", () => {
     });
   });
 
+  it.each(["sufficient", "low", "out"] as const)(
+    "supports the %s stock availability filter",
+    async (status) => {
+      const response = await request(testApp()).get(
+        `/inventory/items?status=${status}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(vi.mocked(listInventoryItems)).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        status,
+        sortBy: "name",
+        order: "asc",
+        includeDeleted: false,
+      });
+    },
+  );
+
   it("rejects invalid list filters before calling the service", async () => {
     const response = await request(testApp()).get(
       "/inventory/items?page=0&limit=101&sortBy=stock&unit=BOX&status=disabled",

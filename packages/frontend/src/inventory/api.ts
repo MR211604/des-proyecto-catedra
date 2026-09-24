@@ -162,5 +162,17 @@ export function useInventoryMutations() {
       invalidateInventoryQueries(variables.itemId),
   });
 
-  return { create, update, movement };
+  const deactivate = useMutation({
+    mutationFn: (id: string) =>
+      client.delete<InventoryItem>(`/api/v1/inventory/items/${id}`),
+    onSuccess: (_data, id) => invalidateInventoryQueries(id),
+  });
+
+  const restore = useMutation({
+    mutationFn: (id: string) =>
+      client.patch<InventoryItem>(`/api/v1/inventory/items/${id}/restore`),
+    onSuccess: (_data, id) => invalidateInventoryQueries(id),
+  });
+
+  return { create, update, movement, deactivate, restore };
 }

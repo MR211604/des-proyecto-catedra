@@ -52,7 +52,9 @@ export const listInventoryItemsQuerySchema = z.object({
   search: z.string().trim().optional(),
   supplierId: z.string().trim().min(1).optional(),
   unit: unitOfMeasureSchema.optional(),
-  status: z.enum(["active", "inactive", "all"]).optional(),
+  status: z
+    .enum(["active", "inactive", "all", "sufficient", "low", "out"])
+    .optional(),
   sortBy: z
     .enum(["name", "sku", "quantity", "createdAt", "updatedAt"])
     .default("name"),

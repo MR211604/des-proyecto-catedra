@@ -1,63 +1,17 @@
-import {
-  ArrowDownToLine,
-  ArrowLeftRight,
-  ArrowUpFromLine,
-  CircleDollarSign,
-  RotateCcw,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { ArrowLeftRight, X } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import toast from "react-hot-toast";
-import { ApiError } from "../lib/api.ts";
-import { useInventoryMovements, useInventoryMutations } from "./api.ts";
-import { formatInventoryQuantity } from "./formatters.ts";
-import type { InventoryItem, SortOrder, StockMovementType } from "./types.ts";
-
-const movementDefinitions: Record<
-  StockMovementType,
-  {
-    label: string;
-    icon: typeof ArrowDownToLine;
-    direction: 1 | -1;
-    signed: boolean;
-  }
-> = {
-  RECEIPT: {
-    label: "Recepción",
-    icon: ArrowDownToLine,
-    direction: 1,
-    signed: false,
-  },
-  ISSUE: {
-    label: "Salida",
-    icon: ArrowUpFromLine,
-    direction: -1,
-    signed: false,
-  },
-  SALE: {
-    label: "Venta",
-    icon: CircleDollarSign,
-    direction: -1,
-    signed: false,
-  },
-  ADJUSTMENT: {
-    label: "Ajuste",
-    icon: SlidersHorizontal,
-    direction: 1,
-    signed: true,
-  },
-  RETURN: {
-    label: "Devolución",
-    icon: RotateCcw,
-    direction: 1,
-    signed: false,
-  },
-};
-
-const movementTypes = (
-  Object.keys(movementDefinitions) as StockMovementType[]
-).map((value) => ({ value, label: movementDefinitions[value].label }));
+import { ApiError } from "../../lib/api.ts";
+import { useInventoryMovements, useInventoryMutations } from "../api.ts";
+import { formatInventoryQuantity } from "../formatters.ts";
+import type { InventoryItem, SortOrder, StockMovementType } from "../types.ts";
+import {
+  formatMovementQuantity,
+  movementDefinitions,
+  movementDelta,
+  movementLabel,
+  movementTypes,
+} from "./movementPresentation.ts";
 
 function isValidQuantity(value: string, type: StockMovementType) {
   const trimmed = value.trim();
@@ -68,27 +22,6 @@ function isValidQuantity(value: string, type: StockMovementType) {
     );
   }
   return /^\d+(?:\.\d{1,3})?$/.test(trimmed) && Number(trimmed) > 0;
-}
-
-function movementLabel(type: StockMovementType) {
-  return movementDefinitions[type].label;
-}
-
-function movementDelta(type: StockMovementType, quantity: string) {
-  return movementDefinitions[type].direction * Number(quantity);
-}
-
-function formatMovementQuantity(
-  type: StockMovementType,
-  quantity: string,
-  unit: InventoryItem["unit"],
-) {
-  const delta = movementDelta(type, quantity);
-  const formatted = formatInventoryQuantity(
-    String(Math.abs(Number(quantity))),
-    unit,
-  );
-  return `${delta > 0 ? "+" : delta < 0 ? "-" : ""}${formatted}`;
 }
 
 export function MovementDrawer({

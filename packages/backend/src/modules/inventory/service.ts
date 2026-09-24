@@ -50,15 +50,33 @@ export async function listInventoryItems(params: ListInventoryItemsQuery) {
   } = params;
   const skip = (page - 1) * limit;
 
-  const deletedAtFilter =
+  const availabilityFilter =
+    status === "sufficient"
+      ? {
+          deletedAt: null,
+          quantity: { gt: prisma.inventoryItem.fields.reorderPoint },
+        }
+      : status === "low"
+        ? {
+            deletedAt: null,
+            quantity: {
+              gt: 0,
+              lte: prisma.inventoryItem.fields.reorderPoint,
+            },
+          }
+        : status === "out"
+          ? { deletedAt: null, quantity: { lte: 0 } }
+          : null;
+
+  const statusFilter =
     status === "all" || (status === undefined && includeDeleted)
       ? {}
       : status === "inactive"
         ? { deletedAt: { not: null } }
-        : { deletedAt: null };
+        : (availabilityFilter ?? { deletedAt: null });
 
   const where = {
-    ...deletedAtFilter,
+    ...statusFilter,
     ...(supplierId ? { supplierId } : {}),
     ...(unit ? { unit } : {}),
     ...(search

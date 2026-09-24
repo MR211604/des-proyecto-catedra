@@ -39,6 +39,7 @@ vi.mock("../../db/prisma.js", () => ({
       count: itemCount,
       create: itemCreate,
       update: itemUpdate,
+      fields: { reorderPoint: "reorderPoint" },
     },
     stockMovement: {
       create: movementCreate,
@@ -157,6 +158,34 @@ describe("inventory service persistence boundary", () => {
       expect.objectContaining({ where: {} }),
     );
   });
+
+  it.each([
+    ["sufficient", { deletedAt: null, quantity: { gt: "reorderPoint" } }],
+    [
+      "low",
+      {
+        deletedAt: null,
+        quantity: { gt: 0, lte: "reorderPoint" },
+      },
+    ],
+    ["out", { deletedAt: null, quantity: { lte: 0 } }],
+  ] as const)(
+    "applies the %s stock availability filter",
+    async (status, where) => {
+      await listInventoryItems({
+        page: 1,
+        limit: 20,
+        sortBy: "name",
+        order: "asc",
+        includeDeleted: false,
+        status,
+      });
+
+      expect(itemFindMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where }),
+      );
+    },
+  );
 
   it("parses item decimals and serializes exact string values", async () => {
     await expect(

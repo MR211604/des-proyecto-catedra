@@ -72,6 +72,12 @@ export type StockMovementsResponse = {
   };
 };
 
-export type InventoryTab = "active" | "inactive" | "all";
+export type InventoryTab =
+  | "active"
+  | "inactive"
+  | "all"
+  | "sufficient"
+  | "low"
+  | "out";
 export type InventorySort = "name" | "sku" | "quantity";
 export type SortOrder = "asc" | "desc";

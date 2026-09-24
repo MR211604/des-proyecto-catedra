@@ -6,7 +6,9 @@ import {
   Eye,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
+  Trash2,
 } from "lucide-react";
 import {
   type ReactNode,
@@ -17,12 +19,18 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Confirmation } from "../components/Confirmation.tsx";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
-import { useInventoryItem, useInventoryItems } from "./api.ts";
+import { ApiError } from "../lib/api.ts";
+import {
+  useInventoryItem,
+  useInventoryItems,
+  useInventoryMutations,
+} from "./api.ts";
+import { MovementDrawer } from "./components/MovementDrawer.tsx";
 import { formatInventoryQuantity } from "./formatters.ts";
-import { MovementDrawer } from "./MovementDrawer.tsx";
 import type {
   InventoryItem,
   InventorySort,
@@ -34,6 +42,9 @@ import type {
 const tabs: { label: string; value: InventoryTab }[] = [
   { label: "Todos", value: "all" },
   { label: "Activos", value: "active" },
+  { label: "Stock suficiente", value: "sufficient" },
+  { label: "Stock bajo", value: "low" },
+  { label: "Agotado", value: "out" },
   { label: "Inactivos", value: "inactive" },
 ];
 
@@ -87,7 +98,13 @@ export function InventoryPage() {
   const debouncedSearch = useDebouncedValue(searchInput, 300);
   const rawTab = searchParams.get("tab");
   const tab: InventoryTab =
-    rawTab === "all" || rawTab === "inactive" ? rawTab : "active";
+    rawTab === "all" ||
+    rawTab === "inactive" ||
+    rawTab === "sufficient" ||
+    rawTab === "low" ||
+    rawTab === "out"
+      ? rawTab
+      : "active";
   const pageValue = Number(searchParams.get("page") ?? "1");
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   const rawSort = searchParams.get("sortBy");
@@ -136,6 +153,7 @@ export function InventoryPage() {
     sortBy,
     order,
   });
+  const { deactivate, restore } = useInventoryMutations();
   const items = query.data?.data ?? [];
   const meta = query.data?.meta;
   const itemFromList = items.find((item) => item.id === movementItemId);
@@ -189,6 +207,52 @@ export function InventoryPage() {
       movementPage: undefined,
     });
   }
+
+  const changeItemStatus = useCallback(
+    (item: InventoryItem, inactive: boolean) => {
+      const runMutation = () => {
+        const mutation = inactive ? restore : deactivate;
+        void mutation
+          .mutateAsync(item.id)
+          .then(() =>
+            toast.success(
+              inactive ? "Material activado." : "Material desactivado.",
+            ),
+          )
+          .catch((error: unknown) =>
+            toast.error(
+              error instanceof ApiError
+                ? error.message
+                : inactive
+                  ? "No se pudo activar el material."
+                  : "No se pudo desactivar el material.",
+            ),
+          );
+      };
+
+      if (inactive) {
+        runMutation();
+        return;
+      }
+
+      toast.custom(
+        (confirmation) => (
+          <Confirmation
+            title="¿Desactivar material?"
+            text={`${item.name} dejará de aparecer entre los materiales activos.`}
+            confirm="Desactivar"
+            onClose={() => toast.remove(confirmation.id)}
+            onConfirm={() => {
+              toast.remove(confirmation.id);
+              runMutation();
+            }}
+          />
+        ),
+        { duration: 8000, position: "top-center" },
+      );
+    },
+    [deactivate, restore],
+  );
 
   function changeSort(nextSort: InventorySort) {
     updateParams({
@@ -250,9 +314,14 @@ export function InventoryPage() {
         header: "Acciones",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <DisabledAction label="Ver material">
+            <button
+              aria-label="Ver material"
+              className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+              onClick={() => navigate(`/inventario/${row.original.id}`)}
+              type="button"
+            >
               <Eye size={17} />
-            </DisabledAction>
+            </button>
             {row.original.deletedAt ? (
               <DisabledAction label="Editar material">
                 <Pencil size={17} />
@@ -277,11 +346,36 @@ export function InventoryPage() {
             >
               <ArrowLeftRight size={17} />
             </button>
+            <button
+              aria-label={
+                row.original.deletedAt
+                  ? "Activar material"
+                  : "Desactivar material"
+              }
+              className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={deactivate.isPending || restore.isPending}
+              onClick={() =>
+                changeItemStatus(row.original, Boolean(row.original.deletedAt))
+              }
+              type="button"
+            >
+              {row.original.deletedAt ? (
+                <RotateCcw size={17} />
+              ) : (
+                <Trash2 size={17} />
+              )}
+            </button>
           </div>
         ),
       },
     ],
-    [navigate, openMovement],
+    [
+      changeItemStatus,
+      deactivate.isPending,
+      navigate,
+      openMovement,
+      restore.isPending,
+    ],
   );
 
   const showFrom =
@@ -317,7 +411,7 @@ export function InventoryPage() {
       <section className="rounded-2xl border border-[#eadde7] bg-[#fffafd] shadow-[0_18px_45px_-35px_#70466a]">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eee2eb] px-5 py-5">
           <div
-            className="flex gap-2 rounded-xl bg-[#f8f0f7] p-1"
+            className="flex flex-wrap gap-2 rounded-xl bg-[#f8f0f7] p-1"
             role="tablist"
             aria-label="Estado de los materiales"
           >
