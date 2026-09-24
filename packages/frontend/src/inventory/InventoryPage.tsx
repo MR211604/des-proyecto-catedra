@@ -10,12 +10,13 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
 import { useInventoryItems } from "./api.ts";
 import { formatInventoryQuantity } from "./formatters.ts";
+import { MovementDrawer } from "./MovementDrawer.tsx";
 import type {
   InventoryItem,
   InventorySort,
@@ -71,7 +72,9 @@ function getStockStatus(quantity: string, reorderPoint: string) {
 }
 
 export function InventoryPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [movementItem, setMovementItem] = useState<InventoryItem | null>(null);
   const [searchInput, setSearchInput] = useState(
     searchParams.get("search") ?? "",
   );
@@ -183,22 +186,46 @@ export function InventoryPage() {
       {
         id: "actions",
         header: "Acciones",
-        cell: () => (
+        cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <DisabledAction label="Ver material">
               <Eye size={17} />
             </DisabledAction>
-            <DisabledAction label="Editar material">
-              <Pencil size={17} />
-            </DisabledAction>
-            <DisabledAction label="Ver movimientos del material">
-              <ArrowLeftRight size={17} />
-            </DisabledAction>
+            {row.original.deletedAt ? (
+              <DisabledAction label="Editar material">
+                <Pencil size={17} />
+              </DisabledAction>
+            ) : (
+              <button
+                aria-label="Editar material"
+                className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+                onClick={() =>
+                  navigate(`/inventario/${row.original.id}/editar`)
+                }
+                type="button"
+              >
+                <Pencil size={17} />
+              </button>
+            )}
+            {row.original.deletedAt ? (
+              <DisabledAction label="Ver movimientos del material">
+                <ArrowLeftRight size={17} />
+              </DisabledAction>
+            ) : (
+              <button
+                aria-label="Ver movimientos del material"
+                className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+                onClick={() => setMovementItem(row.original)}
+                type="button"
+              >
+                <ArrowLeftRight size={17} />
+              </button>
+            )}
           </div>
         ),
       },
     ],
-    [],
+    [navigate],
   );
 
   const showFrom =
@@ -223,8 +250,8 @@ export function InventoryPage() {
           </p>
         </div>
         <button
-          className="flex min-h-12 cursor-not-allowed items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white opacity-55 shadow-[0_8px_18px_-12px_#70466a]"
-          disabled
+          className="flex min-h-12 cursor-pointer items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-5 font-bold text-white shadow-[0_8px_18px_-12px_#70466a] hover:bg-[#70466a]"
+          onClick={() => navigate("/inventario/nuevo")}
           type="button"
         >
           <Plus size={18} />
@@ -343,6 +370,12 @@ export function InventoryPage() {
           </div>
         </footer>
       </section>
+      {movementItem ? (
+        <MovementDrawer
+          item={movementItem}
+          onClose={() => setMovementItem(null)}
+        />
+      ) : null}
     </main>
   );
 }

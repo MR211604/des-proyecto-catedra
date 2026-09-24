@@ -2,9 +2,13 @@ import { z } from "zod";
 
 const decimalString = (scale: number, label: string, signed = false) => {
   const prefix = signed ? "^-?" : "^";
-  return z.string().regex(new RegExp(`${prefix}\\d+(?:\\.\\d{1,${scale}})?$`), {
-    message: `${label} must be a decimal string with at most ${scale} decimal places`,
-  });
+  const schema = z
+    .string()
+    .regex(new RegExp(`${prefix}\\d+(?:\\.\\d{1,${scale}})?$`), {
+      message: `${label} must be a decimal string with at most ${scale} decimal places`,
+    });
+
+  return schema;
 };
 
 export const unitOfMeasureSchema = z.enum([
@@ -31,9 +35,16 @@ export const createInventoryItemSchema = z.object({
   supplierId: z.string().trim().min(1).optional(),
 });
 
-export const updateInventoryItemSchema = createInventoryItemSchema
-  .omit({ quantity: true })
-  .partial();
+export const updateInventoryItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(150).optional(),
+    sku: z.string().trim().max(100).nullable().optional(),
+    reorderPoint: decimalString(3, "Reorder point").optional(),
+    supplierId: z.string().trim().min(1).nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one editable field is required",
+  });
 
 export const listInventoryItemsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

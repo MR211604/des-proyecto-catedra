@@ -12,7 +12,7 @@ import type {
 
 async function validateSupplier(
   tx: typeof prisma,
-  supplierId: string | undefined,
+  supplierId: string | null | undefined,
 ) {
   if (!supplierId) return;
 
@@ -135,6 +135,10 @@ export async function updateInventoryItem(
         throw new AppError(404, "Item not found");
       }
 
+      if (before.deletedAt !== null) {
+        throw new AppError(409, "Item is deactivated");
+      }
+
       if (
         data.supplierId !== undefined &&
         data.supplierId !== before.supplierId
@@ -147,7 +151,6 @@ export async function updateInventoryItem(
         data: {
           ...(data.name !== undefined ? { name: data.name } : {}),
           ...(data.sku !== undefined ? { sku: data.sku ?? null } : {}),
-          ...(data.unit !== undefined ? { unit: data.unit } : {}),
           ...(data.reorderPoint !== undefined
             ? { reorderPoint: toPrismaDecimal(data.reorderPoint) }
             : {}),

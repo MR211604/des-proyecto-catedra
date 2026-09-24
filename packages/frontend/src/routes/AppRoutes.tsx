@@ -5,6 +5,7 @@ import { Dashboard } from "../dashboard/Dashboard.tsx";
 import { Sidebar } from "../dashboard/Sidebar.tsx";
 import { TopBar } from "../dashboard/TopBar.tsx";
 import { InventoryPage } from "../inventory/InventoryPage.tsx";
+import { InventoryFormPage } from "../inventory/InventoryFormPage.tsx";
 import { OrderFormPage } from "../orders/OrderFormPage.tsx";
 import { OrdersPage } from "../orders/OrdersPage.tsx";
 import { ProductionPage } from "../production/ProductionPage.tsx";
@@ -35,6 +36,8 @@ export function AppRoutes() {
         <Route path="pedidos/:id/editar" element={<OrderFormPage />} />
         <Route path="produccion" element={<ProductionPage />} />
         <Route path="inventario" element={<InventoryPage />} />
+        <Route path="inventario/nuevo" element={<InventoryFormPage />} />
+        <Route path="inventario/:id/editar" element={<InventoryFormPage />} />
         <Route path="*" element={<Navigate replace to="/dashboard" />} />
       </Route>
     </Routes>

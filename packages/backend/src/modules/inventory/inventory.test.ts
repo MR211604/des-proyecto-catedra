@@ -120,6 +120,17 @@ describe("Inventory HTTP contract", () => {
     expect(response.body.error).toBe("Validation failed");
     expect(createInventoryItem).not.toHaveBeenCalled();
 
+    const negative = await request(testApp()).post("/inventory/items").send({
+      name: "Tela con saldo inválido",
+      unit: "METER",
+      quantity: "-1.000",
+      reorderPoint: "5.000",
+    });
+
+    expect(negative.status).toBe(400);
+    expect(negative.body.error).toBe("Validation failed");
+    expect(createInventoryItem).not.toHaveBeenCalled();
+
     const malformed = await request(testApp()).post("/inventory/items").send({
       name: "Cierre metálico",
       unit: "UNIT",
@@ -240,6 +251,14 @@ describe("Inventory HTTP contract", () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Validation failed");
     expect(updateInventoryItem).not.toHaveBeenCalled();
+
+    const immutable = await request(testApp())
+      .put("/inventory/items/item_1")
+      .send({ unit: "METER" });
+
+    expect(immutable.status).toBe(400);
+    expect(immutable.body.error).toBe("Validation failed");
+    expect(updateInventoryItem).not.toHaveBeenCalled();
   });
 
   it("records a stock movement for an item with the authenticated actor", async () => {
@@ -264,6 +283,25 @@ describe("Inventory HTTP contract", () => {
       "user_1",
     );
     expect(response.body.id).toBe("movement_1");
+  });
+
+  it.each([
+    ["RECEIPT", "2.500"],
+    ["ISSUE", "1.500"],
+    ["SALE", "1.000"],
+    ["ADJUSTMENT", "-0.500"],
+    ["RETURN", "0.500"],
+  ] as const)("accepts a %s stock movement", async (type, quantity) => {
+    const response = await request(testApp())
+      .post("/inventory/items/item_1/movements")
+      .send({ type, quantity, unit: "METER" });
+
+    expect(response.status).toBe(201);
+    expect(createStockMovement).toHaveBeenCalledWith(
+      "item_1",
+      { type, quantity, unit: "METER" },
+      "user_1",
+    );
   });
 
   it("rejects a zero or malformed movement quantity before calling the service", async () => {
@@ -343,6 +381,17 @@ describe("Inventory HTTP contract", () => {
     expect(mismatch.body.error).toBe(
       "Movement unit does not match the item unit",
     );
+
+    vi.mocked(createStockMovement).mockRejectedValueOnce(
+      new AppError(409, "Stock cannot go below zero"),
+    );
+
+    const insufficient = await request(testApp())
+      .post("/inventory/items/item_1/movements")
+      .send({ type: "ISSUE", quantity: "20.000", unit: "METER" });
+
+    expect(insufficient.status).toBe(409);
+    expect(insufficient.body.error).toBe("Stock cannot go below zero");
   });
 
   it.each([

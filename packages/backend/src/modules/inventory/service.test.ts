@@ -245,6 +245,15 @@ describe("inventory service persistence boundary", () => {
     expect(updateCall.data.reorderPoint).toEqual(new Prisma.Decimal("4.000"));
   });
 
+  it("does not update a deactivated item", async () => {
+    itemFindUnique.mockResolvedValue({ ...item, deletedAt: new Date() });
+
+    await expect(
+      updateInventoryItem("item_1", { name: "Tela premium" }),
+    ).rejects.toEqual(new AppError(409, "Item is deactivated"));
+    expect(itemUpdate).not.toHaveBeenCalled();
+  });
+
   it("re-validates the supplier when an update changes it", async () => {
     supplierFindFirst.mockResolvedValue(null);
 

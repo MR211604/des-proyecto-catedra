@@ -31,6 +31,10 @@ registry.registerPath({
     },
     ...validationResponse,
     ...inventoryResponses,
+    400: {
+      description: "Validation failed or movement unit does not match the item",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
     404: {
       description: "Item not found or deactivated",
       content: { "application/json": { schema: errorResponseSchema } },

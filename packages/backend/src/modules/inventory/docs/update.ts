@@ -32,7 +32,7 @@ registry.registerPath({
     ...validationResponse,
     ...inventoryErrorResponses,
     409: {
-      description: "Item with this SKU already exists",
+      description: "Item with this SKU already exists or is deactivated",
       content: { "application/json": { schema: errorResponseSchema } },
     },
   },
