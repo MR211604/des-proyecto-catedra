@@ -1,5 +1,9 @@
 import { supplierErrorResponses, registry, security } from "./common.js";
-import { supplierDetailSchema, supplierIdParamSchema } from "./schemas.js";
+import {
+  supplierDetailSchema,
+  supplierIdParamSchema,
+  supplierItemsQuerySchema,
+} from "./schemas.js";
 
 registry.registerPath({
   method: "get",
@@ -7,7 +11,10 @@ registry.registerPath({
   summary: "Get supplier by ID",
   tags: ["suppliers"],
   security,
-  request: { params: supplierIdParamSchema },
+  request: {
+    params: supplierIdParamSchema,
+    query: supplierItemsQuerySchema,
+  },
   responses: {
     200: {
       description: "Supplier retrieved",

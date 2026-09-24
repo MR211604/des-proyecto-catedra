@@ -4,8 +4,21 @@ import { serialize } from "../utils.js";
 import type {
   CreateSupplierInput,
   ListSuppliersQuery,
+  SupplierItemsQuery,
   UpdateSupplierInput,
 } from "./schema.js";
+
+const supplierItemSelect = {
+  id: true,
+  name: true,
+  sku: true,
+  unit: true,
+  quantity: true,
+  reorderPoint: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+} as const;
 
 // ------------ OPERACIONES CRUD ------------
 export async function listSuppliers(params: ListSuppliersQuery) {
@@ -55,24 +68,44 @@ export async function listSuppliers(params: ListSuppliersQuery) {
   };
 }
 
-export async function getSupplierById(id: string) {
+export async function getSupplierById(
+  id: string,
+  params: SupplierItemsQuery = {
+    page: 1,
+    limit: 20,
+    status: "all",
+  },
+) {
+  const { page, limit, search, status } = params;
+  const itemStatusFilter =
+    status === "active"
+      ? { deletedAt: null }
+      : status === "inactive"
+        ? { deletedAt: { not: null } }
+        : {};
+  const itemWhere = {
+    ...itemStatusFilter,
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { sku: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
   const supplier = await prisma.supplier.findUnique({
     where: { id },
     include: {
       items: {
-        select: {
-          id: true,
-          name: true,
-          sku: true,
-          unit: true,
-          quantity: true,
-          reorderPoint: true,
-          createdAt: true,
-          updatedAt: true,
-          deletedAt: true,
-        },
+        where: itemWhere,
+        select: supplierItemSelect,
         orderBy: { name: "asc" },
+        skip: (page - 1) * limit,
+        take: limit,
       },
+      _count: { select: { items: true } },
     },
   });
 
@@ -80,7 +113,21 @@ export async function getSupplierById(id: string) {
     throw new AppError(404, "Supplier not found");
   }
 
-  return serialize(supplier);
+  const total = await prisma.inventoryItem.count({
+    where: { supplierId: id, ...itemWhere },
+  });
+  const { _count, ...supplierData } = supplier;
+
+  return serialize({
+    ...supplierData,
+    itemsCount: _count.items,
+    itemsMeta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 }
 
 export async function createSupplier(data: CreateSupplierInput) {

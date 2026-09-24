@@ -25,6 +25,13 @@ export type Supplier = {
 
 export type SupplierDetail = Supplier & {
   items: SupplierItem[];
+  itemsCount: number;
+  itemsMeta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
 
 export type SupplierInput = {

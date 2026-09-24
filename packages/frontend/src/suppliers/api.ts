@@ -6,6 +6,7 @@ import type {
   Supplier,
   SupplierDetail,
   SupplierInput,
+  SupplierItemTab,
   SupplierSort,
   SuppliersResponse,
   SupplierTab,
@@ -18,6 +19,13 @@ type SupplierListParams = {
   tab: SupplierTab;
   sortBy: SupplierSort;
   order: SortOrder;
+};
+
+export type SupplierItemsParams = {
+  page: number;
+  limit: number;
+  search: string;
+  status: SupplierItemTab;
 };
 
 export function buildSupplierListQuery(params: SupplierListParams) {
@@ -45,14 +53,27 @@ export function useSuppliers(params: SupplierListParams) {
   });
 }
 
-export function useSupplier(id: string | undefined) {
+export function useSupplier(
+  id: string | undefined,
+  params?: SupplierItemsParams,
+) {
   const { getToken } = useAuth();
+  const query = params
+    ? new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+        search: params.search,
+        status: params.status,
+      })
+    : null;
 
   return useQuery({
-    queryKey: ["supplier", id],
+    queryKey: ["supplier", id, params],
     enabled: Boolean(id),
     queryFn: () =>
-      createApiClient(getToken).get<SupplierDetail>(`/api/v1/suppliers/${id}`),
+      createApiClient(getToken).get<SupplierDetail>(
+        `/api/v1/suppliers/${id}${query ? `?${query}` : ""}`,
+      ),
   });
 }
 

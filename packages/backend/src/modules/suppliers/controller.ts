@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { ListSuppliersQuery } from "./schema.js";
+import type { ListSuppliersQuery, SupplierItemsQuery } from "./schema.js";
 import * as service from "./service.js";
 
 type ParamWithId = { id: string };
@@ -24,7 +24,8 @@ export async function getById(
   next: NextFunction,
 ) {
   try {
-    const supplier = await service.getSupplierById(request.params.id);
+    const query = response.locals.validatedQuery as SupplierItemsQuery;
+    const supplier = await service.getSupplierById(request.params.id, query);
     response.json(supplier);
   } catch (error) {
     next(error);

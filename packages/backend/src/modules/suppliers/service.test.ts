@@ -1,16 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppError } from "../../middleware/errors.js";
 
-const { transaction, supplierFindUnique, supplierUpdate } = vi.hoisted(() => ({
+const {
+  transaction,
+  supplierFindUnique,
+  supplierUpdate,
+  inventoryItemCount,
+} = vi.hoisted(() => ({
   transaction: vi.fn(),
   supplierFindUnique: vi.fn(),
   supplierUpdate: vi.fn(),
+  inventoryItemCount: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
   prisma: {
     $transaction: transaction,
     supplier: { findUnique: supplierFindUnique },
+    inventoryItem: { count: inventoryItemCount },
   },
 }));
 
@@ -29,6 +36,7 @@ describe("supplier service persistence boundary", () => {
     transaction.mockImplementation(
       async (callback: (supplier: typeof tx) => unknown) => callback(tx),
     );
+    inventoryItemCount.mockResolvedValue(0);
   });
 
   it("does not edit an inactive supplier", async () => {
@@ -50,17 +58,21 @@ describe("supplier service persistence boundary", () => {
       id: "supplier_1",
       name: "Telas del Sur",
       items: [],
+      _count: { items: 0 },
     });
 
     await expect(getSupplierById("supplier_1")).resolves.toEqual({
       id: "supplier_1",
       name: "Telas del Sur",
       items: [],
+      itemsCount: 0,
+      itemsMeta: { page: 1, limit: 20, total: 0, totalPages: 0 },
     });
     expect(supplierFindUnique).toHaveBeenCalledWith({
       where: { id: "supplier_1" },
       include: {
         items: {
+          where: {},
           select: {
             id: true,
             name: true,
@@ -73,8 +85,14 @@ describe("supplier service persistence boundary", () => {
             deletedAt: true,
           },
           orderBy: { name: "asc" },
+          skip: 0,
+          take: 20,
         },
+        _count: { select: { items: true } },
       },
+    });
+    expect(inventoryItemCount).toHaveBeenCalledWith({
+      where: { supplierId: "supplier_1" },
     });
   });
 });

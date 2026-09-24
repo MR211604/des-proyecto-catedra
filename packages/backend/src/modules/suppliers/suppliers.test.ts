@@ -128,6 +128,30 @@ describe("Suppliers HTTP contract", () => {
     });
   });
 
+  it("gets a supplier with validated material pagination parameters", async () => {
+    const response = await request(testApp()).get(
+      "/suppliers/supplier_1?page=2&limit=5&search=tela&status=inactive",
+    );
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(getSupplierById)).toHaveBeenCalledWith("supplier_1", {
+      page: 2,
+      limit: 5,
+      search: "tela",
+      status: "inactive",
+    });
+  });
+
+  it("rejects invalid material filters before calling the service", async () => {
+    const response = await request(testApp()).get(
+      "/suppliers/supplier_1?page=0&limit=101&status=disabled",
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Validation failed");
+    expect(getSupplierById).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid list filters before calling the service", async () => {
     const response = await request(testApp()).get(
       "/suppliers?page=0&limit=101&sortBy=phone&order=sideways",
@@ -180,7 +204,16 @@ describe("Suppliers HTTP contract", () => {
               "supplier_1",
               { name: "Telas del Sur Ltda.", notes: "Preferred supplier" },
             ]
-          : ["supplier_1"]),
+          : serviceName === "getSupplierById"
+            ? [
+                "supplier_1",
+                {
+                  page: 1,
+                  limit: 20,
+                  status: "all",
+                },
+              ]
+            : ["supplier_1"]),
       );
     },
   );

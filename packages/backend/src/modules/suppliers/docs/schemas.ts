@@ -2,10 +2,16 @@ import { z } from "zod";
 import {
   createSupplierSchema,
   listSuppliersQuerySchema,
+  supplierItemsQuerySchema,
   updateSupplierSchema,
 } from "../schema.js";
 
-export { createSupplierSchema, listSuppliersQuerySchema, updateSupplierSchema };
+export {
+  createSupplierSchema,
+  listSuppliersQuerySchema,
+  supplierItemsQuerySchema,
+  updateSupplierSchema,
+};
 
 export const supplierSchema = z.object({
   id: z.string().meta({ example: "clx123abc456def" }),
@@ -34,6 +40,13 @@ export const supplierItemSchema = z.object({
 
 export const supplierDetailSchema = supplierSchema.extend({
   items: z.array(supplierItemSchema),
+  itemsCount: z.number().int().meta({ example: 12 }),
+  itemsMeta: z.object({
+    page: z.number().int().meta({ example: 1 }),
+    limit: z.number().int().meta({ example: 20 }),
+    total: z.number().int().meta({ example: 12 }),
+    totalPages: z.number().int().meta({ example: 1 }),
+  }),
 });
 
 export const listSuppliersResponseSchema = z.object({
