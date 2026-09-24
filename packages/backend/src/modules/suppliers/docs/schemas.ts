@@ -18,6 +18,24 @@ export const supplierSchema = z.object({
   updatedAt: z.iso.datetime().meta({ example: "2026-08-24T12:00:00.000Z" }),
 });
 
+export const supplierItemSchema = z.object({
+  id: z.string().meta({ example: "clx123abc456def" }),
+  name: z.string().meta({ example: "Tela de algodón" }),
+  sku: z.string().nullable().meta({ example: "TEL-001" }),
+  unit: z
+    .enum(["METER", "UNIT", "ROLL", "KILOGRAM"])
+    .meta({ example: "METER" }),
+  quantity: z.string().meta({ example: "10.000" }),
+  reorderPoint: z.string().meta({ example: "5.000" }),
+  createdAt: z.iso.datetime().meta({ example: "2026-08-24T12:00:00.000Z" }),
+  updatedAt: z.iso.datetime().meta({ example: "2026-08-24T12:00:00.000Z" }),
+  deletedAt: z.iso.datetime().nullable().meta({ example: null }),
+});
+
+export const supplierDetailSchema = supplierSchema.extend({
+  items: z.array(supplierItemSchema),
+});
+
 export const listSuppliersResponseSchema = z.object({
   data: z.array(supplierSchema),
   meta: z.object({

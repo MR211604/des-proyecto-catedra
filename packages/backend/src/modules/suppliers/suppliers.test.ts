@@ -21,7 +21,7 @@ vi.mock("./service.js", () => ({
     data: [],
     meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
   })),
-  getSupplierById: vi.fn(async () => ({ id: "supplier_1" })),
+  getSupplierById: vi.fn(async () => ({ id: "supplier_1", items: [] })),
   createSupplier: vi.fn(async (input) => ({ id: "supplier_1", ...input })),
   updateSupplier: vi.fn(async () => ({ id: "supplier_1" })),
   deleteSupplier: vi.fn(async () => ({ id: "supplier_1", deletedAt: null })),
@@ -86,14 +86,12 @@ describe("Suppliers HTTP contract", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(vi.mocked(createSupplier)).toHaveBeenCalledWith(
-      {
-        name: "Telas del Sur",
-        phone: "+56 9 1234 5678",
-        email: "ventas@telasdelsur.cl",
-        notes: "Fabric supplier",
-      },
-    );
+    expect(vi.mocked(createSupplier)).toHaveBeenCalledWith({
+      name: "Telas del Sur",
+      phone: "+56 9 1234 5678",
+      email: "ventas@telasdelsur.cl",
+      notes: "Fabric supplier",
+    });
     expect(response.body.id).toBe("supplier_1");
   });
 
@@ -109,7 +107,7 @@ describe("Suppliers HTTP contract", () => {
 
   it("lists suppliers with validated pagination parameters", async () => {
     const response = await request(testApp()).get(
-      "/suppliers?page=2&limit=5&search=telas&sortBy=name&order=desc&includeDeleted=true",
+      "/suppliers?page=2&limit=5&search=telas&status=inactive&sortBy=name&order=desc&includeDeleted=true",
     );
 
     expect(response.status).toBe(200);
@@ -117,6 +115,7 @@ describe("Suppliers HTTP contract", () => {
       page: 2,
       limit: 5,
       search: "telas",
+      status: "inactive",
       sortBy: "name",
       order: "desc",
       includeDeleted: true,

@@ -1,9 +1,5 @@
-import {
-  supplierErrorResponses,
-  registry,
-  security,
-} from "./common.js";
-import { supplierIdParamSchema, supplierSchema } from "./schemas.js";
+import { supplierErrorResponses, registry, security } from "./common.js";
+import { supplierDetailSchema, supplierIdParamSchema } from "./schemas.js";
 
 registry.registerPath({
   method: "get",
@@ -15,7 +11,7 @@ registry.registerPath({
   responses: {
     200: {
       description: "Supplier retrieved",
-      content: { "application/json": { schema: supplierSchema } },
+      content: { "application/json": { schema: supplierDetailSchema } },
     },
     ...supplierErrorResponses,
   },

@@ -10,6 +10,9 @@ import { InventoryPage } from "../inventory/InventoryPage.tsx";
 import { OrderFormPage } from "../orders/OrderFormPage.tsx";
 import { OrdersPage } from "../orders/OrdersPage.tsx";
 import { ProductionPage } from "../production/ProductionPage.tsx";
+import { SupplierDetailPage } from "../suppliers/SupplierDetailPage.tsx";
+import { SupplierFormPage } from "../suppliers/SupplierFormPage.tsx";
+import { SuppliersPage } from "../suppliers/SuppliersPage.tsx";
 
 function AuthenticatedLayout() {
   return (
@@ -32,6 +35,10 @@ export function AppRoutes() {
         <Route path="clientes" element={<ClientsPage />} />
         <Route path="clientes/nuevo" element={<ClientFormPage />} />
         <Route path="clientes/:id/editar" element={<ClientFormPage />} />
+        <Route path="proveedores" element={<SuppliersPage />} />
+        <Route path="proveedores/nuevo" element={<SupplierFormPage />} />
+        <Route path="proveedores/:id" element={<SupplierDetailPage />} />
+        <Route path="proveedores/:id/editar" element={<SupplierFormPage />} />
         <Route path="pedidos" element={<OrdersPage />} />
         <Route path="pedidos/nuevo" element={<OrderFormPage />} />
         <Route path="pedidos/:id/editar" element={<OrderFormPage />} />

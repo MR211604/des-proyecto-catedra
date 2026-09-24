@@ -129,7 +129,7 @@ The stock movement that puts materials back into inventory, either because an or
 _Avoid_: refund, reversal
 
 **Supplier**:
-A person or business that may be associated with supplying a material. A supplier is not an operational ERP actor and is not required for every material.
+A person or business that may be associated with supplying a material. A supplier is not an operational ERP actor and is not required for every material. A supplier may remain associated with active or deactivated material records so that historical inventory references are preserved.
 _Avoid_: customer, vendor
 
 **Unit Of Measure**:

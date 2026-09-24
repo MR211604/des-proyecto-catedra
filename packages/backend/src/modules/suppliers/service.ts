@@ -1,5 +1,6 @@
 import { prisma } from "../../db/prisma.js";
 import { AppError } from "../../middleware/errors.js";
+import { serialize } from "../utils.js";
 import type {
   CreateSupplierInput,
   ListSuppliersQuery,
@@ -8,11 +9,20 @@ import type {
 
 // ------------ OPERACIONES CRUD ------------
 export async function listSuppliers(params: ListSuppliersQuery) {
-  const { page, limit, search, sortBy, order, includeDeleted } = params;
+  const { page, limit, search, status, sortBy, order, includeDeleted } = params;
   const skip = (page - 1) * limit;
 
+  const deletedFilter =
+    status === "active"
+      ? { deletedAt: null }
+      : status === "inactive"
+        ? { deletedAt: { not: null } }
+        : status === "all" || includeDeleted
+          ? {}
+          : { deletedAt: null };
+
   const where = {
-    ...(includeDeleted ? {} : { deletedAt: null }),
+    ...deletedFilter,
     ...(search
       ? {
           OR: [
@@ -46,13 +56,31 @@ export async function listSuppliers(params: ListSuppliersQuery) {
 }
 
 export async function getSupplierById(id: string) {
-  const supplier = await prisma.supplier.findUnique({ where: { id } });
+  const supplier = await prisma.supplier.findUnique({
+    where: { id },
+    include: {
+      items: {
+        select: {
+          id: true,
+          name: true,
+          sku: true,
+          unit: true,
+          quantity: true,
+          reorderPoint: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+        },
+        orderBy: { name: "asc" },
+      },
+    },
+  });
 
   if (!supplier) {
     throw new AppError(404, "Supplier not found");
   }
 
-  return supplier;
+  return serialize(supplier);
 }
 
 export async function createSupplier(data: CreateSupplierInput) {
@@ -69,6 +97,9 @@ export async function updateSupplier(id: string, data: UpdateSupplierInput) {
 
     if (!before) {
       throw new AppError(404, "Supplier not found");
+    }
+    if (before.deletedAt !== null) {
+      throw new AppError(409, "Inactive suppliers can only be restored");
     }
 
     const after = await tx.supplier.update({ where: { id }, data });
