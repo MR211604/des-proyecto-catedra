@@ -8,13 +8,19 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
-import { useInventoryItems } from "./api.ts";
+import { useInventoryItem, useInventoryItems } from "./api.ts";
 import { formatInventoryQuantity } from "./formatters.ts";
 import { MovementDrawer } from "./MovementDrawer.tsx";
 import type {
@@ -22,6 +28,7 @@ import type {
   InventorySort,
   InventoryTab,
   SortOrder,
+  StockMovementType,
 } from "./types.ts";
 
 const tabs: { label: string; value: InventoryTab }[] = [
@@ -74,7 +81,6 @@ function getStockStatus(quantity: string, reorderPoint: string) {
 export function InventoryPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [movementItem, setMovementItem] = useState<InventoryItem | null>(null);
   const [searchInput, setSearchInput] = useState(
     searchParams.get("search") ?? "",
   );
@@ -89,6 +95,24 @@ export function InventoryPage() {
     rawSort === "sku" || rawSort === "quantity" ? rawSort : "name";
   const order: SortOrder =
     searchParams.get("order") === "desc" ? "desc" : "asc";
+  const movementItemId = searchParams.get("movementItem");
+  const rawMovementType = searchParams.get("movementType");
+  const movementType: StockMovementType | undefined = [
+    "RECEIPT",
+    "ISSUE",
+    "SALE",
+    "ADJUSTMENT",
+    "RETURN",
+  ].includes(rawMovementType ?? "")
+    ? (rawMovementType as StockMovementType)
+    : undefined;
+  const movementOrder: SortOrder =
+    searchParams.get("movementOrder") === "asc" ? "asc" : "desc";
+  const movementPageValue = Number(searchParams.get("movementPage") ?? "1");
+  const movementPage =
+    Number.isInteger(movementPageValue) && movementPageValue > 0
+      ? movementPageValue
+      : 1;
 
   useEffect(() => {
     setSearchInput(searchParams.get("search") ?? "");
@@ -114,6 +138,11 @@ export function InventoryPage() {
   });
   const items = query.data?.data ?? [];
   const meta = query.data?.meta;
+  const itemFromList = items.find((item) => item.id === movementItemId);
+  const movementItemQuery = useInventoryItem(
+    movementItemId && !itemFromList ? movementItemId : undefined,
+  );
+  const movementItem = itemFromList ?? movementItemQuery.data ?? null;
 
   useEffect(() => {
     if (query.error) toast.error("No se pudieron cargar los materiales.");
@@ -126,6 +155,39 @@ export function InventoryPage() {
       else next.delete(key);
     });
     setSearchParams(next, { replace: true });
+  }
+
+  const updateMovementParams = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      const next = new URLSearchParams(searchParams);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) next.set(key, value);
+        else next.delete(key);
+      });
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const openMovement = useCallback(
+    (item: InventoryItem) => {
+      updateMovementParams({
+        movementItem: item.id,
+        movementType: undefined,
+        movementOrder: "desc",
+        movementPage: "1",
+      });
+    },
+    [updateMovementParams],
+  );
+
+  function closeMovement() {
+    updateMovementParams({
+      movementItem: undefined,
+      movementType: undefined,
+      movementOrder: undefined,
+      movementPage: undefined,
+    });
   }
 
   function changeSort(nextSort: InventorySort) {
@@ -207,25 +269,19 @@ export function InventoryPage() {
                 <Pencil size={17} />
               </button>
             )}
-            {row.original.deletedAt ? (
-              <DisabledAction label="Ver movimientos del material">
-                <ArrowLeftRight size={17} />
-              </DisabledAction>
-            ) : (
-              <button
-                aria-label="Ver movimientos del material"
-                className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
-                onClick={() => setMovementItem(row.original)}
-                type="button"
-              >
-                <ArrowLeftRight size={17} />
-              </button>
-            )}
+            <button
+              aria-label="Ver movimientos del material"
+              className="cursor-pointer rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+              onClick={() => openMovement(row.original)}
+              type="button"
+            >
+              <ArrowLeftRight size={17} />
+            </button>
           </div>
         ),
       },
     ],
-    [navigate],
+    [navigate, openMovement],
   );
 
   const showFrom =
@@ -370,10 +426,32 @@ export function InventoryPage() {
           </div>
         </footer>
       </section>
-      {movementItem ? (
+      {movementItemId ? (
         <MovementDrawer
           item={movementItem}
-          onClose={() => setMovementItem(null)}
+          itemLoading={!movementItem && movementItemQuery.isPending}
+          itemError={!movementItem && movementItemQuery.isError}
+          onRetryItem={() => void movementItemQuery.refetch()}
+          history={{
+            page: movementPage,
+            type: movementType,
+            order: movementOrder,
+          }}
+          onHistoryChange={(updates) => {
+            const next: Record<string, string | undefined> = {};
+            if ("type" in updates) {
+              next.movementType = updates.type;
+            }
+            if ("order" in updates) {
+              next.movementOrder = updates.order;
+            }
+            if ("page" in updates) {
+              next.movementPage =
+                updates.page === undefined ? undefined : String(updates.page);
+            }
+            updateMovementParams(next);
+          }}
+          onClose={closeMovement}
         />
       ) : null}
     </main>

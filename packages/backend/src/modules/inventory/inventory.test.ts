@@ -335,6 +335,54 @@ describe("Inventory HTTP contract", () => {
     });
   });
 
+  it("returns movement pagination and the related order item", async () => {
+    vi.mocked(listStockMovements).mockResolvedValueOnce({
+      data: [
+        {
+          id: "movement_1",
+          itemId: "item_1",
+          orderItemId: "order_item_1",
+          orderItem: {
+            id: "order_item_1",
+            orderId: "order_1",
+            description: "Hem",
+            quantity: "2",
+            unitPrice: "10",
+            total: "20",
+            specifications: null,
+          },
+          type: "ISSUE",
+          quantity: "2.5",
+          unit: "METER",
+          reference: null,
+          reason: "production",
+          actorId: "user_1",
+          createdAt: "2026-09-02T00:00:00.000Z",
+        },
+      ],
+      meta: { page: 2, limit: 1, total: 2, totalPages: 2 },
+    });
+
+    const response = await request(testApp()).get(
+      "/inventory/items/item_1/movements?page=2&limit=1&type=ISSUE&order=asc",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      data: [
+        {
+          id: "movement_1",
+          orderItem: {
+            id: "order_item_1",
+            orderId: "order_1",
+            description: "Hem",
+          },
+        },
+      ],
+      meta: { page: 2, limit: 1, total: 2, totalPages: 2 },
+    });
+  });
+
   it("rejects invalid movement filters before calling the service", async () => {
     const response = await request(testApp()).get(
       "/inventory/items/item_1/movements?type=REFUND",

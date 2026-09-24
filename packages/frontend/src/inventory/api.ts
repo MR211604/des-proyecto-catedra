@@ -5,8 +5,8 @@ import type {
   InventoryItem,
   InventoryResponse,
   InventorySort,
-  InventoryTab,
   InventorySupplier,
+  InventoryTab,
   SortOrder,
   StockMovement,
   StockMovementsResponse,
@@ -68,15 +68,29 @@ export function useInventorySuppliers() {
   });
 }
 
-export function useInventoryMovements(itemId: string | undefined) {
+export function useInventoryMovements(
+  itemId: string | undefined,
+  params: {
+    page: number;
+    limit: number;
+    type?: StockMovement["type"];
+    order: SortOrder;
+  },
+) {
   const { getToken } = useAuth();
+  const query = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+    order: params.order,
+    ...(params.type ? { type: params.type } : {}),
+  });
 
   return useQuery({
-    queryKey: ["inventory-movements", itemId],
+    queryKey: ["inventory-movements", itemId, params],
     enabled: Boolean(itemId),
     queryFn: () =>
       createApiClient(getToken).get<StockMovementsResponse>(
-        `/api/v1/inventory/items/${itemId}/movements?limit=100&order=desc`,
+        `/api/v1/inventory/items/${itemId}/movements?${query}`,
       ),
   });
 }

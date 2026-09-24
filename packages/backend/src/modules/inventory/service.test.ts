@@ -431,4 +431,23 @@ describe("inventory service persistence boundary", () => {
       take: 10,
     });
   });
+
+  it("lists movements for an inactive item", async () => {
+    itemFindUnique.mockResolvedValue({ ...item, deletedAt: new Date() });
+    movementFindMany.mockResolvedValue([movement]);
+    movementCount.mockResolvedValue(1);
+
+    await expect(
+      listStockMovements("item_1", {
+        page: 1,
+        limit: 10,
+        order: "desc",
+      }),
+    ).resolves.toMatchObject({
+      data: [{ id: "movement_1", itemId: "item_1" }],
+      meta: { total: 1, totalPages: 1 },
+    });
+
+    expect(itemFindUnique).toHaveBeenCalledWith({ where: { id: "item_1" } });
+  });
 });
