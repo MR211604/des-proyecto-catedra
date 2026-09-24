@@ -108,6 +108,10 @@ _Avoid_: stock, inventory
 The minimum quantity of a material used as a reference for warning that it should be replenished.
 _Avoid_: minimum stock, depletion limit
 
+**Stock Availability Status**:
+The material's availability classification derived from its on-hand quantity and reorder point: sufficient when the quantity is above the reorder point, low when it is positive but at or below the reorder point, and depleted when it is zero or negative.
+_Avoid_: material activation, deactivation
+
 **Stock Movement**:
 A record of a change in a material's on-hand quantity caused by a receipt, issue, sale, return, or adjustment.
 _Avoid_: stock update, transaction
