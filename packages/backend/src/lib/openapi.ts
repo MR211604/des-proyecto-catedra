@@ -73,6 +73,10 @@ export function generateOpenAPIDocument(): ReturnType<
         name: "inventory",
         description: "Inventory and stock movement operations",
       },
+      {
+        name: "sales",
+        description: "Sales and payment registration operations",
+      },
     ],
     servers: [
       {

@@ -139,8 +139,12 @@ _Avoid_: packaging, format
 ## Sales And Payments
 
 **Sale**:
-The commercial record associated with an order that holds the amount to be collected and its payment details.
+The commercial record associated with an order that holds the amount to be collected and its payment details. It preserves the order's commercial lines at the time the sale is registered and may be voided without deleting its history.
 _Avoid_: order, income, invoice
+
+**Sale Item**:
+A line in a sale that preserves the description, quantity, and unit price of an order item at the time the sale is registered.
+_Avoid_: order item, product, invoice line
 
 **Payment**:
 An amount provided by the customer toward some or all of a sale, together with its method and reference when applicable.
