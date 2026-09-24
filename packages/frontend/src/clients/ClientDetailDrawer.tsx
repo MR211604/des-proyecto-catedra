@@ -99,7 +99,7 @@ export function ClientDetailDrawer({
       <aside
         aria-label="Detalle del cliente"
         aria-modal="true"
-        className="relative h-full w-full max-w-[430px] overflow-y-auto bg-[#fffafd] p-5 shadow-2xl sm:p-7"
+        className="relative h-full w-full max-w-107.5 overflow-y-auto bg-[#fffafd] p-5 shadow-2xl sm:p-7"
         ref={drawer}
         role="dialog"
       >

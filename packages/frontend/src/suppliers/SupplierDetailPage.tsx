@@ -12,8 +12,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Confirmation } from "../components/Confirmation.tsx";
 import { formatInventoryQuantity } from "../inventory/formatters.ts";
 import { ApiError } from "../lib/api.ts";
-import { formatSupplierDate } from "./formatters.ts";
 import { useSupplier, useSupplierMutations } from "./api.ts";
+import { formatSupplierDate } from "./formatters.ts";
 import type { SupplierItemTab } from "./types.ts";
 
 const tabs: { label: string; value: SupplierItemTab }[] = [
@@ -200,7 +200,7 @@ export function SupplierDetailPage() {
         </InfoCard>
       </section>
 
-      <section className="mb-7 rounded-2xl border border-[#eadde7] bg-[#fffafd] p-5 shadow-[0_18px_45px_-35px_#70466a] sm:p-6">
+      <section className="mb-7 rounded-2xl border border-[#eadde7] bg-[#fffafd] p-5">
         <h2 className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[#70466a]">
           Notas
         </h2>

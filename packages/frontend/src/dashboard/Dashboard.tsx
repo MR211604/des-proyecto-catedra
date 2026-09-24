@@ -8,7 +8,7 @@ export function Dashboard() {
   const firstName = user?.firstName ?? "Azucena";
 
   return (
-    <main className="mx-auto max-w-[1440px] px-10 py-[38px] pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7 max-[820px]:pb-10">
+    <main className="mx-auto max-w-360 px-10 py-9.5 pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7 max-[820px]:pb-10">
       <section>
         <h1 className="m-0 text-[clamp(30px,3vw,40px)] leading-[1.2] tracking-[-1.2px]">
           Buen día, {firstName}
@@ -17,7 +17,7 @@ export function Dashboard() {
           Aquí está el resumen de tu taller para hoy.
         </p>
       </section>
-      <section className="mt-[42px] grid grid-cols-4 gap-[30px] max-[1100px]:gap-4 max-[820px]:grid-cols-2 max-[480px]:mt-7 max-[480px]:grid-cols-1">
+      <section className="mt-10.5 grid grid-cols-4 gap-7.5 max-[1100px]:gap-4 max-[820px]:grid-cols-2 max-[480px]:mt-7 max-[480px]:grid-cols-1">
         <StatCard
           label="Pedidos Activos"
           value="42"
@@ -44,7 +44,7 @@ export function Dashboard() {
           icon="cash"
         />
       </section>
-      <div className="mt-[30px] grid grid-cols-[minmax(0,1fr)_378px] gap-[30px] max-[1100px]:grid-cols-[minmax(0,1fr)_330px] max-[1100px]:gap-4 max-[820px]:grid-cols-1">
+      <div className="mt-7.5 grid grid-cols-[minmax(0,1fr)_378px] gap-7.5 max-[1100px]:grid-cols-[minmax(0,1fr)_330px] max-[1100px]:gap-4 max-[820px]:grid-cols-1">
         <RecentOrders />
         <TodayAppointments />
       </div>

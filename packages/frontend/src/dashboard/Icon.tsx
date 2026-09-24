@@ -7,12 +7,13 @@ import {
   CircleHelp,
   ClipboardCheck,
   ClipboardList,
+  type LucideIcon,
   Package,
   Plus,
   Scissors,
   Settings,
+  Truck,
   UsersRound,
-  type LucideIcon,
 } from "lucide-react";
 
 export type IconName =
@@ -30,6 +31,7 @@ export type IconName =
   | "production"
   | "reports"
   | "settings"
+  | "truck"
   | "scissors";
 
 type IconProps = {
@@ -52,6 +54,7 @@ const icons: Record<IconName, LucideIcon> = {
   production: Scissors,
   reports: ChartNoAxesColumn,
   settings: Settings,
+  truck: Truck,
   scissors: Scissors,
 };
 

@@ -215,7 +215,7 @@ export function InventoryHistoryPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] border-collapse text-left">
+            <table className="w-full min-w-212.5 border-collapse text-left">
               <thead className="bg-[#fcf9fb]">
                 <tr>
                   {[

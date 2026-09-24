@@ -1,5 +1,5 @@
 import { ArrowLeftRight, X } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { ApiError } from "../../lib/api.ts";
 import { useInventoryMovements, useInventoryMutations } from "../api.ts";
@@ -62,7 +62,7 @@ export function MovementDrawer({
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
 
@@ -109,7 +109,7 @@ export function MovementDrawer({
         }}
         role="dialog"
       >
-        <aside className="flex h-full w-full max-w-[560px] flex-col overflow-y-auto bg-[#fffafd] shadow-[-12px_0_40px_rgba(74,46,71,0.2)]">
+        <aside className="flex h-full w-full max-w-140 flex-col overflow-y-auto bg-[#fffafd] shadow-[-12px_0_40px_rgba(74,46,71,0.2)]">
           <header className="flex items-start justify-between gap-4 border-b border-[#eadfe8] px-6 py-6">
             <div>
               <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[#98728f]">
@@ -163,7 +163,7 @@ export function MovementDrawer({
       }}
       role="dialog"
     >
-      <aside className="flex h-full w-full max-w-[560px] flex-col overflow-y-auto bg-[#fffafd] shadow-[-12px_0_40px_rgba(74,46,71,0.2)]">
+      <aside className="flex h-full w-full max-w-140 flex-col overflow-y-auto bg-[#fffafd] shadow-[-12px_0_40px_rgba(74,46,71,0.2)]">
         <header className="flex items-start justify-between gap-4 border-b border-[#eadfe8] px-6 py-6">
           <div>
             <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[#98728f]">

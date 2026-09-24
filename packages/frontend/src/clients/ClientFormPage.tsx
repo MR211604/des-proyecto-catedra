@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, Info, Ruler, UserRound } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../lib/api.ts";
 import { useClient, useClientMutations } from "./api.ts";
 import type { Client, ClientInput, MeasurementValues } from "./types.ts";
@@ -200,7 +200,7 @@ function ClientFormEditor({
 
   return (
     <main className="min-h-[calc(100vh-72px)] bg-[#f8f5f7] px-6 py-8 sm:px-10">
-      <div className="mx-auto max-w-[900px]">
+      <div className="mx-auto max-w-225">
         <button
           className="mb-8 inline-flex items-center gap-2 border-0 bg-transparent p-0 text-lg text-[#3d343d] cursor-pointer"
           onClick={() => navigate("/clientes")}

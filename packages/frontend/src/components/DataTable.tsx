@@ -14,7 +14,7 @@ export function DataTable<T extends object>({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] border-collapse text-left">
+      <table className="w-full min-w-190 border-collapse text-left">
         <thead className="bg-[#fcf9fb]">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>

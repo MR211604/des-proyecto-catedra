@@ -59,8 +59,8 @@ const statusStyles = {
 
 export function RecentOrders() {
   return (
-    <section className="overflow-hidden rounded-[9px] border border-[#e8dce6] bg-[#fff7fc] shadow-[0_5px_16px_rgb(75_49_69_/_6%)]">
-      <div className="flex min-h-24 items-center justify-between border-b border-[#e8dce6] px-[30px] max-[480px]:px-5">
+    <section className="overflow-hidden rounded-[9px] border border-[#e8dce6] bg-[#fff7fc] shadow-[0_5px_16px_rgb(75_49_69/6%)]">
+      <div className="flex min-h-24 items-center justify-between border-b border-[#e8dce6] px-7.5 max-[480px]:px-5">
         <h2 className="m-0 text-[25px] tracking-[-0.5px] max-[480px]:text-[21px]">
           Pedidos Recientes
         </h2>
@@ -69,28 +69,28 @@ export function RecentOrders() {
           type="button"
         >
           Ver todos{" "}
-          <span aria-hidden="true" className="ml-[5px] text-[23px]">
+          <span aria-hidden="true" className="ml-1.25 text-[23px]">
             →
           </span>
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px] border-collapse text-left text-base">
+        <table className="w-full min-w-170 border-collapse text-left text-base">
           <thead className="bg-[#fffdfd] font-semibold">
             <tr>
-              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                 Order ID
               </th>
-              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                 Cliente
               </th>
-              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                 Servicio
               </th>
-              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                 Estado
               </th>
-              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+              <th className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                 Entrega
               </th>
             </tr>
@@ -98,23 +98,23 @@ export function RecentOrders() {
           <tbody>
             {orders.map((order) => (
               <tr className="border-b border-[#e8dce6]" key={order.id}>
-                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                   {order.id}
                 </td>
-                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                   {order.client}
                 </td>
-                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                   {order.service}
                 </td>
-                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                   <span
-                    className={`rounded-full px-[11px] py-1.5 text-sm font-semibold ${statusStyles[order.statusClass]}`}
+                    className={`rounded-full px-2.75 py-1.5 text-sm font-semibold ${statusStyles[order.statusClass]}`}
                   >
                     {order.status}
                   </span>
                 </td>
-                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-[15px]">
+                <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
                   {order.delivery}
                 </td>
               </tr>
