@@ -2,7 +2,11 @@ import { useAuth } from "@clerk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { createApiClient } from "../lib/api.ts";
-import type { ProductionStage } from "./types.ts";
+import type {
+  ProductionEvent,
+  ProductionJob,
+  ProductionStage,
+} from "./types.ts";
 
 export function useProductionBoard() {
   const { getToken } = useAuth();
@@ -45,6 +49,32 @@ export function useProductionBoard() {
   }, [getToken, queryClient]);
 
   return query;
+}
+
+export function useProductionJob(id: string | null) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["production-job", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<ProductionJob>(
+        `/api/v1/production/jobs/${id}`,
+      ),
+  });
+}
+
+export function useProductionJobEvents(id: string | null) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["production-job-events", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<ProductionEvent[]>(
+        `/api/v1/production/jobs/${id}/events`,
+      ),
+  });
 }
 
 export function useProductionMutations() {
@@ -92,5 +122,39 @@ export function useProductionMutations() {
       queryClient.invalidateQueries({ queryKey: ["production-board"] }),
   });
 
-  return { move };
+  const block = useMutation({
+    mutationFn: ({ jobId, notes }: { jobId: string; notes?: string }) =>
+      client.post<ProductionJob>(
+        `/api/v1/production/jobs/${jobId}/block`,
+        notes ? { notes } : {},
+      ),
+    onSuccess: (_data, { jobId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["production-board"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["production-job", jobId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["production-job-events", jobId],
+      });
+    },
+  });
+
+  const unblock = useMutation({
+    mutationFn: ({ jobId, notes }: { jobId: string; notes?: string }) =>
+      client.post<ProductionJob>(
+        `/api/v1/production/jobs/${jobId}/unblock`,
+        notes ? { notes } : {},
+      ),
+    onSuccess: (_data, { jobId }) => {
+      void queryClient.invalidateQueries({ queryKey: ["production-board"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["production-job", jobId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["production-job-events", jobId],
+      });
+    },
+  });
+
+  return { move, block, unblock };
 }

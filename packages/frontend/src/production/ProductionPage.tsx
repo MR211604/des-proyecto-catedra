@@ -1,6 +1,13 @@
-import { CalendarDays, CircleAlert, Search, UserRound } from "lucide-react";
-import { useState } from "react";
+import {
+  CalendarDays,
+  CircleAlert,
+  Eye,
+  Search,
+  UserRound,
+} from "lucide-react";
+import { useCallback, useState } from "react";
 import { useProductionBoard, useProductionMutations } from "./api.ts";
+import { ProductionJobDrawer } from "./ProductionJobDrawer.tsx";
 import type { ProductionJob, ProductionStage } from "./types.ts";
 
 function formatDate(value: string | null) {
@@ -15,10 +22,12 @@ function JobCard({
   job,
   isMoving,
   onDragStart,
+  onView,
 }: {
   job: ProductionJob;
   isMoving: boolean;
   onDragStart: (jobId: string) => void;
+  onView: (jobId: string) => void;
 }) {
   const dueDate = job.dueDate ?? job.order.dueDate;
   return (
@@ -36,9 +45,24 @@ function JobCard({
             {job.description}
           </p>
         </div>
-        <span className="shrink-0 font-mono text-xs text-[#665a65]">
-          ORD-{job.order.number}
-        </span>
+        <div className="flex shrink-0 items-start gap-2">
+          <span className="font-mono text-xs text-[#665a65]">
+            ORD-{job.order.number}
+          </span>
+          <button
+            aria-label={`Ver detalle de ${job.description}`}
+            className="-mt-1 -mr-1 cursor-pointer rounded-md p-1.5 text-[#806f7d] opacity-80 transition-colors hover:bg-[#f6edf5] hover:text-[#70466a] focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5e83]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onView(job.id);
+            }}
+            onMouseDown={(event) => event.stopPropagation()}
+            title="Ver detalle"
+            type="button"
+          >
+            <Eye size={17} strokeWidth={1.8} />
+          </button>
+        </div>
       </div>
       <div className="mt-5 flex items-center gap-2 text-sm text-[#564b55]">
         <UserRound size={16} strokeWidth={1.8} />
@@ -70,12 +94,14 @@ function StageColumn({
   movingJobId,
   onDrop,
   onDragStart,
+  onView,
 }: {
   stage: ProductionStage;
   search: string;
   movingJobId: string | undefined;
   onDrop: (stageId: string) => void;
   onDragStart: (jobId: string) => void;
+  onView: (jobId: string) => void;
 }) {
   const jobs = stage.jobs.filter((job) => {
     const haystack =
@@ -106,6 +132,7 @@ function StageColumn({
             key={job.id}
             job={job}
             onDragStart={onDragStart}
+            onView={onView}
           />
         ))}
         {jobs.length === 0 && (
@@ -123,6 +150,8 @@ export function ProductionPage() {
   const mutations = useProductionMutations();
   const [search, setSearch] = useState("");
   const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const closeDrawer = useCallback(() => setSelectedJobId(null), []);
 
   const moveJob = (stageId: string) => {
     if (!draggedJobId) return;
@@ -167,6 +196,7 @@ export function ProductionPage() {
               key={stage.id}
               onDragStart={setDraggedJobId}
               onDrop={moveJob}
+              onView={setSelectedJobId}
               movingJobId={
                 mutations.move.isPending
                   ? mutations.move.variables?.jobId
@@ -184,6 +214,9 @@ export function ProductionPage() {
           actual.
         </p>
       )}
+      {selectedJobId ? (
+        <ProductionJobDrawer jobId={selectedJobId} onClose={closeDrawer} />
+      ) : null}
     </main>
   );
 }

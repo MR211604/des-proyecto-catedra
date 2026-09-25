@@ -13,8 +13,8 @@ import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Confirmation } from "../components/Confirmation.tsx";
-import { formatInventoryQuantity } from "../inventory/formatters.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
+import { formatInventoryQuantity } from "../inventory/formatters.ts";
 import { ApiError } from "../lib/api.ts";
 import { useSupplier, useSupplierMutations } from "./api.ts";
 import { formatSupplierDate } from "./formatters.ts";
@@ -223,9 +223,7 @@ export function SupplierDetailPage() {
         <InfoCard label="Fecha de rescisión">
           {formatSupplierDate(supplier.deletedAt)}
         </InfoCard>
-        <InfoCard label="Materiales asociados">
-          {supplier.itemsCount}
-        </InfoCard>
+        <InfoCard label="Materiales asociados">{supplier.itemsCount}</InfoCard>
       </section>
 
       <section className="mb-7 rounded-2xl border border-[#eadde7] bg-[#fffafd] p-5">
@@ -244,12 +242,12 @@ export function SupplierDetailPage() {
               <Package size={20} /> Materiales asociados
             </h2>
             <p className="mt-1 mb-0 text-xs text-[#806f7d]">
-              {meta?.total ?? 0} {meta?.total === 1 ? "material" : "materiales"} en
-              esta vista
+              {meta?.total ?? 0} {meta?.total === 1 ? "material" : "materiales"}{" "}
+              en esta vista
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <label className="flex h-10 min-w-60 items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
+            <label className="flex h-10 min-w-80 items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
               <Search size={17} />
               <span className="sr-only">Buscar materiales</span>
               <input

@@ -1,11 +1,6 @@
-import { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../db/prisma.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import { serialize } from "../utils.js";
-import {
-  dateGroupKey,
-  resolveReportPeriod,
-  type ReportPeriod,
-} from "./time.js";
 import type {
   AnyReportQuery,
   ClientsReportQuery,
@@ -17,6 +12,11 @@ import type {
   SalesReportQuery,
   SummaryReportQuery,
 } from "./schema.js";
+import {
+  dateGroupKey,
+  type ReportPeriod,
+  resolveReportPeriod,
+} from "./time.js";
 
 const moneyZero = () => new Prisma.Decimal(0);
 
@@ -99,9 +99,9 @@ function orderTotal(
 function isOverdue(dueDate: Date | null, status: string, now = new Date()) {
   return Boolean(
     dueDate &&
-      dueDate < now &&
-      status !== "DELIVERED" &&
-      status !== "CANCELLED",
+    dueDate < now &&
+    status !== "DELIVERED" &&
+    status !== "CANCELLED",
   );
 }
 

@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import * as service from "./service.js";
 import { renderReportPdf } from "./pdf.js";
 import type { SummaryReportQuery } from "./schema.js";
+import * as service from "./service.js";
 
 type QueryRequest = Request;
 

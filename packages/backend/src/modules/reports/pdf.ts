@@ -130,7 +130,14 @@ export function renderReportPdf(
     document
       .fontSize(9)
       .fillColor("#555")
-      .text(`Generado: ${new Date().toISOString()}`);
+      .text(
+        `Generado: ${new Date().toLocaleDateString("es-ES", {
+          dateStyle: "long",
+        })} a las ${new Date().toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+      );
     document.fillColor("#000").moveDown();
 
     const period = payload.period;
