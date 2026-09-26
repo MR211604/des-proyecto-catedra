@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { Toaster } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { QuotesPage } from "./QuotesPage.tsx";
@@ -51,6 +52,7 @@ function renderPage(initialEntry = "/cotizaciones") {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <QuotesPage />
+        <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -67,6 +69,13 @@ function mockResponse(body: QuotesResponse, status = 200) {
         }),
     ),
   );
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 function requestUrls() {
@@ -205,5 +214,232 @@ describe("QuotesPage", () => {
     mockResponse(response);
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByText("COT-12")).toBeTruthy();
+  });
+
+  it("shows lifecycle actions according to the quote status", async () => {
+    const futureDate = new Date(Date.now() + 86_400_000 * 2)
+      .toISOString()
+      .slice(0, 10);
+    mockResponse({
+      ...response,
+      data: [
+        { ...response.data[0], validUntil: `${futureDate}T00:00:00.000Z` },
+        { ...response.data[1], status: "SENT" },
+        { ...response.data[1], id: "quote-14", number: 14, status: "REJECTED" },
+      ],
+      meta: { page: 1, limit: 20, total: 3, totalPages: 1 },
+    });
+    renderPage();
+
+    await screen.findByText("COT-12");
+    expect(
+      screen.getByRole("button", { name: /Editar cotización/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Enviar cotización/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Eliminar cotización/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Aceptar cotización/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Rechazar cotización/ }),
+    ).toBeTruthy();
+    expect(screen.getAllByTitle("Sin acciones disponibles")).toHaveLength(1);
+  });
+
+  it("requires confirmation and calls the lifecycle HTTP endpoints", async () => {
+    const futureDate = new Date(Date.now() + 86_400_000 * 2)
+      .toISOString()
+      .slice(0, 10);
+    mockResponse({
+      ...response,
+      data: [
+        { ...response.data[0], validUntil: `${futureDate}T00:00:00.000Z` },
+        { ...response.data[1], status: "SENT" },
+      ],
+    });
+    renderPage();
+    await screen.findByText("COT-12");
+
+    fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
+    expect(await screen.findByText("¿Enviar cotización?")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(
+      requestUrls().some((url) => url.endsWith("/quotes/quote-12/send")),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Enviar" }));
+    await waitFor(() =>
+      expect(
+        requestUrls().some((url) => url.endsWith("/quotes/quote-12/send")),
+      ).toBe(true),
+    );
+    const sendRequest = vi
+      .mocked(fetch)
+      .mock.calls.find(
+        ([input, init]) =>
+          String(input).endsWith("/quotes/quote-12/send") &&
+          init?.method === "POST",
+      );
+    expect(JSON.parse(String(sendRequest?.[1]?.body))).toEqual({});
+    expect(await screen.findByText("Cotización enviada.")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Aceptar cotización/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Aceptar" }));
+    await waitFor(() =>
+      expect(
+        requestUrls().some((url) => url.endsWith("/quotes/quote-13/accept")),
+      ).toBe(true),
+    );
+    const acceptRequest = vi
+      .mocked(fetch)
+      .mock.calls.find(
+        ([input, init]) =>
+          String(input).endsWith("/quotes/quote-13/accept") &&
+          init?.method === "POST",
+      );
+    expect(JSON.parse(String(acceptRequest?.[1]?.body))).toEqual({});
+  });
+
+  it("does not send a draft without a future validity date", async () => {
+    renderPage();
+    await screen.findByText("COT-12");
+
+    fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
+
+    expect(
+      await screen.findByText(
+        "Define una fecha de validez futura antes de enviar la cotización.",
+      ),
+    ).toBeTruthy();
+    expect(
+      requestUrls().some((url) => url.endsWith("/quotes/quote-12/send")),
+    ).toBe(false);
+  });
+
+  it("rejects sent quotes and deletes drafts after confirmation", async () => {
+    mockResponse({
+      ...response,
+      data: [response.data[0], { ...response.data[1], status: "SENT" }],
+    });
+    renderPage();
+    await screen.findByText("COT-12");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Rechazar cotización/ }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Rechazar" }));
+    await waitFor(() =>
+      expect(
+        requestUrls().some((url) => url.endsWith("/quotes/quote-13/reject")),
+      ).toBe(true),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Eliminar cotización/ }),
+    );
+    expect(
+      await screen.findByText("COT-12 se eliminará definitivamente."),
+    ).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Eliminar" }));
+    await waitFor(() =>
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([input, init]) =>
+              String(input).endsWith("/quotes/quote-12") &&
+              init?.method === "DELETE",
+          ),
+      ).toBe(true),
+    );
+  });
+
+  it("shows the API error after a failed lifecycle action", async () => {
+    const futureDate = new Date(Date.now() + 86_400_000 * 2)
+      .toISOString()
+      .slice(0, 10);
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockImplementation(
+          async (_input: RequestInfo | URL, init?: RequestInit) => {
+            if (init?.method === "POST") {
+              return jsonResponse(
+                { error: "La cotización cambió de estado." },
+                409,
+              );
+            }
+            return jsonResponse({
+              ...response,
+              data: [
+                {
+                  ...response.data[0],
+                  validUntil: `${futureDate}T00:00:00.000Z`,
+                },
+              ],
+              meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+            });
+          },
+        ),
+    );
+    renderPage();
+    await screen.findByText("COT-12");
+
+    fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Enviar" }));
+
+    expect(
+      await screen.findByText("La cotización cambió de estado."),
+    ).toBeTruthy();
+  });
+
+  it("refreshes the list after a successful lifecycle mutation", async () => {
+    const futureDate = new Date(Date.now() + 86_400_000 * 2)
+      .toISOString()
+      .slice(0, 10);
+    let status: "DRAFT" | "SENT" = "DRAFT";
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockImplementation(
+          async (_input: RequestInfo | URL, init?: RequestInit) => {
+            if (init?.method === "POST") {
+              status = "SENT";
+              return jsonResponse({ ...response.data[0], status });
+            }
+            return jsonResponse({
+              ...response,
+              data: [
+                {
+                  ...response.data[0],
+                  status,
+                  validUntil: `${futureDate}T00:00:00.000Z`,
+                },
+              ],
+              meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+            });
+          },
+        ),
+    );
+    renderPage();
+    await screen.findByText("COT-12");
+
+    fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Enviar" }));
+
+    expect(await screen.findByText("Enviada")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /Enviar cotización/ }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /Aceptar cotización/ }),
+    ).toBeTruthy();
   });
 });

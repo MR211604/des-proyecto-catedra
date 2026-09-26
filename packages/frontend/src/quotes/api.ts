@@ -101,3 +101,39 @@ export function useQuoteFormMutations() {
 
   return { create, update };
 }
+
+export function useQuoteLifecycleMutations() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const client = createApiClient(getToken);
+
+  const refresh = async (id: string) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["quotes"] }),
+      queryClient.invalidateQueries({ queryKey: ["quote", id] }),
+    ]);
+  };
+
+  const send = useMutation({
+    mutationFn: (id: string) =>
+      client.post<QuoteDetail>(`/api/v1/quotes/${id}/send`, {}),
+    onSuccess: (_data, id) => refresh(id),
+  });
+  const accept = useMutation({
+    mutationFn: (id: string) =>
+      client.post<QuoteDetail>(`/api/v1/quotes/${id}/accept`, {}),
+    onSuccess: (_data, id) => refresh(id),
+  });
+  const reject = useMutation({
+    mutationFn: (id: string) =>
+      client.post<QuoteDetail>(`/api/v1/quotes/${id}/reject`, {}),
+    onSuccess: (_data, id) => refresh(id),
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) =>
+      client.delete<{ id: string; deleted: boolean }>(`/api/v1/quotes/${id}`),
+    onSuccess: (_data, id) => refresh(id),
+  });
+
+  return { send, accept, reject, remove };
+}

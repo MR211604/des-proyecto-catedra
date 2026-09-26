@@ -1,12 +1,24 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
+import { Confirmation } from "../components/Confirmation.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
-import { useQuotes } from "./api.ts";
+import { ApiError } from "../lib/api.ts";
+import { useQuoteLifecycleMutations, useQuotes } from "./api.ts";
 import {
   quoteStatusClasses,
   quoteStatusLabels,
@@ -14,6 +26,8 @@ import {
 } from "./constants.ts";
 import { formatQuoteDate, formatQuoteTotal } from "./formatters.ts";
 import type { Quote, QuoteSort, QuoteStatus, SortOrder } from "./types.ts";
+
+type QuoteAction = "send" | "accept" | "reject" | "delete";
 
 export function QuotesPage() {
   const navigate = useNavigate();
@@ -39,6 +53,7 @@ export function QuotesPage() {
     sortBy,
     order,
   });
+  const { send, accept, reject, remove } = useQuoteLifecycleMutations();
   const quotes = query.data?.data ?? [];
   const meta = query.data?.meta;
 
@@ -70,6 +85,131 @@ export function QuotesPage() {
       order: sortBy === nextSort && order === "asc" ? "desc" : "asc",
       page: "1",
     });
+  }
+
+  function isFutureValidityDate(value: string | null) {
+    if (!value) return false;
+    const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+    return !Number.isNaN(date.getTime()) && date > new Date();
+  }
+
+  function runAction(action: QuoteAction, quote: Quote) {
+    if (action === "send" && !isFutureValidityDate(quote.validUntil)) {
+      toast.error(
+        "Define una fecha de validez futura antes de enviar la cotización.",
+      );
+      return;
+    }
+
+    const mutation =
+      action === "send"
+        ? send
+        : action === "accept"
+          ? accept
+          : action === "reject"
+            ? reject
+            : remove;
+    const actionDetails = {
+      send: {
+        title: "¿Enviar cotización?",
+        text: `COT-${quote.number} será enviada al cliente.`,
+        confirm: "Enviar",
+        success: "Cotización enviada.",
+        fallback: "No se pudo enviar la cotización.",
+      },
+      accept: {
+        title: "¿Aceptar cotización?",
+        text: `COT-${quote.number} quedará aceptada.`,
+        confirm: "Aceptar",
+        success: "Cotización aceptada.",
+        fallback: "No se pudo aceptar la cotización.",
+      },
+      reject: {
+        title: "¿Rechazar cotización?",
+        text: `COT-${quote.number} quedará rechazada.`,
+        confirm: "Rechazar",
+        success: "Cotización rechazada.",
+        fallback: "No se pudo rechazar la cotización.",
+      },
+      delete: {
+        title: "¿Eliminar cotización?",
+        text: `COT-${quote.number} se eliminará definitivamente.`,
+        confirm: "Eliminar",
+        success: "Cotización eliminada.",
+        fallback: "No se pudo eliminar la cotización.",
+      },
+    }[action];
+
+    toast.custom(
+      (confirmation) => (
+        <Confirmation
+          title={actionDetails.title}
+          text={actionDetails.text}
+          confirm={actionDetails.confirm}
+          onClose={() => toast.remove(confirmation.id)}
+          onConfirm={() => {
+            toast.remove(confirmation.id);
+            if (mutation.isPending) return;
+            void mutation
+              .mutateAsync(quote.id)
+              .then(() => toast.success(actionDetails.success))
+              .catch((error: unknown) =>
+                toast.error(
+                  error instanceof ApiError
+                    ? error.message
+                    : actionDetails.fallback,
+                ),
+              );
+          }}
+        />
+      ),
+      { duration: 8000, position: "top-center" },
+    );
+  }
+
+  function renderActions(quote: Quote) {
+    const actionButton = (
+      action: QuoteAction,
+      label: string,
+      icon: ReactNode,
+    ) => (
+      <button
+        aria-label={label}
+        className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+        onClick={() => runAction(action, quote)}
+        title={label}
+        type="button"
+      >
+        {icon}
+      </button>
+    );
+
+    if (quote.status === "DRAFT") {
+      return (
+        <div className="flex items-center gap-1">
+          {actionButton("send", "Enviar cotización", <Send size={17} />)}
+          {actionButton("delete", "Eliminar cotización", <Trash2 size={17} />)}
+          <button
+            aria-label="Editar cotización"
+            className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+            onClick={() => navigate(`/cotizaciones/${quote.id}/editar`)}
+            title="Editar cotización"
+            type="button"
+          >
+            <Pencil size={17} />
+          </button>
+        </div>
+      );
+    }
+    if (quote.status === "SENT") {
+      return (
+        <div className="flex items-center gap-1">
+          {actionButton("accept", "Aceptar cotización", <Check size={17} />)}
+          {actionButton("reject", "Rechazar cotización", <X size={17} />)}
+        </div>
+      );
+    }
+    return <span title="Sin acciones disponibles">-</span>;
   }
 
   const columns: ColumnDef<typeof appTableFeatures, Quote, unknown>[] = [
@@ -122,19 +262,7 @@ export function QuotesPage() {
     {
       id: "actions",
       header: "Acciones",
-      cell: ({ row }) =>
-        row.original.status === "DRAFT" ? (
-          <button
-            aria-label="Editar cotización"
-            className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
-            onClick={() => navigate(`/cotizaciones/${row.original.id}/editar`)}
-            type="button"
-          >
-            <Pencil size={17} />
-          </button>
-        ) : (
-          <span title="Sin acciones disponibles">-</span>
-        ),
+      cell: ({ row }) => renderActions(row.original),
     },
   ];
 
