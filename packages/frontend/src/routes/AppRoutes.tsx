@@ -10,6 +10,7 @@ import { InventoryPage } from "../inventory/InventoryPage.tsx";
 import { OrderFormPage } from "../orders/OrderFormPage.tsx";
 import { OrdersPage } from "../orders/OrdersPage.tsx";
 import { ProductionPage } from "../production/ProductionPage.tsx";
+import { QuotesPage } from "../quotes/QuotesPage.tsx";
 import { SupplierDetailPage } from "../suppliers/SupplierDetailPage.tsx";
 import { SupplierFormPage } from "../suppliers/SupplierFormPage.tsx";
 import { SuppliersPage } from "../suppliers/SuppliersPage.tsx";
@@ -42,6 +43,7 @@ export function AppRoutes() {
         <Route path="pedidos" element={<OrdersPage />} />
         <Route path="pedidos/nuevo" element={<OrderFormPage />} />
         <Route path="pedidos/:id/editar" element={<OrderFormPage />} />
+        <Route path="cotizaciones" element={<QuotesPage />} />
         <Route path="produccion" element={<ProductionPage />} />
         <Route path="inventario" element={<InventoryPage />} />
         <Route path="inventario/nuevo" element={<InventoryFormPage />} />
