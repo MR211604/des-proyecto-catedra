@@ -7,8 +7,8 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QuoteFormPage } from "./QuoteFormPage.tsx";
 
 vi.mock("@clerk/react", () => ({

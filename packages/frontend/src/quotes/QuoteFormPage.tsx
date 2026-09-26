@@ -4,11 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../lib/api.ts";
 import { useQuote, useQuoteFormMutations, useQuoteFormOptions } from "./api.ts";
-import type {
-  QuoteDetail,
-  QuoteInput,
-  QuoteMaterialUnit,
-} from "./types.ts";
+import type { QuoteDetail, QuoteInput, QuoteMaterialUnit } from "./types.ts";
 
 type MaterialForm = {
   id: string;
