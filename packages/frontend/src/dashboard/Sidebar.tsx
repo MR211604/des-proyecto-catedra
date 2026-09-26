@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { SignInIcon } from "../auth/AuthIcons";
 import { Icon, type IconName } from "./Icon";
 
 const navigation: { label: string; icon: IconName; to: string }[] = [
@@ -18,11 +19,11 @@ export function Sidebar() {
   return (
     <aside className="flex min-h-screen w-65 flex-[0_0_260px] flex-col bg-[#e4dbe4] px-2.5 py-7.5 max-[1100px]:w-55 max-[1100px]:basis-55 max-[820px]:relative max-[820px]:min-h-0 max-[820px]:w-full max-[820px]:basis-auto max-[820px]:px-4 max-[820px]:py-4.5">
       <div className="flex items-center gap-3 px-3.75 text-[#70466a] max-[820px]:px-0">
-        <div className="grid h-10 w-10 place-items-center rounded-[10px] border border-[#bd9fb8] bg-[#f8edf7] font-bold tracking-[-2px]">
-          CA
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-[#bd9fb8] bg-[#f8edf7]">
+          <SignInIcon />
         </div>
-        <div>
-          <strong className="block max-w-44.5 overflow-hidden text-ellipsis whitespace-nowrap text-lg">
+        <div className="min-w-0">
+          <strong className="block text-lg leading-tight">
             Confecciones Azucena
           </strong>
           <span className="mt-1.25 block text-sm text-[#302630]">
@@ -47,13 +48,6 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <button
-        className="mt-auto flex min-h-12.5 cursor-pointer items-center justify-center gap-3.5 rounded-xs border-0 bg-[#8b5e83] font-bold text-white max-[820px]:absolute max-[820px]:right-4 max-[820px]:top-4.5 max-[820px]:mt-0 max-[820px]:min-h-10 max-[820px]:px-3.25"
-        type="button"
-      >
-        <Icon name="plus" size={22} />
-        <span className="max-[820px]:hidden">Nuevo Pedido</span>
-      </button>
     </aside>
   );
 }

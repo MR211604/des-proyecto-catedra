@@ -222,7 +222,7 @@ export function InventoryHistoryPage() {
                     "Tipo",
                     "Cantidad",
                     "Fecha",
-                    "Referencia",
+                    "Trabajo realizado",
                     "Motivo",
                     "Pedido",
                   ].map((heading) => (
@@ -267,7 +267,7 @@ export function InventoryHistoryPage() {
                         }).format(new Date(movement.createdAt))}
                       </td>
                       <td className="px-5 py-4 text-sm text-[#5f525d]">
-                        {movement.reference ?? "—"}
+                        {movement.orderItem?.description ?? "—"}
                       </td>
                       <td className="max-w-60 px-5 py-4 text-sm text-[#5f525d]">
                         {movement.reason ?? "—"}

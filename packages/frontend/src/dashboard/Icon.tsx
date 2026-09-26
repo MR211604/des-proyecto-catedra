@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Package,
   Plus,
+  ReceiptText,
   Scissors,
   Settings,
   Truck,
@@ -29,6 +30,7 @@ export type IconName =
   | "orders"
   | "plus"
   | "production"
+  | "receipt"
   | "reports"
   | "settings"
   | "truck"
@@ -52,6 +54,7 @@ const icons: Record<IconName, LucideIcon> = {
   orders: ClipboardList,
   plus: Plus,
   production: Scissors,
+  receipt: ReceiptText,
   reports: ChartNoAxesColumn,
   settings: Settings,
   truck: Truck,

@@ -199,9 +199,7 @@ export function OrderFormPage() {
       </div>
     );
 
-  return (
-    <OrderFormEditor id={id} options={options} order={orderQuery.data} />
-  );
+  return <OrderFormEditor id={id} options={options} order={orderQuery.data} />;
 }
 
 function OrderFormEditor({
