@@ -1,8 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
@@ -16,6 +16,7 @@ import { formatQuoteDate, formatQuoteTotal } from "./formatters.ts";
 import type { Quote, QuoteSort, QuoteStatus, SortOrder } from "./types.ts";
 
 export function QuotesPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(
     searchParams.get("search") ?? "",
@@ -121,7 +122,19 @@ export function QuotesPage() {
     {
       id: "actions",
       header: "Acciones",
-      cell: () => <span title="Sin acciones disponibles">-</span>,
+      cell: ({ row }) =>
+        row.original.status === "DRAFT" ? (
+          <button
+            aria-label="Editar cotización"
+            className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+            onClick={() => navigate(`/cotizaciones/${row.original.id}/editar`)}
+            type="button"
+          >
+            <Pencil size={17} />
+          </button>
+        ) : (
+          <span title="Sin acciones disponibles">-</span>
+        ),
     },
   ];
 
@@ -131,16 +144,25 @@ export function QuotesPage() {
 
   return (
     <main className="mx-auto max-w-360 px-10 py-9.5 pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7">
-      <div className="mb-7">
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
-          Relación del taller
-        </p>
-        <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
-          Cotizaciones
-        </h1>
-        <p className="mt-2 mb-0 text-sm text-[#786d77]">
-          Consulta y localiza las propuestas comerciales del taller.
-        </p>
+      <div className="mb-7 flex items-end justify-between gap-4 max-[620px]:items-start max-[620px]:flex-col">
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#98728f]">
+            Relación del taller
+          </p>
+          <h1 className="m-0 text-[clamp(32px,4vw,46px)] font-bold tracking-[-1.8px] text-[#211b21]">
+            Cotizaciones
+          </h1>
+          <p className="mt-2 mb-0 text-sm text-[#786d77]">
+            Consulta y localiza las propuestas comerciales del taller.
+          </p>
+        </div>
+        <button
+          className="inline-flex items-center gap-2 rounded-lg border-0 bg-[#8b5e83] px-4 py-3 text-sm font-bold text-white hover:bg-[#70466a]"
+          onClick={() => navigate("/cotizaciones/nueva")}
+          type="button"
+        >
+          <Plus size={18} /> Nueva cotización
+        </button>
       </div>
       <section className="rounded-2xl border border-[#eadde7] bg-[#fffafd] shadow-[0_18px_45px_-35px_#70466a]">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eee2eb] px-5 py-5">
