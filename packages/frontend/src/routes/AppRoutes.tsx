@@ -10,8 +10,10 @@ import { InventoryPage } from "../inventory/InventoryPage.tsx";
 import { OrderFormPage } from "../orders/OrderFormPage.tsx";
 import { OrdersPage } from "../orders/OrdersPage.tsx";
 import { ProductionPage } from "../production/ProductionPage.tsx";
-import { QuotesPage } from "../quotes/QuotesPage.tsx";
 import { QuoteFormPage } from "../quotes/QuoteFormPage.tsx";
+import { QuotesPage } from "../quotes/QuotesPage.tsx";
+import { SaleFormPage } from "../sales/SaleFormPage.tsx";
+import { SalesPage } from "../sales/SalesPage.tsx";
 import { SupplierDetailPage } from "../suppliers/SupplierDetailPage.tsx";
 import { SupplierFormPage } from "../suppliers/SupplierFormPage.tsx";
 import { SuppliersPage } from "../suppliers/SuppliersPage.tsx";
@@ -48,6 +50,8 @@ export function AppRoutes() {
         <Route path="cotizaciones/nueva" element={<QuoteFormPage />} />
         <Route path="cotizaciones/:id/editar" element={<QuoteFormPage />} />
         <Route path="produccion" element={<ProductionPage />} />
+        <Route path="ventas" element={<SalesPage />} />
+        <Route path="ventas/nueva" element={<SaleFormPage />} />
         <Route path="inventario" element={<InventoryPage />} />
         <Route path="inventario/nuevo" element={<InventoryFormPage />} />
         <Route path="inventario/:id" element={<InventoryHistoryPage />} />
