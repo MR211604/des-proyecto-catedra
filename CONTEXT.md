@@ -21,7 +21,7 @@ The primary person responsible for the workshop and its administration. In the s
 _Avoid_: system administrator, customer
 
 **Quote**:
-The pricing proposal for one or more jobs that the workshop presents to a customer before converting it into a confirmed order.
+The pricing proposal for one or more jobs that the workshop presents to a customer before converting it into a confirmed order. A quote may be a draft, sent, accepted, rejected, or expired; its notes describe additional commercial context rather than a quoted job itself.
 _Avoid_: estimate, order, invoice
 
 **Order**:
