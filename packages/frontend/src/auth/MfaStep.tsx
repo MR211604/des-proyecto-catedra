@@ -63,7 +63,9 @@ export function MfaStep({
             disabled={isSubmitting || formSubmitting}
             type="submit"
           >
-            {isSubmitting || formSubmitting ? "Verificando..." : "Verificar código"}
+            {isSubmitting || formSubmitting
+              ? "Verificando..."
+              : "Verificar código"}
           </button>
         )}
       </form.Subscribe>

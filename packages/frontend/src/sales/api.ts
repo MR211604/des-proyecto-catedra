@@ -3,12 +3,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createApiClient } from "../lib/api.ts";
 import type { OrdersResponse } from "../orders/types.ts";
 import type {
+  PaymentInput,
+  PaymentMutationResponse,
+  PaymentsResponse,
   Sale,
+  SaleDetail,
   SaleInput,
   SaleSort,
   SaleStatus,
   SalesResponse,
   SortOrder,
+  UpdatePaymentInput,
 } from "./types.ts";
 
 type SaleListParams = {
@@ -18,6 +23,8 @@ type SaleListParams = {
   sortBy: SaleSort;
   order: SortOrder;
 };
+
+const paymentHistoryLimit = 10;
 
 export function useSales(params: SaleListParams) {
   const { getToken } = useAuth();
@@ -33,6 +40,34 @@ export function useSales(params: SaleListParams) {
     queryKey: ["sales", params],
     queryFn: () =>
       createApiClient(getToken).get<SalesResponse>(`/api/v1/sales?${query}`),
+  });
+}
+
+export function useSale(id: string | undefined) {
+  const { getToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["sale", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<SaleDetail>(`/api/v1/sales/${id}`),
+  });
+}
+
+export function useSalePayments(id: string | undefined) {
+  const { getToken } = useAuth();
+  const query = new URLSearchParams({
+    limit: String(paymentHistoryLimit),
+    order: "desc",
+  });
+
+  return useQuery({
+    queryKey: ["sale-payments", id],
+    enabled: Boolean(id),
+    queryFn: () =>
+      createApiClient(getToken).get<PaymentsResponse>(
+        `/api/v1/sales/${id}/payments?${query}`,
+      ),
   });
 }
 
@@ -67,6 +102,14 @@ export function useSaleMutations() {
   const queryClient = useQueryClient();
   const client = createApiClient(getToken);
 
+  const refresh = async (saleId: string) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["sales"] }),
+      queryClient.invalidateQueries({ queryKey: ["sale", saleId] }),
+      queryClient.invalidateQueries({ queryKey: ["sale-payments", saleId] }),
+    ]);
+  };
+
   const create = useMutation({
     mutationFn: (input: SaleInput) => client.post<Sale>("/api/v1/sales", input),
     onSuccess: async () => {
@@ -74,5 +117,51 @@ export function useSaleMutations() {
     },
   });
 
-  return { create };
+  const voidSale = useMutation({
+    mutationFn: (id: string) =>
+      client.post<SaleDetail>(`/api/v1/sales/${id}/void`, {}),
+    onSuccess: (_data, id) => refresh(id),
+  });
+
+  const createPayment = useMutation({
+    mutationFn: ({ saleId, input }: { saleId: string; input: PaymentInput }) =>
+      client.post<PaymentMutationResponse>(
+        `/api/v1/sales/${saleId}/payments`,
+        input,
+      ),
+    onSuccess: (_data, { saleId }) => refresh(saleId),
+  });
+
+  const updatePayment = useMutation({
+    mutationFn: ({
+      saleId,
+      paymentId,
+      input,
+    }: {
+      saleId: string;
+      paymentId: string;
+      input: UpdatePaymentInput;
+    }) =>
+      client.put<PaymentMutationResponse>(
+        `/api/v1/sales/${saleId}/payments/${paymentId}`,
+        input,
+      ),
+    onSuccess: (_data, { saleId }) => refresh(saleId),
+  });
+
+  const deletePayment = useMutation({
+    mutationFn: ({
+      saleId,
+      paymentId,
+    }: {
+      saleId: string;
+      paymentId: string;
+    }) =>
+      client.delete<PaymentMutationResponse>(
+        `/api/v1/sales/${saleId}/payments/${paymentId}`,
+      ),
+    onSuccess: (_data, { saleId }) => refresh(saleId),
+  });
+
+  return { create, voidSale, createPayment, updatePayment, deletePayment };
 }

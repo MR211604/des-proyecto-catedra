@@ -1,49 +1,27 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { type ReactNode, useEffect, useMemo } from "react";
+import { ChevronLeft, ChevronRight, Eye, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Confirmation } from "../components/Confirmation.tsx";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
-import { useSales } from "./api.ts";
-import { tabs } from "./constants.ts";
+import { ApiError } from "../lib/api.ts";
+import { useSaleMutations, useSales } from "./api.ts";
+import { paymentStatusClasses, tabs } from "./constants.ts";
 import {
   formatSaleDate,
   formatSaleMoney,
   paymentMethod,
   paymentStatus,
 } from "./formatters.ts";
+import { SaleDetailDrawer } from "./SaleDetailDrawer.tsx";
 import type { Sale, SaleSort, SortOrder } from "./types.ts";
-
-function DisabledAction({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      aria-label={label}
-      className="cursor-not-allowed rounded-md p-2 text-[#96758f] opacity-55"
-      disabled
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
 
 export function SalesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const rawStatus = searchParams.get("status");
   const activeTab = tabs.find((tab) => tab.value === rawStatus) ?? tabs[0];
   const pageValue = Number(searchParams.get("page") ?? "1");
@@ -58,6 +36,7 @@ export function SalesPage() {
     sortBy,
     order,
   });
+  const { voidSale } = useSaleMutations();
   const sales = query.data?.data ?? [];
   const meta = query.data?.meta;
 
@@ -74,83 +53,114 @@ export function SalesPage() {
     setSearchParams(next, { replace: true });
   }
 
-  const columns = useMemo<ColumnDef<typeof appTableFeatures, Sale, unknown>[]>(
-    () => [
-      {
-        accessorKey: "createdAt",
-        header: "Fecha",
-        cell: ({ getValue }) => formatSaleDate(getValue<string>()),
+  function runVoid(id: string, number: number) {
+    toast.custom(
+      (confirmation) => (
+        <Confirmation
+          title="¿Anular venta?"
+          text={`ORD-${number} será anulada. Sus pagos e historial se conservan.`}
+          confirm="Anular venta"
+          onClose={() => toast.remove(confirmation.id)}
+          onConfirm={() => {
+            toast.remove(confirmation.id);
+            if (voidSale.isPending) return;
+            void voidSale
+              .mutateAsync(id)
+              .then(() => toast.success("Venta anulada."))
+              .catch((error: unknown) =>
+                toast.error(
+                  error instanceof ApiError
+                    ? error.message
+                    : "No se pudo anular la venta.",
+                ),
+              );
+          }}
+        />
+      ),
+      { duration: 8000, position: "top-center" },
+    );
+  }
+
+  const columns: ColumnDef<typeof appTableFeatures, Sale, unknown>[] = [
+    {
+      accessorKey: "createdAt",
+      header: "Fecha",
+      cell: ({ getValue }) => formatSaleDate(getValue<string>()),
+    },
+    {
+      accessorKey: "number",
+      header: "Pedido",
+      cell: ({ getValue }) => <strong>ORD-{getValue<number>()}</strong>,
+    },
+    {
+      id: "client",
+      header: "Cliente",
+      cell: ({ row }) => row.original.order.client.name,
+    },
+    {
+      accessorKey: "total",
+      header: "Total",
+      cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
+    },
+    {
+      accessorKey: "paidAmount",
+      header: "Pagado",
+      cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
+    },
+    {
+      accessorKey: "outstandingBalance",
+      header: "Saldo",
+      cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
+    },
+    {
+      id: "method",
+      header: "Método",
+      cell: ({ row }) => paymentMethod(row.original),
+    },
+    {
+      id: "paymentStatus",
+      header: "Estado de pago",
+      cell: ({ row }) => {
+        const status = paymentStatus(row.original);
+        return (
+          <span
+            className={`rounded-md px-3 py-1.5 text-xs font-bold ${paymentStatusClasses[status]}`}
+          >
+            {status}
+          </span>
+        );
       },
-      {
-        accessorKey: "number",
-        header: "Pedido",
-        cell: ({ getValue }) => <strong>ORD-{getValue<number>()}</strong>,
-      },
-      {
-        id: "client",
-        header: "Cliente",
-        cell: ({ row }) => row.original.order.client.name,
-      },
-      {
-        accessorKey: "total",
-        header: "Total",
-        cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
-      },
-      {
-        accessorKey: "paidAmount",
-        header: "Pagado",
-        cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
-      },
-      {
-        accessorKey: "outstandingBalance",
-        header: "Saldo",
-        cell: ({ getValue }) => formatSaleMoney(getValue<string>()),
-      },
-      {
-        id: "method",
-        header: "Método",
-        cell: ({ row }) => paymentMethod(row.original),
-      },
-      {
-        id: "paymentStatus",
-        header: "Estado de pago",
-        cell: ({ row }) => {
-          const status = paymentStatus(row.original);
-          const classes =
-            status === "Pagado"
-              ? "bg-[#e8f3ea] text-[#477052]"
-              : status === "Pagado parcial"
-                ? "bg-[#fff2da] text-[#936d2c]"
-                : "bg-[#f2e6f1] text-[#805276]";
-          return (
-            <span
-              className={`rounded-md px-3 py-1.5 text-xs font-bold ${classes}`}
-            >
-              {status}
-            </span>
-          );
-        },
-      },
-      {
-        id: "actions",
-        header: "Acciones",
-        cell: () => (
+    },
+    {
+      id: "actions",
+      header: "Acciones",
+      cell: ({ row }) => {
+        const sale = row.original;
+        const voided = sale.status === "VOIDED";
+        return (
           <div className="flex items-center gap-1">
-            <DisabledAction label="Ver venta">
+            <button
+              aria-label={`Ver venta ORD-${sale.number}`}
+              className="cursor-pointer rounded-md p-2 text-[#766774] hover:bg-[#f6edf5]"
+              onClick={() => setSelectedSaleId(sale.id)}
+              type="button"
+            >
               <Eye size={17} />
-            </DisabledAction>
-            <DisabledAction label="Editar venta">
-              <Pencil size={17} />
-            </DisabledAction>
-            <DisabledAction label="Anular venta">
+            </button>
+            <button
+              aria-label={`Anular venta ORD-${sale.number}`}
+              className="cursor-pointer rounded-md p-2 text-[#766774] hover:bg-[#fff1f2] hover:text-[#9c3042] disabled:cursor-not-allowed disabled:opacity-55"
+              disabled={voided}
+              onClick={() => runVoid(sale.id, sale.number)}
+              type="button"
+            >
               <Trash2 size={17} />
-            </DisabledAction>
+            </button>
           </div>
-        ),
+        );
       },
-    ],
-    [],
-  );
+    },
+  ];
 
   const showFrom =
     meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0;
@@ -283,6 +293,12 @@ export function SalesPage() {
           </div>
         </footer>
       </section>
+      {selectedSaleId ? (
+        <SaleDetailDrawer
+          saleId={selectedSaleId}
+          onClose={() => setSelectedSaleId(null)}
+        />
+      ) : null}
     </main>
   );
 }

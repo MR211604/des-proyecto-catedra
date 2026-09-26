@@ -14,6 +14,13 @@ export function formatSaleDate(value: string) {
   }).format(new Date(value));
 }
 
+export function formatSaleDateTime(value: string) {
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 export function formatSaleMoney(value: string) {
   return currency.format(Number(value));
 }
@@ -33,4 +40,8 @@ export function paymentMethod(sale: Sale) {
   if (methods.size === 0) return "--";
   if (methods.size > 1) return "Mixto";
   return methods.has("CASH") ? "Efectivo" : "Transferencia";
+}
+
+export function paymentMethodLabel(method: PaymentMethod) {
+  return method === "CASH" ? "Efectivo" : "Transferencia";
 }

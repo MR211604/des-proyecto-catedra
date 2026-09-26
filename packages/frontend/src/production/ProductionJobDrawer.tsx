@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   CircleAlert,
+  CircleCheck,
   Eye,
   Lock,
   Unlock,
@@ -122,6 +123,23 @@ export function ProductionJobDrawer({
     }
   }
 
+  async function markOrderReady() {
+    if (!job) return;
+    try {
+      await mutations.ready.mutateAsync({ orderId: job.orderId });
+      toast.success("Pedido marcado como listo.");
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : "No se pudo marcar el pedido como listo.",
+      );
+    }
+  }
+
+  const canMarkReady = job?.order.status === "IN_PRODUCTION";
+  const isReadyPending = mutations.ready.isPending;
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-[#211b21]/35">
       <button
@@ -239,6 +257,35 @@ export function ProductionJobDrawer({
                     : "Bloquear trabajo"}
               </button>
             </section>
+
+            {canMarkReady ? (
+              <section className="rounded-xl border border-[#cfe4d8] bg-[#f3faf5] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="m-0 text-base font-bold text-[#2f4a3a]">
+                      Estado del pedido
+                    </h3>
+                    <p className="mt-1 mb-0 text-sm text-[#5c7566]">
+                      {job.status === "COMPLETED"
+                        ? "Todos los trabajos deben estar completados. Al marcar el pedido como listo pasará al estado «Listo» en Pedidos."
+                        : "Este trabajo aún no está completado. Todos los trabajos del pedido deben estar completados para poder marcarlo como listo."}
+                    </p>
+                  </div>
+                  <CircleCheck className="shrink-0 text-[#3c7655]" size={20} />
+                </div>
+                <button
+                  className="mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#3c7655] bg-[#3c7655] px-4 text-sm font-bold text-white hover:bg-[#2f5e43] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={job.status !== "COMPLETED" || isReadyPending}
+                  onClick={() => void markOrderReady()}
+                  type="button"
+                >
+                  <CircleCheck size={16} />
+                  {isReadyPending
+                    ? "Marcando pedido..."
+                    : "Marcar pedido como listo"}
+                </button>
+              </section>
+            ) : null}
 
             <section>
               <div className="mb-3 flex items-center justify-between">

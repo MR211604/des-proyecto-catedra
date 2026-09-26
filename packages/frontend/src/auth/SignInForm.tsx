@@ -45,10 +45,7 @@ function readRememberedCredentials(): RememberedCredentials {
   }
 }
 
-function updateRememberedCredentials(
-  rememberMe: boolean,
-  identifier: string,
-) {
+function updateRememberedCredentials(rememberMe: boolean, identifier: string) {
   const storage = getLocalStorage();
   if (!storage) return;
 

@@ -2,6 +2,7 @@ import { useAuth } from "@clerk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { createApiClient } from "../lib/api.ts";
+import type { Order } from "../orders/types.ts";
 import type {
   ProductionEvent,
   ProductionJob,
@@ -156,5 +157,16 @@ export function useProductionMutations() {
     },
   });
 
-  return { move, block, unblock };
+  const ready = useMutation({
+    mutationFn: ({ orderId }: { orderId: string }) =>
+      client.post<Order>(`/api/v1/orders/${orderId}/ready`, {}),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["production-board"] });
+      void queryClient.invalidateQueries({ queryKey: ["production-job"] });
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+      void queryClient.invalidateQueries({ queryKey: ["order"] });
+    },
+  });
+
+  return { move, block, unblock, ready };
 }
