@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import {
+  ArrowRightLeft,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -10,24 +11,177 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { DataTable } from "../components/DataTable.tsx";
 import { Confirmation } from "../components/Confirmation.tsx";
+import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
 import { ApiError } from "../lib/api.ts";
-import { useQuoteLifecycleMutations, useQuotes } from "./api.ts";
+import {
+  useQuoteConversion,
+  useQuoteLifecycleMutations,
+  useQuotes,
+} from "./api.ts";
 import {
   quoteStatusClasses,
   quoteStatusLabels,
   quoteTabs,
 } from "./constants.ts";
 import { formatQuoteDate, formatQuoteTotal } from "./formatters.ts";
-import type { Quote, QuoteSort, QuoteStatus, SortOrder } from "./types.ts";
+import type {
+  Quote,
+  QuoteConversionStage,
+  QuoteSort,
+  QuoteStatus,
+  SortOrder,
+} from "./types.ts";
 
-type QuoteAction = "send" | "accept" | "reject" | "delete";
+type QuoteAction = "send" | "accept" | "reject" | "delete" | "convert";
+
+function ConversionDialog({
+  quote,
+  stages,
+  selectedStageId,
+  onSelectStage,
+  onCancel,
+  onContinue,
+  onBack,
+  onConvert,
+  confirming,
+  converting,
+}: {
+  quote: Quote;
+  stages: {
+    isPending: boolean;
+    isFetching: boolean;
+    isError: boolean;
+    error: Error | null;
+    data: QuoteConversionStage[] | undefined;
+  };
+  selectedStageId: string;
+  onSelectStage: (stageId: string) => void;
+  onCancel: () => void;
+  onContinue: () => void;
+  onBack: () => void;
+  onConvert: () => void;
+  confirming: boolean;
+  converting: boolean;
+}) {
+  const activeStages = stages.data?.filter((stage) => stage.isActive) ?? [];
+  const selectedStage = activeStages.find(
+    (stage) => stage.id === selectedStageId,
+  );
+  const loading = stages.isPending || stages.isFetching;
+
+  return (
+    <div
+      aria-labelledby="conversion-dialog-title"
+      aria-modal="true"
+      className="fixed inset-0 z-50 grid place-items-center bg-[#211b21]/35 p-4"
+      role="dialog"
+    >
+      <div className="w-[min(440px,100%)] rounded-2xl border border-[#eadde7] bg-[#fffafd] p-6 text-[#302630] shadow-[0_24px_70px_-25px_#4d3049]">
+        {confirming ? (
+          <>
+            <h2 className="m-0 text-lg font-bold" id="conversion-dialog-title">
+              ¿Convertir cotización en pedido?
+            </h2>
+            <p className="mt-2 mb-0 text-sm text-[#806f7d]">
+              COT-{quote.number} se convertirá en un pedido con la etapa inicial
+              <strong className="text-[#5f4658]"> {selectedStage?.name}</strong>
+              .
+            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                className="rounded-lg px-3 py-2 text-sm font-bold text-[#806f7d] hover:bg-[#f6edf5]"
+                disabled={converting}
+                onClick={onBack}
+                type="button"
+              >
+                Atrás
+              </button>
+              <button
+                className="rounded-lg px-3 py-2 text-sm font-bold text-[#806f7d] hover:bg-[#f6edf5]"
+                disabled={converting}
+                onClick={onCancel}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="rounded-lg bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white hover:bg-[#70466a] disabled:cursor-wait disabled:opacity-60"
+                disabled={converting}
+                onClick={onConvert}
+                type="button"
+              >
+                {converting ? "Convirtiendo..." : "Convertir en pedido"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="m-0 text-lg font-bold" id="conversion-dialog-title">
+              Seleccionar etapa de producción
+            </h2>
+            <p className="mt-2 mb-0 text-sm text-[#806f7d]">
+              Elige la etapa en la que comenzará el pedido COT-{quote.number}.
+            </p>
+            {loading ? (
+              <p className="mt-5 mb-0 text-sm text-[#806f7d]">
+                Cargando etapas de producción...
+              </p>
+            ) : stages.isError ? (
+              <p className="mt-5 mb-0 text-sm text-[#b34b5d]">
+                {stages.error?.message ??
+                  "No se pudieron cargar las etapas de producción."}
+              </p>
+            ) : activeStages.length === 0 ? (
+              <p className="mt-5 mb-0 text-sm text-[#b34b5d]">
+                No hay etapas de producción activas disponibles.
+              </p>
+            ) : (
+              <label className="mt-5 grid gap-2 text-sm font-semibold">
+                <span>Etapa de producción</span>
+                <select
+                  aria-label="Etapa de producción"
+                  className="h-11 rounded-lg border border-[#dfcedc] bg-white px-3 font-normal outline-none focus:border-[#8b5e83]"
+                  onChange={(event) => onSelectStage(event.target.value)}
+                  value={selectedStageId}
+                >
+                  <option value="">Selecciona una etapa</option>
+                  {activeStages.map((stage) => (
+                    <option key={stage.id} value={stage.id}>
+                      {stage.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                className="rounded-lg px-3 py-2 text-sm font-bold text-[#806f7d] hover:bg-[#f6edf5]"
+                onClick={onCancel}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="rounded-lg bg-[#8b5e83] px-4 py-2 text-sm font-bold text-white hover:bg-[#70466a] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!selectedStageId || loading || stages.isError}
+                onClick={onContinue}
+                type="button"
+              >
+                Continuar
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function QuotesPage() {
   const navigate = useNavigate();
@@ -54,6 +208,10 @@ export function QuotesPage() {
     order,
   });
   const { send, accept, reject, remove } = useQuoteLifecycleMutations();
+  const { stages, convert } = useQuoteConversion();
+  const [conversionQuote, setConversionQuote] = useState<Quote | null>(null);
+  const [selectedStageId, setSelectedStageId] = useState("");
+  const [confirmingConversion, setConfirmingConversion] = useState(false);
   const quotes = query.data?.data ?? [];
   const meta = query.data?.meta;
 
@@ -94,6 +252,14 @@ export function QuotesPage() {
   }
 
   function runAction(action: QuoteAction, quote: Quote) {
+    if (action === "convert") {
+      setConversionQuote(quote);
+      setSelectedStageId("");
+      setConfirmingConversion(false);
+      void stages.refetch();
+      return;
+    }
+
     if (action === "send" && !isFutureValidityDate(quote.validUntil)) {
       toast.error(
         "Define una fecha de validez futura antes de enviar la cotización.",
@@ -167,6 +333,29 @@ export function QuotesPage() {
     );
   }
 
+  function closeConversion() {
+    setConversionQuote(null);
+    setSelectedStageId("");
+    setConfirmingConversion(false);
+  }
+
+  function confirmConversion() {
+    if (!conversionQuote || !selectedStageId || convert.isPending) return;
+    void convert
+      .mutateAsync({ id: conversionQuote.id, stageId: selectedStageId })
+      .then(() => {
+        closeConversion();
+        toast.success("Cotización convertida en pedido.");
+      })
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof ApiError
+            ? error.message
+            : "No se pudo convertir la cotización en pedido.",
+        );
+      });
+  }
+
   function renderActions(quote: Quote) {
     const actionButton = (
       action: QuoteAction,
@@ -206,6 +395,17 @@ export function QuotesPage() {
         <div className="flex items-center gap-1">
           {actionButton("accept", "Aceptar cotización", <Check size={17} />)}
           {actionButton("reject", "Rechazar cotización", <X size={17} />)}
+        </div>
+      );
+    }
+    if (quote.status === "ACCEPTED" && !quote.order) {
+      return (
+        <div className="flex items-center gap-1">
+          {actionButton(
+            "convert",
+            "Convertir en pedido",
+            <ArrowRightLeft size={17} />,
+          )}
         </div>
       );
     }
@@ -404,6 +604,20 @@ export function QuotesPage() {
           </div>
         </footer>
       </section>
+      {conversionQuote ? (
+        <ConversionDialog
+          confirming={confirmingConversion}
+          converting={convert.isPending}
+          onBack={() => setConfirmingConversion(false)}
+          onCancel={closeConversion}
+          onContinue={() => setConfirmingConversion(true)}
+          onConvert={confirmConversion}
+          onSelectStage={setSelectedStageId}
+          quote={conversionQuote}
+          selectedStageId={selectedStageId}
+          stages={stages}
+        />
+      ) : null}
     </main>
   );
 }

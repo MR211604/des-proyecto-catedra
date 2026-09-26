@@ -1,9 +1,10 @@
 import { useAuth } from "@clerk/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createApiClient } from "../lib/api.ts";
-import type { InventoryItem } from "../inventory/types.ts";
 import type { Client } from "../clients/types.ts";
+import type { InventoryItem } from "../inventory/types.ts";
+import { createApiClient } from "../lib/api.ts";
 import type {
+  QuoteConversionStage,
   QuoteDetail,
   QuoteInput,
   QuoteSort,
@@ -136,4 +137,33 @@ export function useQuoteLifecycleMutations() {
   });
 
   return { send, accept, reject, remove };
+}
+
+export function useQuoteConversion() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const client = createApiClient(getToken);
+
+  const stages = useQuery({
+    queryKey: ["quote-conversion-stages"],
+    enabled: false,
+    queryFn: () =>
+      client.get<QuoteConversionStage[]>("/api/v1/production/stages"),
+  });
+
+  const convert = useMutation({
+    mutationFn: ({ id, stageId }: { id: string; stageId: string }) =>
+      client.post(`/api/v1/quotes/${id}/convert`, { stageId }),
+    onSuccess: async (_data, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["quotes"] }),
+        queryClient.invalidateQueries({ queryKey: ["quote", id] }),
+        queryClient.invalidateQueries({ queryKey: ["orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["order"] }),
+        queryClient.invalidateQueries({ queryKey: ["production-board"] }),
+      ]);
+    },
+  });
+
+  return { stages, convert };
 }

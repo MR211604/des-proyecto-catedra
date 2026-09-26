@@ -9,11 +9,19 @@ export type Quote = {
   id: string;
   number: number;
   client: { name: string };
+  order?: { id: string; number: number } | null;
   status: QuoteStatus;
   notes: string | null;
   total: string;
   validUntil: string | null;
   createdAt: string;
+};
+
+export type QuoteConversionStage = {
+  id: string;
+  name: string;
+  position: number;
+  isActive: boolean;
 };
 
 export type QuoteMaterialUnit = "METER" | "UNIT" | "ROLL" | "KILOGRAM";

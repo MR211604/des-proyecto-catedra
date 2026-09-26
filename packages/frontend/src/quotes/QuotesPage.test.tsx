@@ -6,12 +6,13 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { Toaster } from "react-hot-toast";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { QuotesPage } from "./QuotesPage.tsx";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formatQuoteDate, formatQuoteTotal } from "./formatters.ts";
+import { QuotesPage } from "./QuotesPage.tsx";
 import type { QuotesResponse } from "./types.ts";
 
 vi.mock("@clerk/react", () => ({
@@ -393,6 +394,264 @@ describe("QuotesPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Enviar cotización/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Enviar" }));
+
+    expect(
+      await screen.findByText("La cotización cambió de estado."),
+    ).toBeTruthy();
+  });
+
+  it("selects an active stage, confirms, and converts an accepted quote", async () => {
+    let converted = false;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith("/production/stages")) {
+          return jsonResponse([
+            {
+              id: "stage-1",
+              name: "Preparación",
+              position: 1,
+              isActive: true,
+            },
+            { id: "stage-2", name: "Corte", position: 2, isActive: false },
+            {
+              id: "stage-3",
+              name: "Confección",
+              position: 3,
+              isActive: true,
+            },
+          ]);
+        }
+        if (url.endsWith("/quotes/quote-13/convert")) {
+          converted = true;
+          return jsonResponse({ id: "order-13", number: 13 });
+        }
+        return jsonResponse({
+          ...response,
+          data: [
+            response.data[0],
+            {
+              ...response.data[1],
+              ...(converted ? { order: { id: "order-13", number: 13 } } : {}),
+            },
+            {
+              ...response.data[1],
+              id: "quote-14",
+              number: 14,
+              order: { id: "order-14", number: 14 },
+            },
+          ],
+          meta: { page: 1, limit: 20, total: 3, totalPages: 1 },
+        });
+      }),
+    );
+    renderPage();
+
+    await screen.findByText("COT-13");
+    expect(
+      screen.getAllByRole("button", { name: "Convertir en pedido" }),
+    ).toHaveLength(1);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir en pedido" }),
+    );
+    expect(
+      await screen.findByRole("heading", {
+        name: "Seleccionar etapa de producción",
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Corte" })).toBeNull();
+    expect(
+      await screen.findByRole("option", { name: "Confección" }),
+    ).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Continuar" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Etapa de producción" }),
+      {
+        target: { value: "stage-3" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(
+      await screen.findByRole("heading", {
+        name: "¿Convertir cotización en pedido?",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/COT-13 se convertirá/)).toBeTruthy();
+
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Cancelar",
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([input]) => String(input).endsWith("/convert")),
+    ).toBe(false);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir en pedido" }),
+    );
+    await screen.findByRole("combobox", { name: "Etapa de producción" });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Etapa de producción" }),
+      { target: { value: "stage-3" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Atrás" }));
+    expect(
+      screen.getByRole("heading", { name: "Seleccionar etapa de producción" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Convertir en pedido",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([input, request]) =>
+              String(input).endsWith("/quotes/quote-13/convert") &&
+              request?.method === "POST",
+          ),
+      ).toBe(true),
+    );
+    const conversionRequest = vi
+      .mocked(fetch)
+      .mock.calls.find(
+        ([input, request]) =>
+          String(input).endsWith("/quotes/quote-13/convert") &&
+          request?.method === "POST",
+      );
+    expect(JSON.parse(String(conversionRequest?.[1]?.body))).toEqual({
+      stageId: "stage-3",
+    });
+    expect(
+      await screen.findByText("Cotización convertida en pedido."),
+    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Convertir en pedido" }),
+      ).toBeNull(),
+    );
+  });
+
+  it("does not convert when the stage selection is cancelled", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).endsWith("/production/stages")) {
+          return jsonResponse([
+            { id: "stage-1", name: "Preparación", position: 1, isActive: true },
+          ]);
+        }
+        return jsonResponse(response);
+      }),
+    );
+    renderPage();
+    await screen.findByText("COT-13");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir en pedido" }),
+    );
+    await screen.findByRole("combobox", { name: "Etapa de producción" });
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([input]) => String(input).endsWith("/convert")),
+    ).toBe(false);
+  });
+
+  it("shows stage API errors without enabling conversion", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).endsWith("/production/stages")) {
+          return jsonResponse(
+            { error: "No se pudieron cargar las etapas." },
+            503,
+          );
+        }
+        return jsonResponse(response);
+      }),
+    );
+    renderPage();
+    await screen.findByText("COT-13");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir en pedido" }),
+    );
+    expect(
+      await screen.findByText("No se pudieron cargar las etapas."),
+    ).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Continuar" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
+  it("shows the API error when conversion loses its accepted state", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockImplementation(
+          async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url = String(input);
+            if (url.endsWith("/production/stages")) {
+              return jsonResponse([
+                {
+                  id: "stage-1",
+                  name: "Preparación",
+                  position: 1,
+                  isActive: true,
+                },
+              ]);
+            }
+            if (
+              url.endsWith("/quotes/quote-13/convert") &&
+              init?.method === "POST"
+            ) {
+              return jsonResponse(
+                { error: "La cotización cambió de estado." },
+                409,
+              );
+            }
+            return jsonResponse(response);
+          },
+        ),
+    );
+    renderPage();
+    await screen.findByText("COT-13");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Convertir en pedido" }),
+    );
+    await screen.findByRole("combobox", { name: "Etapa de producción" });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Etapa de producción" }),
+      { target: { value: "stage-1" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Convertir en pedido",
+      }),
+    );
 
     expect(
       await screen.findByText("La cotización cambió de estado."),
