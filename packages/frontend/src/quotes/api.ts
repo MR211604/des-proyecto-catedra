@@ -161,6 +161,7 @@ export function useQuoteConversion() {
         queryClient.invalidateQueries({ queryKey: ["orders"] }),
         queryClient.invalidateQueries({ queryKey: ["order"] }),
         queryClient.invalidateQueries({ queryKey: ["production-board"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] }),
       ]);
     },
   });

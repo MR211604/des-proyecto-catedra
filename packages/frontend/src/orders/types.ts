@@ -14,6 +14,8 @@ export type Order = {
   notes: string | null;
   dueDate: string | null;
   createdAt: string;
+  updatedAt: string;
+  deliveredAt: string | null;
   items: Array<{ total: string }>;
 };
 
@@ -58,5 +60,5 @@ export type OrdersResponse = {
   meta: { page: number; limit: number; total: number; totalPages: number };
 };
 
-export type OrderSort = "number" | "createdAt" | "dueDate";
+export type OrderSort = "number" | "createdAt" | "updatedAt" | "dueDate";
 export type SortOrder = "asc" | "desc";

@@ -165,6 +165,7 @@ export function useProductionMutations() {
       void queryClient.invalidateQueries({ queryKey: ["production-job"] });
       void queryClient.invalidateQueries({ queryKey: ["orders"] });
       void queryClient.invalidateQueries({ queryKey: ["order"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 

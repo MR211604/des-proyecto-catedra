@@ -27,13 +27,13 @@ export function Dashboard() {
           value={data ? String(data.orders.totalActive) : "—"}
           detail={
             data
-              ? `${data.orders.byStatus.CONFIRMED} sin iniciar`
+              ? `${data.orders.byStatus.CONFIRMED} sin iniciar · ${data.orders.byStatus.DELIVERED} entregados`
               : fallbackDetail
           }
           icon="clipboard"
         />
         <StatCard
-          label="Entregas Hoy"
+          label="Listos para Entrega"
           value={data ? String(data.orders.readyForDelivery) : "—"}
           detail={
             data

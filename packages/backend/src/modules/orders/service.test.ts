@@ -61,8 +61,13 @@ vi.mock("../../db/prisma.js", () => ({
   },
 }));
 
-const { createOrder, updateOrder, startOrderProduction, cancelOrder } =
-  await import("./service.js");
+const {
+  createOrder,
+  updateOrder,
+  startOrderProduction,
+  deliverOrder,
+  cancelOrder,
+} = await import("./service.js");
 
 import type { CreateOrderInput } from "./schema.js";
 
@@ -707,5 +712,32 @@ describe("orders service cancellation material returns", () => {
     expect(inventoryItemFindMany).not.toHaveBeenCalled();
     expect(movementCreate).not.toHaveBeenCalled();
     expect(inventoryItemUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("orders service delivery", () => {
+  it("records the actual delivery timestamp when delivering a ready order", async () => {
+    const deliveredAt = new Date("2026-09-27T18:30:00.000Z");
+    orderFindUnique.mockResolvedValue({ ...order, status: "READY" });
+    orderUpdate.mockResolvedValue({
+      ...order,
+      status: "DELIVERED",
+      deliveredAt,
+    });
+
+    await expect(deliverOrder("order_1", "user_1")).resolves.toMatchObject({
+      id: "order_1",
+      status: "DELIVERED",
+      deliveredAt: deliveredAt.toISOString(),
+    });
+
+    expect(orderUpdate).toHaveBeenCalledWith({
+      where: { id: "order_1", status: "READY" },
+      data: {
+        status: "DELIVERED",
+        deliveredAt: expect.any(Date),
+      },
+      include: expect.anything(),
+    });
   });
 });

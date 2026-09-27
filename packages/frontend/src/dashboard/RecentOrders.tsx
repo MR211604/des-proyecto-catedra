@@ -11,7 +11,7 @@ export function RecentOrders() {
     page: 1,
     limit: 10,
     search: "",
-    sortBy: "createdAt",
+    sortBy: "updatedAt",
     order: "desc",
   });
   const orders = query.data?.data ?? [];
@@ -92,7 +92,12 @@ export function RecentOrders() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
-                    {formatOrderDate(order.dueDate)}
+                    {order.status === "DELIVERED" ? "Real: " : "Estimada: "}
+                    {formatOrderDate(
+                      order.status === "DELIVERED"
+                        ? order.deliveredAt
+                        : order.dueDate,
+                    )}
                   </td>
                 </tr>
               ))

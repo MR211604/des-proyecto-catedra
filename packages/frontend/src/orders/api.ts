@@ -44,7 +44,12 @@ export function useOrderMutations() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const client = createApiClient(getToken);
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["orders"] });
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["orders"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["order"] }),
+    ]);
 
   const start = useMutation({
     mutationFn: (id: string) =>
@@ -111,8 +116,11 @@ export function useOrderFormMutations() {
   const queryClient = useQueryClient();
   const client = createApiClient(getToken);
   const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["orders"] });
-    await queryClient.invalidateQueries({ queryKey: ["order"] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["orders"] }),
+      queryClient.invalidateQueries({ queryKey: ["order"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] }),
+    ]);
   };
   const create = useMutation({
     mutationFn: (input: unknown) =>
