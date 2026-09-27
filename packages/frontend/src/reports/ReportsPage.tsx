@@ -93,7 +93,7 @@ function createInitialRequest(): ReportRequest {
     period: "month",
     from: dates.from,
     to: dates.to,
-    groupBy: "day",
+    groupBy: "month",
     specific: createSpecificFilters(),
   };
 }
@@ -452,7 +452,9 @@ function SpecificFilters({
 export function ReportsPage() {
   const { getToken } = useAuth();
   const [draft, setDraft] = useState(createInitialRequest);
-  const [applied, setApplied] = useState<ReportRequest | null>(null);
+  const [applied, setApplied] = useState<ReportRequest | null>(
+    createInitialRequest,
+  );
   const [page, setPage] = useState(1);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -778,21 +780,6 @@ export function ReportsPage() {
         <div className="mt-5 grid min-h-64 place-items-center rounded-xl border border-[#e7dce5] bg-white text-sm text-[#796c78]">
           Generando {reportTitle.toLocaleLowerCase("es-SV")}…
         </div>
-      )}
-
-      {!applied && (
-        <section className="mt-5 rounded-xl border border-dashed border-[#d9c8d7] bg-[#fffafd] px-6 py-12 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-[#f3eaf2] text-[#805b7a]">
-            <FileText size={22} />
-          </div>
-          <h2 className="mb-0 mt-4 text-lg font-bold text-[#3e3040]">
-            Prepara tu {reportTitle.toLocaleLowerCase("es-SV")}
-          </h2>
-          <p className="mb-0 mt-2 text-sm leading-6 text-[#766975]">
-            Ajusta el período y los filtros, y después genera el reporte para
-            consultar sus indicadores y gráficos.
-          </p>
-        </section>
       )}
 
       {currentResult && applied && (
