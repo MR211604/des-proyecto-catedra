@@ -1,11 +1,15 @@
 import { useUser } from "@clerk/react";
+import { useDashboardSummary } from "./api";
+import { formatDashboardMoney } from "./formatters";
 import { RecentOrders } from "./RecentOrders";
 import { StatCard } from "./StatCard";
-import { TodayAppointments } from "./TodayAppointments";
 
 export function Dashboard() {
   const { user } = useUser();
   const firstName = user?.firstName ?? "Azucena";
+  const summary = useDashboardSummary();
+  const data = summary.data?.data;
+  const fallbackDetail = summary.isError ? "No disponible" : "Cargando...";
 
   return (
     <main className="mx-auto max-w-360 px-10 py-9.5 pb-14 max-[1100px]:px-6 max-[820px]:px-4 max-[820px]:py-7 max-[820px]:pb-10">
@@ -20,33 +24,48 @@ export function Dashboard() {
       <section className="mt-10.5 grid grid-cols-4 gap-7.5 max-[1100px]:gap-4 max-[820px]:grid-cols-2 max-[480px]:mt-7 max-[480px]:grid-cols-1">
         <StatCard
           label="Pedidos Activos"
-          value="42"
-          detail="+3 nuevos hoy"
+          value={data ? String(data.orders.totalActive) : "—"}
+          detail={
+            data
+              ? `${data.orders.byStatus.CONFIRMED} sin iniciar`
+              : fallbackDetail
+          }
           icon="clipboard"
         />
         <StatCard
           label="Entregas Hoy"
-          value="8"
-          detail="3 pendientes"
+          value={data ? String(data.orders.readyForDelivery) : "—"}
+          detail={
+            data
+              ? data.orders.overdue > 0
+                ? `${data.orders.overdue} retrasados`
+                : "Sin retrasos"
+              : fallbackDetail
+          }
           icon="calendar"
         />
         <StatCard
           label="Pendiente Producción"
-          value="15"
-          detail="2 retrasados"
+          value={data ? String(data.production.currentJobs) : "—"}
+          detail={
+            data ? `${data.production.blockedJobs} bloqueados` : fallbackDetail
+          }
           icon="scissors"
           tone="danger"
         />
         <StatCard
           label="Ventas del Mes"
-          value="$4,250"
-          detail="+12% vs mes anterior"
+          value={data ? formatDashboardMoney(data.sales.totalSold) : "—"}
+          detail={
+            data
+              ? `${formatDashboardMoney(data.sales.totalCollected)} cobrado`
+              : fallbackDetail
+          }
           icon="cash"
         />
       </section>
-      <div className="mt-7.5 grid grid-cols-[minmax(0,1fr)_378px] gap-7.5 max-[1100px]:grid-cols-[minmax(0,1fr)_330px] max-[1100px]:gap-4 max-[820px]:grid-cols-1">
+      <div className="mt-7.5">
         <RecentOrders />
-        <TodayAppointments />
       </div>
     </main>
   );

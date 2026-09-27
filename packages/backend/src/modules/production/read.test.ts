@@ -72,7 +72,11 @@ describe("production read service", () => {
     ]);
 
     await expect(
-      getProductionBoard({ orderId: "order_1", status: "TODO", assignedTo: "user_1" }),
+      getProductionBoard({
+        orderId: "order_1",
+        status: "TODO",
+        assignedTo: "user_1",
+      }),
     ).resolves.toMatchObject([
       {
         id: "stage_1",

@@ -51,13 +51,18 @@ export function useOrderMutations() {
       client.post<Order>(`/api/v1/orders/${id}/start`, {}),
     onSuccess: refresh,
   });
+  const deliver = useMutation({
+    mutationFn: (id: string) =>
+      client.post<Order>(`/api/v1/orders/${id}/deliver`, {}),
+    onSuccess: refresh,
+  });
   const cancel = useMutation({
     mutationFn: (id: string) =>
       client.post<Order>(`/api/v1/orders/${id}/cancel`, {}),
     onSuccess: refresh,
   });
 
-  return { start, cancel };
+  return { start, deliver, cancel };
 }
 
 export function useOrder(id: string | undefined) {

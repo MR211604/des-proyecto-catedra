@@ -6,6 +6,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Truck,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -20,6 +21,27 @@ import { useOrderMutations, useOrders } from "./api.ts";
 import { statusClasses, statusLabels, tabs } from "./constants.ts";
 import { formatOrderDate, formatOrderTotal } from "./formatters.ts";
 import type { Order, OrderSort, OrderStatus, SortOrder } from "./types.ts";
+
+const actionConfig = {
+  start: {
+    title: "¿Empezar producción?",
+    outcome: "empezado",
+    confirm: "Empezar",
+    success: "Producción iniciada.",
+  },
+  deliver: {
+    title: "¿Marcar pedido como entregado?",
+    outcome: "entregado",
+    confirm: "Entregar",
+    success: "Pedido entregado.",
+  },
+  cancel: {
+    title: "¿Cancelar pedido?",
+    outcome: "cancelado",
+    confirm: "Cancelar pedido",
+    success: "Pedido cancelado.",
+  },
+} as const;
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -48,7 +70,7 @@ export function OrdersPage() {
     sortBy,
     order,
   });
-  const { start, cancel } = useOrderMutations();
+  const { start, deliver, cancel } = useOrderMutations();
   const orders = query.data?.data ?? [];
   const meta = query.data?.meta;
 
@@ -74,24 +96,27 @@ export function OrdersPage() {
     setSearchParams(next, { replace: true });
   }
 
-  function runAction(id: string, action: "start" | "cancel", number: number) {
-    const isStart = action === "start";
-    const toastId = toast.custom(
+  function runAction(
+    id: string,
+    action: "start" | "deliver" | "cancel",
+    number: number,
+  ) {
+    const config = actionConfig[action];
+    const mutations = { start, deliver, cancel };
+    return toast.custom(
       (confirmation) => (
         <Confirmation
-          title={isStart ? "¿Empezar producción?" : "¿Cancelar pedido?"}
-          text={`Pedido ORD-${number} será ${isStart ? "empezado" : "cancelado"}.`}
-          confirm={isStart ? "Empezar" : "Cancelar pedido"}
+          title={config.title}
+          text={`Pedido ORD-${number} será ${config.outcome}.`}
+          confirm={config.confirm}
           onClose={() => toast.remove(confirmation.id)}
           onConfirm={() => {
             toast.remove(confirmation.id);
-            if (isStart ? start.isPending : cancel.isPending) return;
-            void (isStart ? start.mutateAsync(id) : cancel.mutateAsync(id))
-              .then(() =>
-                toast.success(
-                  isStart ? "Producción iniciada." : "Pedido cancelado.",
-                ),
-              )
+            const mutation = mutations[action];
+            if (mutation.isPending) return;
+            void mutation
+              .mutateAsync(id)
+              .then(() => toast.success(config.success))
               .catch((error: unknown) =>
                 toast.error(
                   error instanceof ApiError
@@ -104,7 +129,6 @@ export function OrdersPage() {
       ),
       { duration: 8000, position: "top-center" },
     );
-    return toastId;
   }
 
   const columns: ColumnDef<typeof appTableFeatures, Order, unknown>[] = [
@@ -188,6 +212,16 @@ export function OrdersPage() {
                 type="button"
               >
                 <CirclePlay size={17} />
+              </button>
+            ) : null}
+            {order.status === "READY" ? (
+              <button
+                aria-label="Marcar pedido como entregado"
+                className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+                onClick={() => runAction(order.id, "deliver", order.number)}
+                type="button"
+              >
+                <Truck size={17} />
               </button>
             ) : null}
             {["CONFIRMED", "IN_PRODUCTION", "READY"].includes(order.status) ? (

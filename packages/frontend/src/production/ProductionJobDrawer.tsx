@@ -128,6 +128,7 @@ export function ProductionJobDrawer({
     try {
       await mutations.ready.mutateAsync({ orderId: job.orderId });
       toast.success("Pedido marcado como listo.");
+      onClose();
     } catch (error: unknown) {
       toast.error(
         error instanceof ApiError
@@ -137,7 +138,7 @@ export function ProductionJobDrawer({
     }
   }
 
-  const canMarkReady = job?.order.status === "IN_PRODUCTION";
+  const isOrderInProduction = job?.order.status === "IN_PRODUCTION";
   const isReadyPending = mutations.ready.isPending;
 
   return (
@@ -225,40 +226,45 @@ export function ProductionJobDrawer({
               </div>
             </section>
 
-            <section className="rounded-xl border border-[#eadfe8] bg-[#fffafd] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="m-0 text-base font-bold text-[#302630]">
-                    Control del trabajo
-                  </h3>
-                  <p className="mt-1 mb-0 text-sm text-[#806f7d]">
-                    Al bloquearlo, no podrá moverse a otra fase.
-                  </p>
+            {isOrderInProduction ? (
+              <section className="rounded-xl border border-[#eadfe8] bg-[#fffafd] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="m-0 text-base font-bold text-[#302630]">
+                      Control del trabajo
+                    </h3>
+                    <p className="mt-1 mb-0 text-sm text-[#806f7d]">
+                      Al bloquearlo, no podrá moverse a otra fase.
+                    </p>
+                  </div>
+                  {job.status === "BLOCKED" ? (
+                    <CircleAlert
+                      className="shrink-0 text-[#ad2525]"
+                      size={20}
+                    />
+                  ) : null}
                 </div>
-                {job.status === "BLOCKED" ? (
-                  <CircleAlert className="shrink-0 text-[#ad2525]" size={20} />
-                ) : null}
-              </div>
-              <button
-                className={`mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${job.status === "BLOCKED" ? "border-[#8b5e83] bg-[#8b5e83] text-white hover:bg-[#70466a]" : "border-[#b34b5d] text-[#9c3042] hover:bg-[#fff1f2]"}`}
-                disabled={isTransitioning}
-                onClick={() => void toggleBlocked()}
-                type="button"
-              >
-                {job.status === "BLOCKED" ? (
-                  <Unlock size={16} />
-                ) : (
-                  <Lock size={16} />
-                )}
-                {isTransitioning
-                  ? "Actualizando..."
-                  : job.status === "BLOCKED"
-                    ? "Desbloquear trabajo"
-                    : "Bloquear trabajo"}
-              </button>
-            </section>
+                <button
+                  className={`mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${job.status === "BLOCKED" ? "border-[#8b5e83] bg-[#8b5e83] text-white hover:bg-[#70466a]" : "border-[#b34b5d] text-[#9c3042] hover:bg-[#fff1f2]"}`}
+                  disabled={isTransitioning}
+                  onClick={() => void toggleBlocked()}
+                  type="button"
+                >
+                  {job.status === "BLOCKED" ? (
+                    <Unlock size={16} />
+                  ) : (
+                    <Lock size={16} />
+                  )}
+                  {isTransitioning
+                    ? "Actualizando..."
+                    : job.status === "BLOCKED"
+                      ? "Desbloquear trabajo"
+                      : "Bloquear trabajo"}
+                </button>
+              </section>
+            ) : null}
 
-            {canMarkReady ? (
+            {isOrderInProduction ? (
               <section className="rounded-xl border border-[#cfe4d8] bg-[#f3faf5] p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -267,11 +273,10 @@ export function ProductionJobDrawer({
                     </h3>
                     <p className="mt-1 mb-0 text-sm text-[#5c7566]">
                       {job.status === "COMPLETED"
-                        ? "Todos los trabajos deben estar completados. Al marcar el pedido como listo pasará al estado «Listo» en Pedidos."
+                        ? "Al marcar el pedido como listo pasará al estado «Listo» en Pedidos."
                         : "Este trabajo aún no está completado. Todos los trabajos del pedido deben estar completados para poder marcarlo como listo."}
                     </p>
                   </div>
-                  <CircleCheck className="shrink-0 text-[#3c7655]" size={20} />
                 </div>
                 <button
                   className="mt-4 inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#3c7655] bg-[#3c7655] px-4 text-sm font-bold text-white hover:bg-[#2f5e43] disabled:cursor-not-allowed disabled:opacity-50"
