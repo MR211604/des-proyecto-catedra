@@ -145,10 +145,10 @@ function reportMetrics(type: ReportType, summary: Record<string, unknown>) {
           "period",
         ),
         metric(
-          "Saldo pendiente",
+          "Saldo actual",
           formatReportMoney(summary.outstandingBalance),
-          "En ventas no anuladas",
-          "period",
+          "Pendiente en las ventas no anuladas",
+          "current",
         ),
       ];
     case "payments":
@@ -656,8 +656,12 @@ export function ReportTable({
               { label: "Fecha", key: "date", kind: "date" },
               { label: "Estado", key: "status", kind: "status" },
               { label: "Total", key: "total", kind: "money" },
-              { label: "Cobrado", key: "paidAmount", kind: "money" },
-              { label: "Saldo", key: "outstandingBalance", kind: "money" },
+              { label: "Cobrado a la fecha", key: "paidAmount", kind: "money" },
+              {
+                label: "Saldo actual",
+                key: "outstandingBalance",
+                kind: "money",
+              },
             ]
           : type === "payments"
             ? [
@@ -797,6 +801,17 @@ export function ReportTable({
                                 : column.key === "sale.number"
                                   ? `VTA-${String(value ?? "").padStart(4, "0")}`
                                   : formatReportLabel(value);
+                    const relationPath = column.key.endsWith(".name")
+                      ? column.key.slice(0, -5)
+                      : "";
+                    const showsDeactivatedRelation =
+                      (relationPath === "client" ||
+                        relationPath.endsWith(".client") ||
+                        relationPath === "supplier") &&
+                      Boolean(getPath(row, `${relationPath}.deletedAt`));
+                    const cellDisplay = showsDeactivatedRelation
+                      ? `${display} · Inactivo`
+                      : display;
                     return (
                       <td
                         className={`whitespace-nowrap px-5 py-3.5 text-sm text-[#3d343d] ${isMoney ? "text-right font-semibold tabular-nums" : ""}`}
@@ -806,7 +821,7 @@ export function ReportTable({
                           <span
                             className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${reportStatusTone(value)}`}
                           >
-                            {display}
+                            {cellDisplay}
                           </span>
                         ) : column.key === "active" ||
                           column.key === "converted" ? (
@@ -816,7 +831,7 @@ export function ReportTable({
                             {value ? "Sí" : "No"}
                           </span>
                         ) : (
-                          display
+                          cellDisplay
                         )}
                       </td>
                     );

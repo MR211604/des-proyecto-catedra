@@ -130,7 +130,7 @@ async function orderRows(query: OrdersReportQuery, period: ReportPeriod) {
     where: { AND: conditions },
     orderBy: { createdAt: "desc" },
     include: {
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, deletedAt: true } },
       items: { select: { total: true } },
     },
   });
@@ -180,7 +180,10 @@ async function salesRows(query: SalesReportQuery, period: ReportPeriod) {
     orderBy: { createdAt: "desc" },
     include: {
       order: {
-        select: { number: true, client: { select: { id: true, name: true } } },
+        select: {
+          number: true,
+          client: { select: { id: true, name: true, deletedAt: true } },
+        },
       },
       payments: { select: { amount: true } },
     },
@@ -273,7 +276,7 @@ export async function paymentsReport(query: PaymentsReportQuery) {
           order: {
             select: {
               number: true,
-              client: { select: { id: true, name: true } },
+              client: { select: { id: true, name: true, deletedAt: true } },
             },
           },
         },
@@ -331,7 +334,7 @@ async function productionRows(query: ProductionReportQuery) {
           number: true,
           status: true,
           dueDate: true,
-          client: { select: { id: true, name: true } },
+          client: { select: { id: true, name: true, deletedAt: true } },
         },
       },
     },
@@ -493,7 +496,7 @@ export async function inventoryReport(query: InventoryReportQuery) {
       unit: true,
       quantity: true,
       reorderPoint: true,
-      supplier: { select: { id: true, name: true } },
+      supplier: { select: { id: true, name: true, deletedAt: true } },
     },
   });
   const filteredItems = items.filter(
@@ -627,7 +630,7 @@ export async function quotesReport(query: QuotesReportQuery) {
     },
     orderBy: { createdAt: "desc" },
     include: {
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, deletedAt: true } },
       order: { select: { id: true, number: true } },
     },
   });
