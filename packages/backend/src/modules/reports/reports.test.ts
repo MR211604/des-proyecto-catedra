@@ -1,6 +1,7 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { generateOpenAPIDocument } from "../../lib/openapi.js";
 import { errorHandler } from "../../middleware/errors.js";
 
 const auth = vi.hoisted(() => ({
@@ -49,7 +50,7 @@ describe("reports HTTP contract", () => {
     auth.orgRole = "org:admin";
   });
 
-  it("allows only workshop owners to read the summary", async () => {
+  it("allows only organization admins to read the summary", async () => {
     const ownerResponse = await request(testApp()).get("/reports/summary");
     expect(ownerResponse.status).toBe(200);
     expect(ownerResponse.body.currency).toBe("USD");
@@ -65,6 +66,22 @@ describe("reports HTTP contract", () => {
     );
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Validation failed");
+  });
+
+  it("documents report-specific filters and the organization admin role", () => {
+    const document = generateOpenAPIDocument();
+    const orders = document.paths?.["/api/v1/reports/orders"]?.get;
+
+    expect(orders?.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "status", in: "query" }),
+        expect.objectContaining({ name: "clientId", in: "query" }),
+        expect.objectContaining({ name: "overdue", in: "query" }),
+      ]),
+    );
+    expect(orders?.responses?.["403"]).toMatchObject({
+      description: "org:admin role required",
+    });
   });
 
   it("returns a downloadable PDF representation", async () => {

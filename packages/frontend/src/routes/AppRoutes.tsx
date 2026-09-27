@@ -1,3 +1,5 @@
+import { useAuth } from "@clerk/react";
+import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { ClientFormPage } from "../clients/ClientFormPage.tsx";
 import { ClientsPage } from "../clients/ClientsPage.tsx";
@@ -18,6 +20,12 @@ import { SupplierDetailPage } from "../suppliers/SupplierDetailPage.tsx";
 import { SupplierFormPage } from "../suppliers/SupplierFormPage.tsx";
 import { SuppliersPage } from "../suppliers/SuppliersPage.tsx";
 
+const ReportsPage = lazy(() =>
+  import("../reports/ReportsPage.tsx").then((module) => ({
+    default: module.ReportsPage,
+  })),
+);
+
 function AuthenticatedLayout() {
   return (
     <div className="flex min-h-screen bg-[#fcf9fb] text-[#1f1a20] max-[820px]:block">
@@ -30,12 +38,53 @@ function AuthenticatedLayout() {
   );
 }
 
+function ReportsRoute() {
+  const { isLoaded, orgRole } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <main className="grid min-h-[55vh] place-items-center text-[#766975]">
+        Cargando permisos...
+      </main>
+    );
+  }
+
+  if (orgRole !== "org:admin") {
+    return (
+      <main className="mx-auto max-w-3xl px-8 py-16 max-[820px]:px-4">
+        <section className="rounded-xl border border-[#e1d5df] bg-white p-8 shadow-[0_8px_28px_rgba(74,46,71,0.06)]">
+          <h1 className="m-0 text-2xl font-bold text-[#352638]">
+            Acceso restringido
+          </h1>
+          <p className="mb-0 mt-3 leading-7 text-[#665a65]">
+            Los reportes del taller están disponibles únicamente para
+            administradores de la organización.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <main className="grid min-h-[55vh] place-items-center text-[#766975]">
+          Cargando reportes…
+        </main>
+      }
+    >
+      <ReportsPage />
+    </Suspense>
+  );
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AuthenticatedLayout />}>
         <Route index element={<Navigate replace to="/dashboard" />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="reportes" element={<ReportsRoute />} />
         <Route path="clientes" element={<ClientsPage />} />
         <Route path="clientes/nuevo" element={<ClientFormPage />} />
         <Route path="clientes/:id/editar" element={<ClientFormPage />} />

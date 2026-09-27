@@ -99,26 +99,35 @@ function orderTotal(
 function isOverdue(dueDate: Date | null, status: string, now = new Date()) {
   return Boolean(
     dueDate &&
-    dueDate < now &&
-    status !== "DELIVERED" &&
-    status !== "CANCELLED",
+      dueDate < now &&
+      status !== "DELIVERED" &&
+      status !== "CANCELLED",
   );
 }
 
 async function orderRows(query: OrdersReportQuery, period: ReportPeriod) {
-  const where: Prisma.CustomerOrderWhereInput = {
-    createdAt: { gte: period.from, lt: period.to },
-    ...(query.status ? { status: query.status } : {}),
-    ...(query.clientId ? { clientId: query.clientId } : {}),
-    ...(query.overdue
-      ? {
-          dueDate: { lt: new Date() },
-          status: { notIn: ["DELIVERED", "CANCELLED"] },
-        }
-      : {}),
-  };
+  const now = new Date();
+  const conditions: Prisma.CustomerOrderWhereInput[] = [
+    { createdAt: { gte: period.from, lt: period.to } },
+  ];
+  if (query.status) conditions.push({ status: query.status });
+  if (query.clientId) conditions.push({ clientId: query.clientId });
+  if (query.overdue === true) {
+    conditions.push(
+      { dueDate: { lt: now } },
+      { status: { notIn: ["DELIVERED", "CANCELLED"] } },
+    );
+  } else if (query.overdue === false) {
+    conditions.push({
+      OR: [
+        { dueDate: null },
+        { dueDate: { gte: now } },
+        { status: { in: ["DELIVERED", "CANCELLED"] } },
+      ],
+    });
+  }
   const rows = await prisma.customerOrder.findMany({
-    where,
+    where: { AND: conditions },
     orderBy: { createdAt: "desc" },
     include: {
       client: { select: { id: true, name: true } },
@@ -292,15 +301,20 @@ export async function paymentsReport(query: PaymentsReportQuery) {
 }
 
 async function productionRows(query: ProductionReportQuery) {
+  const conditions: Prisma.ProductionJobWhereInput[] = [
+    { order: { status: { in: ["IN_PRODUCTION", "READY"] } } },
+  ];
+  if (query.status) conditions.push({ status: query.status });
+  if (query.stageId) conditions.push({ stageId: query.stageId });
+  if (query.assignedTo) conditions.push({ assignedTo: query.assignedTo });
+  if (query.blocked !== undefined) {
+    conditions.push({
+      status: query.blocked ? "BLOCKED" : { not: "BLOCKED" },
+    });
+  }
   const rows = await prisma.productionJob.findMany({
     where: {
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.stageId ? { stageId: query.stageId } : {}),
-      ...(query.assignedTo ? { assignedTo: query.assignedTo } : {}),
-      ...(query.blocked === undefined
-        ? {}
-        : { status: query.blocked ? "BLOCKED" : { not: "BLOCKED" } }),
-      order: { status: { in: ["IN_PRODUCTION", "READY"] } },
+      AND: conditions,
     },
     orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
     include: {
@@ -480,7 +494,11 @@ export async function inventoryReport(query: InventoryReportQuery) {
   const movements = await prisma.stockMovement.findMany({
     where: {
       createdAt: { gte: period.from, lt: period.to },
-      ...(query.itemId ? { itemId: query.itemId } : {}),
+      ...(query.availability
+        ? { itemId: { in: filteredItems.map((item) => item.id) } }
+        : query.itemId
+          ? { itemId: query.itemId }
+          : {}),
       ...(query.movementType ? { type: query.movementType } : {}),
       item: {
         deletedAt: null,
@@ -547,13 +565,13 @@ export async function clientsReport(query: ClientsReportQuery) {
       ...(query.active === undefined
         ? {}
         : { deletedAt: query.active ? null : { not: null } }),
-      ...(query.withActivity
-        ? {
-            orders: {
-              some: { createdAt: { gte: period.from, lt: period.to } },
-            },
-          }
-        : {}),
+      ...(query.withActivity === undefined
+        ? {}
+        : {
+            orders: query.withActivity
+              ? { some: { createdAt: { gte: period.from, lt: period.to } } }
+              : { none: { createdAt: { gte: period.from, lt: period.to } } },
+          }),
       createdAt: { gte: period.from, lt: period.to },
     },
     orderBy: { createdAt: "desc" },

@@ -79,7 +79,7 @@ export function generateOpenAPIDocument(): ReturnType<
       },
       {
         name: "reports",
-        description: "Owner-only workshop statistics and reports",
+        description: "org:admin-only workshop statistics and reports",
       },
     ],
     servers: [
