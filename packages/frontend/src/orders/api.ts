@@ -47,6 +47,7 @@ export function useOrderMutations() {
   const refresh = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["orders"] }),
+      queryClient.invalidateQueries({ queryKey: ["production-board"] }),
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] }),
       queryClient.invalidateQueries({ queryKey: ["order"] }),
     ]);

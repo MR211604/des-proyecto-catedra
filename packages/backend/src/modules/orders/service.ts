@@ -1,6 +1,7 @@
 import { prisma } from "../../db/prisma.js";
 import { type $Enums, Prisma } from "../../generated/prisma/client.js";
 import { AppError } from "../../middleware/errors.js";
+import { productionEvents } from "../production/events.js";
 import { type ActiveStage, deriveJobStatus } from "../production/service.js";
 import { serialize, stateConflict, toPrismaDecimal } from "../utils.js";
 import type { CreateOrderInput, ListOrdersQuery } from "./schema.js";
@@ -470,7 +471,7 @@ async function transitionOrder(
   actorId: string,
   operation: "start" | "ready" | "deliver" | "cancel",
 ) {
-  return prisma
+  const result = await prisma
     .$transaction(
       async (tx) => {
         const before = await tx.customerOrder.findUnique({
@@ -546,6 +547,18 @@ async function transitionOrder(
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     )
     .catch(stateConflict);
+
+  if (operation === "deliver") {
+    productionEvents.publish({
+      type: "production.changed",
+      operation: "production.order.delivered",
+      actorId,
+      occurredAt: new Date().toISOString(),
+      context: { order: { id } },
+    });
+  }
+
+  return result;
 }
 
 export function startOrderProduction(id: string, actorId: string) {

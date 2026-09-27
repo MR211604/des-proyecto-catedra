@@ -3,6 +3,7 @@ import { Prisma } from "../../generated/prisma/client.js";
 import { AppError } from "../../middleware/errors.js";
 
 const {
+  publish,
   transaction,
   clientFindFirst,
   inventoryItemFindMany,
@@ -20,6 +21,7 @@ const {
   movementCreate,
   movementFindMany,
 } = vi.hoisted(() => ({
+  publish: vi.fn(),
   transaction: vi.fn(),
   clientFindFirst: vi.fn(),
   inventoryItemFindMany: vi.fn(),
@@ -37,6 +39,8 @@ const {
   movementCreate: vi.fn(),
   movementFindMany: vi.fn(),
 }));
+
+vi.mock("../production/events.js", () => ({ productionEvents: { publish } }));
 
 vi.mock("../../db/prisma.js", () => ({
   prisma: {
@@ -739,5 +743,13 @@ describe("orders service delivery", () => {
       },
       include: expect.anything(),
     });
+    expect(publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "production.changed",
+        operation: "production.order.delivered",
+        actorId: "user_1",
+        context: { order: { id: "order_1" } },
+      }),
+    );
   });
 });
