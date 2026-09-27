@@ -45,7 +45,7 @@ export function Dashboard() {
           icon="calendar"
         />
         <StatCard
-          label="Pendiente Producción"
+          label="Trabajos de Producción"
           value={data ? String(data.production.currentJobs) : "—"}
           detail={
             data ? `${data.production.blockedJobs} bloqueados` : fallbackDetail

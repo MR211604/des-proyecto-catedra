@@ -11,6 +11,7 @@ const {
   movementFindMany,
   saleFindMany,
   paymentFindMany,
+  quoteFindMany,
 } = vi.hoisted(() => ({
   orderFindMany: vi.fn(),
   jobFindMany: vi.fn(),
@@ -21,6 +22,7 @@ const {
   movementFindMany: vi.fn(),
   saleFindMany: vi.fn(),
   paymentFindMany: vi.fn(),
+  quoteFindMany: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
@@ -34,6 +36,7 @@ vi.mock("../../db/prisma.js", () => ({
     stockMovement: { findMany: movementFindMany },
     sale: { findMany: saleFindMany },
     payment: { findMany: paymentFindMany },
+    quote: { findMany: quoteFindMany },
   },
 }));
 
@@ -43,6 +46,7 @@ const {
   ordersReport,
   productionReport,
   salesReport,
+  summary,
 } = await import("./service.js");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -215,6 +219,22 @@ const productionJobs = [
     dueDate: null,
     createdAt: new Date("2024-05-03T12:00:00.000Z"),
   },
+  {
+    id: "job-delivered",
+    description: "Vestido terminado",
+    status: "COMPLETED",
+    assignedTo: "Carla",
+    stage: activeStages[0],
+    order: {
+      id: "order_3",
+      number: 23,
+      status: "DELIVERED",
+      dueDate: new Date("2024-05-10T12:00:00.000Z"),
+      client: { id: "client_3", name: "Carla", phone: null, email: null },
+    },
+    dueDate: new Date("2024-05-10T12:00:00.000Z"),
+    createdAt: new Date("2024-05-04T12:00:00.000Z"),
+  },
 ];
 const clients = [
   {
@@ -321,8 +341,10 @@ const collectedPayments = [
 beforeEach(() => {
   vi.clearAllMocks();
   orderFindMany.mockImplementation(
-    async ({ where }: { where: Record<string, unknown> }) =>
-      historicalOrderRows.filter((row) => matchesWhere(row, where)),
+    async ({ where }: { where?: Record<string, unknown> }) =>
+      where
+        ? historicalOrderRows.filter((row) => matchesWhere(row, where))
+        : historicalOrderRows,
   );
   jobFindMany.mockImplementation(
     async ({ where }: { where: Record<string, unknown> }) =>
@@ -350,6 +372,7 @@ beforeEach(() => {
     async ({ where }: { where: Record<string, unknown> }) =>
       collectedPayments.filter((payment) => matchesWhere(payment, where)),
   );
+  quoteFindMany.mockResolvedValue([]);
 });
 
 describe("reports service filters", () => {
@@ -396,6 +419,36 @@ describe("reports service filters", () => {
     });
 
     expect(report.data).toEqual([]);
+  });
+
+  it("keeps production jobs after their order is delivered", async () => {
+    const report = await productionReport({
+      from: "2024-01-01",
+      to: "2024-12-31",
+      groupBy: "day",
+      page: 1,
+      limit: 20,
+    });
+
+    expect(report.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "job-delivered" }),
+      ]),
+    );
+  });
+
+  it("includes delivered orders in the production summary", async () => {
+    const report = await summary({
+      from: "2024-01-01",
+      to: "2024-12-31",
+      groupBy: "day",
+      page: 1,
+      limit: 20,
+    });
+
+    expect(report.data).toMatchObject({
+      production: { currentJobs: 3 },
+    });
   });
 
   it("scopes production event totals to jobs matching the report filters", async () => {

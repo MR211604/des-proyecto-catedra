@@ -19,6 +19,11 @@ import {
 } from "./time.js";
 
 const moneyZero = () => new Prisma.Decimal(0);
+const productionOrderStatuses = [
+  "IN_PRODUCTION",
+  "READY",
+  "DELIVERED",
+] as const;
 
 function sumDecimal(values: Array<Prisma.Decimal | null | undefined>) {
   return values.reduce<Prisma.Decimal>(
@@ -311,7 +316,7 @@ export async function paymentsReport(query: PaymentsReportQuery) {
 
 async function productionRows(query: ProductionReportQuery) {
   const conditions: Prisma.ProductionJobWhereInput[] = [
-    { order: { status: { in: ["IN_PRODUCTION", "READY"] } } },
+    { order: { status: { in: [...productionOrderStatuses] } } },
   ];
   if (query.status) conditions.push({ status: query.status });
   if (query.stageId) conditions.push({ stageId: query.stageId });
@@ -688,7 +693,9 @@ export async function summary(query: SummaryReportQuery) {
         select: { status: true, dueDate: true },
       }),
       prisma.productionJob.findMany({
-        where: { order: { status: { in: ["IN_PRODUCTION", "READY"] } } },
+        where: {
+          order: { status: { in: [...productionOrderStatuses] } },
+        },
         select: { status: true, stage: { select: { id: true, name: true } } },
       }),
       prisma.sale.findMany({

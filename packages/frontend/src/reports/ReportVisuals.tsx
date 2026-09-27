@@ -105,9 +105,9 @@ function reportMetrics(type: ReportType, summary: Record<string, unknown>) {
     case "production":
       return [
         metric(
-          "Trabajos activos",
+          "Trabajos registrados",
           formatReportNumber(summary.currentJobs),
-          "Pedidos en producción o listos",
+          "Trabajos de órdenes en producción, listas y entregadas",
           "current",
         ),
         metric(
