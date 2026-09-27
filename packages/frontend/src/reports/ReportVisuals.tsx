@@ -705,7 +705,6 @@ export function ReportTable({
                         key: "createdAt",
                         kind: "date",
                       },
-                      { label: "Estado", key: "active" },
                       { label: "Pedidos del período", key: "orderCount" },
                     ]
                   : [
@@ -814,7 +813,7 @@ export function ReportTable({
                       : display;
                     return (
                       <td
-                        className={`whitespace-nowrap px-5 py-3.5 text-sm text-[#3d343d] ${isMoney ? "text-right font-semibold tabular-nums" : ""}`}
+                        className={`whitespace-nowrap px-5 py-3.5 text-sm text-[#3d343d] ${isMoney ? "font-semibold tabular-nums" : ""}`}
                         key={column.key}
                       >
                         {column.kind === "status" ? (

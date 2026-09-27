@@ -103,6 +103,7 @@ function StageColumn({
   onDragStart: (jobId: string) => void;
   onView: (jobId: string) => void;
 }) {
+  console.log(stage);
   const jobs = stage.jobs.filter((job) => {
     const haystack =
       `${job.description} ${job.orderItem?.description ?? ""} ${job.order.client.name} ${job.order.number}`.toLowerCase();

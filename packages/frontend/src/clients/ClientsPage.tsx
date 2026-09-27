@@ -4,26 +4,16 @@ import {
   ChevronRight,
   Eye,
   Pencil,
-  RotateCcw,
   Search,
-  Trash2,
   UserRoundPlus,
 } from "lucide-react";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Confirmation } from "../components/Confirmation.tsx";
 import { DataTable } from "../components/DataTable.tsx";
 import type { appTableFeatures } from "../components/tableConfig.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
-import { ApiError } from "../lib/api.ts";
-import { useClientMutations, useClients } from "./api.ts";
+import { useClients } from "./api.ts";
 import { ClientDetailDrawer } from "./ClientDetailDrawer.tsx";
 import { formatClientDate } from "./formatters.ts";
 import type { Client, ClientSort, ClientTab, SortOrder } from "./types.ts";
@@ -41,25 +31,6 @@ function initials(name: string) {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
-}
-
-function DisabledAction({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      aria-label={label}
-      className="cursor-not-allowed rounded-md p-2 text-[#96758f] opacity-55"
-      disabled
-      type="button"
-    >
-      {children}
-    </button>
-  );
 }
 
 export function ClientsPage() {
@@ -98,59 +69,12 @@ export function ClientsPage() {
     sortBy,
     order,
   });
-  const { deactivate, restore } = useClientMutations();
   const clients = query.data?.data ?? [];
   const meta = query.data?.meta;
 
   useEffect(() => {
     if (query.error) toast.error("No se pudieron cargar los clientes.");
   }, [query.error]);
-
-  const changeClientStatus = useCallback(
-    (clientId: string, inactive: boolean, clientName: string) => {
-      const runMutation = () => {
-        const mutation = inactive ? restore : deactivate;
-        void mutation
-          .mutateAsync(clientId)
-          .then(() =>
-            toast.success(
-              inactive ? "Cliente activado." : "Cliente desactivado.",
-            ),
-          )
-          .catch((error: unknown) =>
-            toast.error(
-              error instanceof ApiError
-                ? error.message
-                : inactive
-                  ? "No se pudo activar el cliente."
-                  : "No se pudo desactivar el cliente.",
-            ),
-          );
-      };
-
-      if (inactive) {
-        runMutation();
-        return;
-      }
-
-      toast.custom(
-        (confirmation) => (
-          <Confirmation
-            title={"¿Desactivar cliente?"}
-            text={`${clientName} dejará de aparecer entre los clientes activos.`}
-            confirm="Desactivar"
-            onClose={() => toast.remove(confirmation.id)}
-            onConfirm={() => {
-              toast.remove(confirmation.id);
-              runMutation();
-            }}
-          />
-        ),
-        { duration: 8000, position: "top-center" },
-      );
-    },
-    [deactivate, restore],
-  );
 
   const columns = useMemo<
     ColumnDef<typeof appTableFeatures, Client, unknown>[]
@@ -184,20 +108,6 @@ export function ClientsPage() {
         cell: ({ getValue }) => formatClientDate(getValue<string>()),
       },
       {
-        accessorKey: "deletedAt",
-        header: "Estado",
-        cell: ({ getValue }) => {
-          const inactive = Boolean(getValue<string | null>());
-          return (
-            <span
-              className={`rounded-md px-3 py-1.5 text-xs font-bold ${inactive ? "bg-[#eee8ed] text-[#625660]" : "bg-[#f2e6f1] text-[#805276]"}`}
-            >
-              {inactive ? "Inactivo" : "Activo"}
-            </span>
-          );
-        },
-      },
-      {
         id: "actions",
         header: "Acciones",
         cell: ({ row }) => (
@@ -214,55 +124,19 @@ export function ClientsPage() {
             >
               <Eye size={17} />
             </button>
-            {row.original.deletedAt ? (
-              <DisabledAction label="Editar cliente">
-                <Pencil size={17} />
-              </DisabledAction>
-            ) : (
-              <button
-                aria-label="Editar cliente"
-                className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
-                onClick={() => navigate(`/clientes/${row.original.id}/editar`)}
-                type="button"
-              >
-                <Pencil size={17} />
-              </button>
-            )}
             <button
-              aria-label={
-                row.original.deletedAt
-                  ? "Activar cliente"
-                  : "Desactivar cliente"
-              }
-              className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5] disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={deactivate.isPending || restore.isPending}
-              onClick={() =>
-                changeClientStatus(
-                  row.original.id,
-                  Boolean(row.original.deletedAt),
-                  row.original.name,
-                )
-              }
+              aria-label="Editar cliente"
+              className="rounded-md p-2 text-[#8b5e83] hover:bg-[#f6edf5]"
+              onClick={() => navigate(`/clientes/${row.original.id}/editar`)}
               type="button"
             >
-              {row.original.deletedAt ? (
-                <RotateCcw size={17} />
-              ) : (
-                <Trash2 size={17} />
-              )}
+              <Pencil size={17} />
             </button>
           </div>
         ),
       },
     ],
-    [
-      deactivate.isPending,
-      navigate,
-      restore.isPending,
-      searchParams,
-      setSearchParams,
-      changeClientStatus,
-    ],
+    [navigate, searchParams, setSearchParams],
   );
 
   function updateParams(updates: Record<string, string | undefined>) {
