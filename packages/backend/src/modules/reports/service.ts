@@ -403,6 +403,11 @@ export async function productionReport(query: ProductionReportQuery) {
       orderBy: { createdAt: "asc" },
     }),
   ]);
+  const jobIds = rows.map((row) => row.id);
+  const matchingJobIds = new Set(jobIds);
+  const matchingEvents = events.filter((event) =>
+    matchingJobIds.has(event.jobId),
+  );
   const grouped = Object.values(
     rows.reduce<
       Record<string, { stage: unknown; status: string; count: number }>
@@ -414,7 +419,6 @@ export async function productionReport(query: ProductionReportQuery) {
     }, {}),
   );
   const finalPosition = stages.at(-1)?.position;
-  const jobIds = rows.map((row) => row.id);
   const allEvents = finalPosition
     ? await prisma.productionEvent.findMany({
         where: { jobId: { in: jobIds } },
@@ -449,11 +453,11 @@ export async function productionReport(query: ProductionReportQuery) {
     {
       currentJobs: rows.length,
       blockedJobs: rows.filter((row) => row.status === "BLOCKED").length,
-      eventsInPeriod: events.length,
+      eventsInPeriod: matchingEvents.length,
       eventTypes: Object.fromEntries(
         ["STAGE_MOVED", "BLOCKED", "UNBLOCKED"].map((type) => [
           type,
-          events.filter((event) => event.type === type).length,
+          matchingEvents.filter((event) => event.type === type).length,
         ]),
       ),
       completedJobsWithTiming: timings.length,

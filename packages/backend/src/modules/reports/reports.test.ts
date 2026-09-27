@@ -51,9 +51,9 @@ describe("reports HTTP contract", () => {
   });
 
   it("allows only organization admins to read the summary", async () => {
-    const ownerResponse = await request(testApp()).get("/reports/summary");
-    expect(ownerResponse.status).toBe(200);
-    expect(ownerResponse.body.currency).toBe("USD");
+    const adminResponse = await request(testApp()).get("/reports/summary");
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body.currency).toBe("USD");
 
     auth.orgRole = "org:member";
     const staffResponse = await request(testApp()).get("/reports/summary");

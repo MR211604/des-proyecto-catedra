@@ -1,3 +1,9 @@
+import type { InventoryUnit, StockMovementType } from "../inventory/types.ts";
+import type { OrderStatus } from "../orders/types.ts";
+import type { ProductionJobStatus } from "../production/types.ts";
+import type { QuoteStatus } from "../quotes/types.ts";
+import type { PaymentMethod, SaleStatus } from "../sales/types.ts";
+
 export type ReportType =
   | "summary"
   | "orders"
@@ -85,32 +91,35 @@ export type ReportResult = {
   meta?: PaginatedReport["meta"];
 };
 
+type OptionalFilter<T extends string> = "" | T;
+type BooleanFilter = "" | "true" | "false";
+
 export type ReportSpecificFilters = {
   orders: {
-    status: string;
+    status: OptionalFilter<OrderStatus>;
     clientId: string;
-    overdue: "" | "true" | "false";
+    overdue: BooleanFilter;
   };
   production: {
-    status: string;
+    status: OptionalFilter<ProductionJobStatus>;
     stageId: string;
     assignedTo: string;
-    blocked: "" | "true" | "false";
+    blocked: BooleanFilter;
   };
-  sales: { status: string };
-  payments: { method: string; saleId: string };
+  sales: { status: OptionalFilter<SaleStatus> };
+  payments: { method: OptionalFilter<PaymentMethod>; saleId: string };
   inventory: {
-    availability: string;
-    unit: string;
+    availability: OptionalFilter<"sufficient" | "low" | "out">;
+    unit: OptionalFilter<InventoryUnit>;
     itemId: string;
     supplierId: string;
-    movementType: string;
+    movementType: OptionalFilter<StockMovementType>;
   };
   clients: {
-    active: "" | "true" | "false";
-    withActivity: "" | "true" | "false";
+    active: BooleanFilter;
+    withActivity: BooleanFilter;
   };
-  quotes: { status: string; converted: "" | "true" | "false" };
+  quotes: { status: OptionalFilter<QuoteStatus>; converted: BooleanFilter };
   summary: Record<string, never>;
 };
 

@@ -398,7 +398,41 @@ describe("reports service filters", () => {
     expect(report.data).toEqual([]);
   });
 
-  it("can select clients without activity during the period", async () => {
+  it("scopes production event totals to jobs matching the report filters", async () => {
+    eventFindMany.mockResolvedValue([
+      {
+        id: "event-in-progress",
+        jobId: "job-in-progress",
+        type: "STAGE_MOVED",
+        createdAt: new Date("2024-05-02T12:00:00.000Z"),
+        toStage: { position: 1 },
+      },
+      {
+        id: "event-blocked",
+        jobId: "job-blocked",
+        type: "BLOCKED",
+        createdAt: new Date("2024-05-03T12:00:00.000Z"),
+        toStage: { position: 1 },
+      },
+    ]);
+
+    const report = await productionReport({
+      from: "2024-01-01",
+      to: "2024-12-31",
+      groupBy: "day",
+      page: 1,
+      limit: 20,
+      status: "IN_PROGRESS",
+      blocked: false,
+    });
+
+    expect(report.summary).toMatchObject({
+      eventsInPeriod: 1,
+      eventTypes: { STAGE_MOVED: 1, BLOCKED: 0, UNBLOCKED: 0 },
+    });
+  });
+
+  it("can select customers without Customer Activity during the period", async () => {
     const report = await clientsReport({
       from: "2024-01-01",
       to: "2024-12-31",

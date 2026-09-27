@@ -452,7 +452,7 @@ function SpecificFilters({
 export function ReportsPage() {
   const { getToken } = useAuth();
   const [draft, setDraft] = useState(createInitialRequest);
-  const [applied, setApplied] = useState(createInitialRequest);
+  const [applied, setApplied] = useState<ReportRequest | null>(null);
   const [page, setPage] = useState(1);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -464,13 +464,14 @@ export function ReportsPage() {
     (draft.type === "payments" && options.sales.isError) ||
     (draft.type === "inventory" &&
       (options.items.isError || options.suppliers.isError));
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(applied);
+  const isDirty =
+    applied !== null && JSON.stringify(draft) !== JSON.stringify(applied);
   const datesAreValid =
     draft.dateMode !== "range" ||
     (Boolean(draft.from) && Boolean(draft.to) && draft.from <= draft.to);
-  const reportTitle = reportTitles[applied.type];
+  const reportTitle = reportTitles[applied?.type ?? draft.type];
   const currentResult =
-    !report.isError && report.data?.type === applied.type
+    applied && !report.isError && report.data?.type === applied.type
       ? report.data
       : undefined;
   const filterGridColumns =
@@ -511,7 +512,7 @@ export function ReportsPage() {
   };
 
   const exportPdf = async () => {
-    if (isDirty || report.isFetching) return;
+    if (!applied || !currentResult || isDirty || report.isFetching) return;
     setPdfBusy(true);
     setPdfError(null);
     try {
@@ -545,7 +546,14 @@ export function ReportsPage() {
         <div className="flex shrink-0 flex-col items-end gap-1.5 max-[700px]:w-full max-[700px]:items-start">
           <button
             className="inline-flex h-11 items-center justify-center gap-2.5 rounded-lg border border-[#8b5e83] bg-white px-4 text-sm font-semibold text-[#70466a] shadow-sm transition hover:bg-[#f8eff7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5e83] disabled:cursor-not-allowed disabled:opacity-45 max-[700px]:w-full"
-            disabled={isDirty || report.isFetching || pdfBusy || report.isError}
+            disabled={
+              !applied ||
+              !currentResult ||
+              isDirty ||
+              report.isFetching ||
+              pdfBusy ||
+              report.isError
+            }
             onClick={() => void exportPdf()}
             type="button"
           >
@@ -724,7 +732,7 @@ export function ReportsPage() {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="m-0 text-[10px] font-bold uppercase tracking-[0.2em] text-[#98728f]">
-            Vista generada
+            {applied ? "Vista generada" : "Tipo seleccionado"}
           </p>
           <h2 className="mb-0 mt-1 flex items-center gap-2 text-lg font-bold text-[#342b35]">
             <FileText size={18} className="text-[#8b5e83]" />
@@ -768,11 +776,26 @@ export function ReportsPage() {
 
       {(report.isPending || (report.isFetching && !currentResult)) && (
         <div className="mt-5 grid min-h-64 place-items-center rounded-xl border border-[#e7dce5] bg-white text-sm text-[#796c78]">
-          Generando {reportTitles[applied.type].toLocaleLowerCase("es-SV")}…
+          Generando {reportTitle.toLocaleLowerCase("es-SV")}…
         </div>
       )}
 
-      {currentResult && (
+      {!applied && (
+        <section className="mt-5 rounded-xl border border-dashed border-[#d9c8d7] bg-[#fffafd] px-6 py-12 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-[#f3eaf2] text-[#805b7a]">
+            <FileText size={22} />
+          </div>
+          <h2 className="mb-0 mt-4 text-lg font-bold text-[#3e3040]">
+            Prepara tu {reportTitle.toLocaleLowerCase("es-SV")}
+          </h2>
+          <p className="mb-0 mt-2 text-sm leading-6 text-[#766975]">
+            Ajusta el período y los filtros, y después genera el reporte para
+            consultar sus indicadores y gráficos.
+          </p>
+        </section>
+      )}
+
+      {currentResult && applied && (
         <>
           <ReportOverview type={applied.type} result={currentResult} />
           <ReportTable
