@@ -206,15 +206,21 @@ async function salesRows(query: SalesReportQuery, period: ReportPeriod) {
 
 export async function salesReport(query: SalesReportQuery) {
   const period = resolveReportPeriod(query);
+  const periodPaymentsQuery =
+    query.status === "VOIDED"
+      ? Promise.resolve([])
+      : prisma.payment.findMany({
+          where: {
+            paidAt: { gte: period.from, lt: period.to },
+            sale: {
+              status: query.status ?? { not: "VOIDED" },
+            },
+          },
+          select: { amount: true, method: true },
+        });
   const [rows, periodPayments] = await Promise.all([
     salesRows(query, period),
-    prisma.payment.findMany({
-      where: {
-        paidAt: { gte: period.from, lt: period.to },
-        sale: { status: { not: "VOIDED" } },
-      },
-      select: { amount: true, method: true },
-    }),
+    periodPaymentsQuery,
   ]);
   const activeRows = rows.filter((row) => row.status !== "VOIDED");
   return paginated(

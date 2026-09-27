@@ -9,6 +9,8 @@ const {
   clientFindMany,
   inventoryItemFindMany,
   movementFindMany,
+  saleFindMany,
+  paymentFindMany,
 } = vi.hoisted(() => ({
   orderFindMany: vi.fn(),
   jobFindMany: vi.fn(),
@@ -17,6 +19,8 @@ const {
   clientFindMany: vi.fn(),
   inventoryItemFindMany: vi.fn(),
   movementFindMany: vi.fn(),
+  saleFindMany: vi.fn(),
+  paymentFindMany: vi.fn(),
 }));
 
 vi.mock("../../db/prisma.js", () => ({
@@ -28,11 +32,18 @@ vi.mock("../../db/prisma.js", () => ({
     client: { findMany: clientFindMany },
     inventoryItem: { findMany: inventoryItemFindMany },
     stockMovement: { findMany: movementFindMany },
+    sale: { findMany: saleFindMany },
+    payment: { findMany: paymentFindMany },
   },
 }));
 
-const { clientsReport, inventoryReport, ordersReport, productionReport } =
-  await import("./service.js");
+const {
+  clientsReport,
+  inventoryReport,
+  ordersReport,
+  productionReport,
+  salesReport,
+} = await import("./service.js");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -270,6 +281,42 @@ const stockMovements = inventoryItems.map((item, index) => ({
   actorId: "actor_1",
   createdAt: new Date(`2024-05-0${index + 2}T12:00:00.000Z`),
 }));
+const sales = [
+  {
+    id: "sale-open",
+    number: 31,
+    status: "OPEN",
+    createdAt: new Date("2024-05-02T12:00:00.000Z"),
+    subtotal: new Prisma.Decimal("30.00"),
+    total: new Prisma.Decimal("30.00"),
+    order: {
+      number: 41,
+      client: { id: "client_1", name: "Ana" },
+    },
+    payments: [{ amount: new Prisma.Decimal("30.00") }],
+  },
+  {
+    id: "sale-voided",
+    number: 32,
+    status: "VOIDED",
+    createdAt: new Date("2024-05-03T12:00:00.000Z"),
+    subtotal: new Prisma.Decimal("15.00"),
+    total: new Prisma.Decimal("15.00"),
+    order: {
+      number: 42,
+      client: { id: "client_2", name: "Beatriz" },
+    },
+    payments: [{ amount: new Prisma.Decimal("15.00") }],
+  },
+];
+const collectedPayments = [
+  {
+    amount: new Prisma.Decimal("30.00"),
+    method: "CASH",
+    paidAt: new Date("2024-05-04T12:00:00.000Z"),
+    sale: { status: "OPEN" },
+  },
+];
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -294,6 +341,14 @@ beforeEach(() => {
   movementFindMany.mockImplementation(
     async ({ where }: { where: Record<string, unknown> }) =>
       stockMovements.filter((movement) => matchesWhere(movement, where)),
+  );
+  saleFindMany.mockImplementation(
+    async ({ where }: { where: Record<string, unknown> }) =>
+      sales.filter((sale) => matchesWhere(sale, where)),
+  );
+  paymentFindMany.mockImplementation(
+    async ({ where }: { where: Record<string, unknown> }) =>
+      collectedPayments.filter((payment) => matchesWhere(payment, where)),
   );
 });
 
@@ -368,5 +423,22 @@ describe("reports service filters", () => {
     });
 
     expect(report.data).toMatchObject([{ id: "movement-item-low" }]);
+  });
+
+  it("does not include other sales' collections in a voided-sales report", async () => {
+    const report = await salesReport({
+      from: "2024-01-01",
+      to: "2024-12-31",
+      groupBy: "day",
+      page: 1,
+      limit: 20,
+      status: "VOIDED",
+    });
+
+    expect(report.summary).toMatchObject({
+      totalSold: "0",
+      totalCollected: "0",
+      byPaymentMethod: { CASH: "0", TRANSFER: "0" },
+    });
   });
 });

@@ -598,82 +598,66 @@ export function ReportsPage() {
               </SelectInput>
             </Field>
           ) : (
-            <Field label="Fecha inicial">
-              <span className="relative block">
-                <CalendarDays
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8d7a8b]"
-                  size={17}
-                />
-                <input
-                  className={`${fieldClassName} pl-10`}
-                  max={draft.to || undefined}
-                  name="from"
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      from: event.target.value,
-                    }))
-                  }
-                  type="date"
-                  value={draft.from}
-                />
-              </span>
-            </Field>
+            <>
+              <Field label="Fecha inicial">
+                <span className="relative block">
+                  <CalendarDays
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8d7a8b]"
+                    size={17}
+                  />
+                  <input
+                    className={`${fieldClassName} pl-10`}
+                    max={draft.to || undefined}
+                    name="from"
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        from: event.target.value,
+                      }))
+                    }
+                    type="date"
+                    value={draft.from}
+                  />
+                </span>
+              </Field>
+              <Field label="Fecha final">
+                <span className="relative block">
+                  <CalendarDays
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8d7a8b]"
+                    size={17}
+                  />
+                  <input
+                    className={`${fieldClassName} pl-10`}
+                    min={draft.from || undefined}
+                    name="to"
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        to: event.target.value,
+                      }))
+                    }
+                    type="date"
+                    value={draft.to}
+                  />
+                </span>
+              </Field>
+            </>
           )}
-          {draft.dateMode === "range" ? (
-            <Field label="Fecha final">
-              <span className="relative block">
-                <CalendarDays
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8d7a8b]"
-                  size={17}
-                />
-                <input
-                  className={`${fieldClassName} pl-10`}
-                  min={draft.from || undefined}
-                  name="to"
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      to: event.target.value,
-                    }))
-                  }
-                  type="date"
-                  value={draft.to}
-                />
-              </span>
-            </Field>
-          ) : (
-            <Field label="Tipo de reporte">
-              <SelectInput
-                name="report-type"
-                onChange={(value) => changeType(value as ReportType)}
-                value={draft.type}
-              >
-                {reportTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </SelectInput>
-            </Field>
-          )}
-          {draft.dateMode === "range" ? (
-            <Field label="Tipo de reporte">
-              <SelectInput
-                name="report-type"
-                onChange={(value) => changeType(value as ReportType)}
-                value={draft.type}
-              >
-                {reportTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </SelectInput>
-            </Field>
-          ) : null}
+          <Field label="Tipo de reporte">
+            <SelectInput
+              name="report-type"
+              onChange={(value) => changeType(value as ReportType)}
+              value={draft.type}
+            >
+              {reportTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </SelectInput>
+          </Field>
           <button
             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#8b5e83] px-5 text-sm font-semibold text-white shadow-[0_5px_13px_rgba(112,70,106,0.16)] transition hover:bg-[#754d6e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b5e83] disabled:cursor-not-allowed disabled:opacity-50 max-[1150px]:col-span-2 max-[620px]:col-span-1"
             disabled={!datesAreValid || (report.isFetching && !isDirty)}

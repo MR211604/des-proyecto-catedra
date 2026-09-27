@@ -1,4 +1,4 @@
-# ADR 0003: Production transition events and owner reports
+# ADR 0003: Production transition events and administrator reports
 
 ## Status
 
@@ -6,10 +6,10 @@ Accepted
 
 ## Context
 
-The workshop needs owner-only statistics and reports for operations, production,
-sales, payments, inventory, customers, and quotes. Production reports also need
-reliable blocked-time information, but the existing production event history
-only represented stage changes.
+The workshop needs organization-admin-only statistics and reports for
+operations, production, sales, payments, inventory, customers, and quotes.
+Production reports also need reliable blocked-time information, but the existing
+production event history only represented stage changes.
 
 ## Decision
 
@@ -21,10 +21,10 @@ created for records that predate the migration. The production-job relation
 restricts deletion while events exist, so aggregate deletion cannot silently
 remove the transition history.
 
-The backend exposes owner-only report endpoints under `/api/v1/reports`, with
-JSON and synchronous PDF representations. Reports use live queries, explicit
-date periods in the workshop timezone (`America/El_Salvador`), and USD for
-monetary values.
+The backend exposes report endpoints restricted to the Clerk `org:admin` role
+under `/api/v1/reports`, with JSON and synchronous PDF representations. Reports
+use live queries, explicit date periods in the workshop timezone
+(`America/El_Salvador`), and USD for monetary values.
 
 ## Consequences
 
