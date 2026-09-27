@@ -3,7 +3,13 @@ import { useOrders } from "../orders/api.ts";
 import { statusClasses, statusLabels } from "../orders/constants.ts";
 import { formatOrderDate } from "../orders/formatters.ts";
 
-const columns = ["Order ID", "Cliente", "Estado", "Entrega"];
+const columns = [
+  "Order ID",
+  "Cliente",
+  "Estado",
+  "Entregado en",
+  "Entrega estimada",
+];
 
 export function RecentOrders() {
   const navigate = useNavigate();
@@ -92,12 +98,12 @@ export function RecentOrders() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
-                    {order.status === "DELIVERED" ? "Real: " : "Estimada: "}
                     {formatOrderDate(
-                      order.status === "DELIVERED"
-                        ? order.deliveredAt
-                        : order.dueDate,
+                      order.deliveredAt ? order.deliveredAt : null,
                     )}
+                  </td>
+                  <td className="whitespace-nowrap border-b border-[#e8dce6] px-5 py-3.75">
+                    {formatOrderDate(order.dueDate)}
                   </td>
                 </tr>
               ))
