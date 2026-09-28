@@ -3,6 +3,7 @@ import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { env } from "../config/env.js";
 
 export const clerk: RequestHandler = clerkMiddleware({
+  publishableKey: env.CLERK_PUBLISHABLE_KEY,
   secretKey: env.CLERK_SECRET_KEY,
 });
 
