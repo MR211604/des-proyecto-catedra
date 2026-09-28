@@ -18,12 +18,6 @@ import { ClientDetailDrawer } from "./ClientDetailDrawer.tsx";
 import { formatClientDate } from "./formatters.ts";
 import type { Client, ClientSort, ClientTab, SortOrder } from "./types.ts";
 
-const tabs: { label: string; value: ClientTab }[] = [
-  { label: "Todos", value: "all" },
-  { label: "Activos", value: "active" },
-  { label: "Inactivos", value: "inactive" },
-];
-
 function initials(name: string) {
   return name
     .split(" ")
@@ -148,10 +142,6 @@ export function ClientsPage() {
     setSearchParams(next, { replace: true });
   }
 
-  function changeTab(nextTab: ClientTab) {
-    updateParams({ tab: nextTab, page: "1" });
-  }
-
   function changeSort(nextSort: ClientSort) {
     updateParams({
       sortBy: nextSort,
@@ -191,24 +181,6 @@ export function ClientsPage() {
         </div>
         <section className="rounded-2xl border border-[#eadde7] bg-[#fffafd] shadow-[0_18px_45px_-35px_#70466a]">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eee2eb] px-5 py-5">
-            <div
-              className="flex gap-2 rounded-xl bg-[#f8f0f7] p-1"
-              role="tablist"
-              aria-label="Estado de clientes"
-            >
-              {tabs.map((item) => (
-                <button
-                  aria-selected={tab === item.value}
-                  className={`rounded-lg border-0 px-4 py-2 text-sm font-bold transition ${tab === item.value ? "bg-white text-[#70466a] shadow-sm" : "bg-transparent text-[#8a7886]"}`}
-                  key={item.value}
-                  onClick={() => changeTab(item.value)}
-                  role="tab"
-                  type="button"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
             <label className="flex h-11 min-w-65 items-center gap-2 rounded-lg border border-[#dfcedc] bg-white px-3 text-[#8d7888] focus-within:border-[#8b5e83] max-[620px]:w-full">
               <Search size={18} />
               <span className="sr-only">Buscar clientes</span>

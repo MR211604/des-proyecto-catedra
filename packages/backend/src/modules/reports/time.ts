@@ -29,6 +29,10 @@ function dateStringFromParts(date: Date) {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+export function formatReportDate(date: Date) {
+  return dateStringFromParts(date);
+}
+
 function offsetMinutes(date: Date) {
   const value = offsetFormatter
     .formatToParts(date)

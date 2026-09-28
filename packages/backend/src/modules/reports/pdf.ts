@@ -1,70 +1,12 @@
 import PDFDocument from "pdfkit";
+import {
+  flattenPdfRecord,
+  formatGeneratedDate,
+  formatGeneratedTime,
+  rowsForPdfTable,
+} from "./pdf-format.js";
 
 type TableCell = string | PDFKit.Mixins.CellOptions;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function formatFields(fields: Record<string, string>): string {
-  const entries = Object.entries(fields);
-  return entries.length
-    ? entries.map(([key, nestedValue]) => `${key}: ${nestedValue}`).join(", ")
-    : "—";
-}
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "number")
-    return Number.isInteger(value) ? String(value) : value.toFixed(2);
-  if (typeof value === "string") return value;
-  if (typeof value === "boolean") return value ? "Sí" : "No";
-  if (value instanceof Date) return value.toLocaleString("es-ES");
-  if (Array.isArray(value)) {
-    if (value.length === 0) return "—";
-    return value
-      .map((entry) => {
-        if (!isRecord(entry)) return formatValue(entry);
-        return formatFields(flattenRecord(entry));
-      })
-      .join(", ");
-  }
-  if (isRecord(value)) return formatFields(flattenRecord(value));
-  return String(value);
-}
-
-function flattenRecord(
-  value: Record<string, unknown>,
-  prefix = "",
-): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, entry] of Object.entries(value)) {
-    const field = prefix ? `${prefix}.${key}` : key;
-    if (isRecord(entry)) {
-      Object.assign(result, flattenRecord(entry, field));
-    } else {
-      result[field] = formatValue(entry);
-    }
-  }
-  return result;
-}
-
-function tableRecord(value: Record<string, unknown>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [key, formatValue(entry)]),
-  );
-}
-
-function rowsForTable(values: unknown[]) {
-  const rows = values.map((value) =>
-    isRecord(value) ? tableRecord(value) : { value: formatValue(value) },
-  );
-  const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
-  return {
-    headers,
-    rows: rows.map((row) => headers.map((header) => row[header] ?? "—")),
-  };
-}
 
 function addTable(
   doc: PDFKit.PDFDocument,
@@ -99,7 +41,7 @@ function addObjectTable(
   doc: PDFKit.PDFDocument,
   value: Record<string, unknown>,
 ) {
-  const rows = Object.entries(flattenRecord(value));
+  const rows = Object.entries(flattenPdfRecord(value));
   addTable(
     doc,
     ["Campo", "Valor"],
@@ -108,7 +50,7 @@ function addObjectTable(
 }
 
 function addRecordsTable(doc: PDFKit.PDFDocument, values: unknown[]) {
-  const { headers, rows } = rowsForTable(values);
+  const { headers, rows } = rowsForPdfTable(values);
   addTable(doc, headers, rows);
 }
 
@@ -131,12 +73,7 @@ export function renderReportPdf(
       .fontSize(9)
       .fillColor("#555")
       .text(
-        `Generado: ${new Date().toLocaleDateString("es-ES", {
-          dateStyle: "long",
-        })} a las ${new Date().toLocaleTimeString("es-ES", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
+        `Generado: ${formatGeneratedDate()} a las ${formatGeneratedTime()}`,
       );
     document.fillColor("#000").moveDown();
 
