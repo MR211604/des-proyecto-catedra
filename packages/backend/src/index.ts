@@ -59,7 +59,7 @@ export const server = createServer(app);
 attachProductionWebSocket(server);
 
 if (process.env.NODE_ENV !== "test") {
-  server.listen(env.PORT, () => {
-    console.log(`Backend listening on http://localhost:${env.PORT}`);
+  server.listen(env.PORT, "0.0.0.0", () => {
+    console.log(`Backend listening on port ${env.PORT}`);
   });
 }

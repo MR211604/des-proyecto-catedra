@@ -84,8 +84,8 @@ export function generateOpenAPIDocument(): ReturnType<
     ],
     servers: [
       {
-        url: `http://localhost:${env.PORT}`,
-        description: "Local server",
+        url: env.PUBLIC_API_URL ?? `http://localhost:${env.PORT}`,
+        description: env.PUBLIC_API_URL ? "Public API server" : "Local server",
       },
     ],
   });

@@ -6,6 +6,7 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   CLERK_SECRET_KEY: z.string().min(1),
   CORS_ORIGIN: z.url().default("*"),
+  PUBLIC_API_URL: z.url().optional(),
 });
 
 export const env = envSchema.parse(process.env);

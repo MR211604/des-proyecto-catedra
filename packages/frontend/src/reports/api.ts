@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
-import { ApiError, createApiClient } from "../lib/api.ts";
+import { ApiError, apiUrl, createApiClient } from "../lib/api.ts";
 import type {
   PaginatedReport,
   ReportRequest,
@@ -229,7 +229,7 @@ export async function downloadReportPdf(
   const token = await getToken();
   const query = queryFor(request, 1, 100);
   const response = await fetch(
-    `/api/v1/reports/${reportPaths[request.type]}.pdf?${query}`,
+    apiUrl(`/api/v1/reports/${reportPaths[request.type]}.pdf?${query}`),
     { headers: token ? { Authorization: `Bearer ${token}` } : {} },
   );
 

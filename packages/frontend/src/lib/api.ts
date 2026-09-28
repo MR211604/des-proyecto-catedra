@@ -16,6 +16,14 @@ type ApiClient = {
   delete: <T>(path: string) => Promise<T>;
 };
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "";
+
+export function apiUrl(path: string) {
+  if (!apiBaseUrl) return path;
+  return `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export function createApiClient(
   getToken: () => Promise<string | null>,
 ): ApiClient {
@@ -45,7 +53,7 @@ async function request<T>(
   body?: unknown,
 ) {
   const token = await getToken();
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -28,11 +28,19 @@ export function useProductionBoard() {
     const connect = async () => {
       const token = await getToken();
       if (!token || disposed) return;
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = import.meta.env.DEV
-        ? "localhost:3000"
-        : window.location.host;
-      socket = new WebSocket(`${protocol}//${host}`, `clerk.${token}`);
+      const configuredUrl = import.meta.env.VITE_WS_URL?.trim().replace(
+        /\/+$/,
+        "",
+      );
+      const url =
+        configuredUrl || (import.meta.env.DEV ? "ws://localhost:3000" : null);
+
+      if (!url) {
+        console.error("Missing VITE_WS_URL environment variable");
+        return;
+      }
+
+      socket = new WebSocket(url, `clerk.${token}`);
       socket.onmessage = () => {
         void queryClient.invalidateQueries({ queryKey: ["production-board"] });
       };
