@@ -79,12 +79,16 @@ function ReportsRoute() {
 }
 
 export function AppRoutes() {
+  const { orgRole } = useAuth();
+  const isAdmin = orgRole === "org:admin";
+  const defaultRoute = isAdmin ? "/dashboard" : "/clientes";
+
   return (
     <Routes>
       <Route element={<AuthenticatedLayout />}>
-        <Route index element={<Navigate replace to="/dashboard" />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="reportes" element={<ReportsRoute />} />
+        <Route index element={<Navigate replace to={defaultRoute} />} />
+        {isAdmin && <Route path="dashboard" element={<Dashboard />} />}
+        {isAdmin && <Route path="reportes" element={<ReportsRoute />} />}
         <Route path="clientes" element={<ClientsPage />} />
         <Route path="clientes/nuevo" element={<ClientFormPage />} />
         <Route path="clientes/:id/editar" element={<ClientFormPage />} />
@@ -105,7 +109,7 @@ export function AppRoutes() {
         <Route path="inventario/nuevo" element={<InventoryFormPage />} />
         <Route path="inventario/:id" element={<InventoryHistoryPage />} />
         <Route path="inventario/:id/editar" element={<InventoryFormPage />} />
-        <Route path="*" element={<Navigate replace to="/dashboard" />} />
+        <Route path="*" element={<Navigate replace to={defaultRoute} />} />
       </Route>
     </Routes>
   );

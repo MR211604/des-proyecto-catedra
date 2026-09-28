@@ -13,7 +13,6 @@ const navigation: { label: string; icon: IconName; to: string }[] = [
   { label: "Proveedores", icon: "truck", to: "/proveedores" },
   { label: "Ventas", icon: "cash", to: "/ventas" },
   { label: "Reportes", icon: "reports", to: "/reportes" },
-  { label: "Configuración", icon: "settings", to: "/configuracion" },
 ];
 
 export function Sidebar() {
@@ -39,7 +38,11 @@ export function Sidebar() {
         className="mt-8.75 grid gap-1.5 max-[820px]:mt-4.5 max-[820px]:flex max-[820px]:gap-1 max-[820px]:overflow-x-auto"
       >
         {navigation
-          .filter((item) => item.to !== "/reportes" || orgRole === "org:admin")
+          .filter(
+            (item) =>
+              (!["/dashboard", "/reportes"].includes(item.to) ||
+                orgRole === "org:admin"),
+          )
           .map((item) => (
             <NavLink
               className={({ isActive }) =>
