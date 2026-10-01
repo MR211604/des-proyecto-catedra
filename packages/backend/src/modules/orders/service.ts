@@ -1,3 +1,4 @@
+import { duplexPair } from "node:stream";
 import { prisma } from "../../db/prisma.js";
 import { type $Enums, Prisma } from "../../generated/prisma/client.js";
 import { AppError } from "../../middleware/errors.js";
@@ -74,6 +75,22 @@ async function validateMaterials(tx: typeof prisma, input: CreateOrderInput) {
 }
 
 async function validateJobs(tx: typeof prisma, input: CreateOrderInput) {
+  const orderDueDate = input.dueDate;
+  if (
+    orderDueDate &&
+    input.jobs.some(
+      (job) =>
+        job.dueDate !== undefined &&
+        job.dueDate !== null &&
+        job.dueDate > orderDueDate,
+    )
+  ) {
+    throw new AppError(
+      400,
+      "Production job due date cannot be after the order due date",
+    );
+  }
+
   for (const job of input.jobs) {
     if (
       job.orderItemIndex !== undefined &&
@@ -112,7 +129,7 @@ function jobData(
       activeStages,
     ),
     assignedTo: job.assignedTo,
-    dueDate: job.dueDate,
+    dueDate: job.dueDate ?? null,
   }));
 }
 

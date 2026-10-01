@@ -56,7 +56,6 @@ const unitLabels: Record<QuoteMaterialUnit, string> = {
 };
 
 function dateInput(value: string | null | undefined) {
-  console.log("fecha enviada", value.slice(0, 10));
   return value ? value.slice(0, 10) : "";
 }
 
@@ -226,7 +225,6 @@ function QuoteFormEditor({
     defaultValues: quote ? formFromQuote(quote) : emptyForm,
     onSubmit: async ({ value }) => {
       const input = buildInput(value, options.inventory.data ?? []);
-      console.log("input a enviar", input);
       try {
         if (isEditing && id) {
           await update.mutateAsync({ id, input });

@@ -388,6 +388,58 @@ describe("orders service material lists", () => {
   });
 });
 
+describe("orders service production job dates", () => {
+  it("rejects a production job scheduled after the order due date", async () => {
+    const input: CreateOrderInput = {
+      ...baseInput,
+      dueDate: new Date("2026-09-10T00:00:00.000Z"),
+      jobs: [
+        {
+          stageId: "stage_1",
+          description: "Hem",
+          orderItemIndex: 0,
+          dueDate: new Date("2026-09-11T00:00:00.000Z"),
+        },
+      ],
+    };
+
+    await expect(createOrder(input)).rejects.toEqual(
+      new AppError(
+        400,
+        "Production job due date cannot be after the order due date",
+      ),
+    );
+    expect(orderCreate).not.toHaveBeenCalled();
+    expect(jobCreateMany).not.toHaveBeenCalled();
+  });
+
+  it("allows a production job on or before the order due date", async () => {
+    const input: CreateOrderInput = {
+      ...baseInput,
+      dueDate: new Date("2026-09-10T00:00:00.000Z"),
+      jobs: [
+        {
+          stageId: "stage_1",
+          description: "Hem",
+          orderItemIndex: 0,
+          dueDate: new Date("2026-09-09T00:00:00.000Z"),
+        },
+      ],
+    };
+
+    await expect(createOrder(input)).resolves.toMatchObject({
+      id: "order_1",
+    });
+    expect(jobCreateMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          dueDate: new Date("2026-09-09T00:00:00.000Z"),
+        }),
+      ],
+    });
+  });
+});
+
 describe("orders service production start material issue", () => {
   it("issues one movement per order-item material and decrements stock", async () => {
     await expect(

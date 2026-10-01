@@ -114,7 +114,6 @@ export function ProductionJobDrawer({
           : "Trabajo bloqueado.",
       );
     } catch (error: unknown) {
-      console.log(error);
       toast.error(
         error instanceof ApiError
           ? error.message
