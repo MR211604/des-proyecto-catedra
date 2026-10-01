@@ -353,7 +353,7 @@ export function formatGeneratedDate(date = new Date()) {
 }
 
 export function formatGeneratedTime(date = new Date()) {
-  return date.toLocaleTimeString("es-ES", {
+  return date.toLocaleTimeString("es-SV", {
     hour: "2-digit",
     minute: "2-digit",
   });

@@ -1,16 +1,14 @@
 export function formatQuoteDate(value: string | null) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
+
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
 }
 
 export function formatQuoteTotal(value: string) {
-  return new Intl.NumberFormat("es-CO", {
+  return new Intl.NumberFormat("es-SV", {
     style: "currency",
-    currency: "COP",
+    currency: "USD",
     maximumFractionDigits: 2,
   }).format(Number(value));
 }

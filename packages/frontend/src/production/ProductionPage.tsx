@@ -12,7 +12,7 @@ import type { ProductionJob, ProductionStage } from "./types.ts";
 
 function formatDate(value: string | null) {
   if (!value) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("es-SV", {
     day: "numeric",
     month: "short",
   }).format(new Date(value));

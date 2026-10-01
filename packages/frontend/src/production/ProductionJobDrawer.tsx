@@ -33,7 +33,7 @@ const eventLabels: Record<ProductionEvent["type"], string> = {
 
 function formatDate(value: string | null) {
   if (!value) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("es-SV", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -41,7 +41,7 @@ function formatDate(value: string | null) {
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("es-SV", {
     day: "numeric",
     month: "short",
     hour: "2-digit",

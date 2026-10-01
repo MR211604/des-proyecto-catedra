@@ -380,7 +380,7 @@ export function MovementDrawer({
                         </span>
                       </div>
                       <p className="mt-1 mb-0 text-xs text-[#806f7d]">
-                        {new Intl.DateTimeFormat("es-ES", {
+                        {new Intl.DateTimeFormat("es-SV", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         }).format(new Date(movementItem.createdAt))}

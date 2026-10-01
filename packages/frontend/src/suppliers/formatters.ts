@@ -1,9 +1,6 @@
 export function formatSupplierDate(value: string | null) {
   if (!value) return "—";
 
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
 }

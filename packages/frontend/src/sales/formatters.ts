@@ -7,15 +7,14 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 export function formatSaleDate(value: string) {
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  if (!value) return "-";
+
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
 }
 
 export function formatSaleDateTime(value: string) {
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat("es-SV", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));

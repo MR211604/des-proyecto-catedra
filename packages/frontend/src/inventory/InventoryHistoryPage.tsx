@@ -261,7 +261,7 @@ export function InventoryHistoryPage() {
                         )}
                       </td>
                       <td className="px-5 py-4 text-sm text-[#5f525d]">
-                        {new Intl.DateTimeFormat("es-ES", {
+                        {new Intl.DateTimeFormat("es-SV", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         }).format(new Date(movement.createdAt))}

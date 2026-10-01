@@ -11,7 +11,7 @@ export function formatInventoryQuantity(value: string, unit: InventoryUnit) {
   const number = Number(value);
   if (!Number.isFinite(number)) return `${value} ${unitLabels[unit]}`;
 
-  return `${new Intl.NumberFormat("es-ES", {
+  return `${new Intl.NumberFormat("es-SV", {
     maximumFractionDigits: 3,
   }).format(number)} ${unitLabels[unit]}`;
 }
